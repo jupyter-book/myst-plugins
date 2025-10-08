@@ -3,11 +3,11 @@ version: 1
 project:
   id: f1082c4e-082a-4655-a225-d9dde40f31b9
   title: myst-plugins
+  date: 2024-09-01
   # description:
   # keywords: []
-  authors: 
-    - Freek Pols
-    - Luuk Fröling
+  # authors:
+
   
   github: https://github.com/jupyter-book/myst-plugins
 
@@ -19,6 +19,7 @@ project:
     - plugins/picsum/picsum.mjs
     - plugins/markup/markup.mjs
     - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
+    - plugins/update-date-frontmatter/dist/update-date-frontmatter.mjs
 
   # To autogenerate a Table of Contents, run "myst init --write-toc"
   toc:
@@ -31,6 +32,7 @@ project:
     - file: example/intermezzo.md
     - file: example/example.md
     - file: example/iframe-to-thumbnail.md
+    - file: example/update-date.md
 
 
 site:

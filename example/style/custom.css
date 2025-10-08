@@ -1,5 +1,10 @@
+/* update-date-frontmatter plugin */ 
 
-/* Code toegevoegd 17/05. Leuke kleurtjes zodat het makkelijk te zien is wat waar komt */
+/* Remove style from date node, to allow us to add the update date underneath (remove mb-4) */
+
+#skip-to-frontmatter {
+  margin-bottom: 0;
+}
 
 /*Title color in dark mode*/
 .dark aside.admonition-experiment .dark\:text-white {
@@ -132,7 +137,7 @@ aside.admonition-example > div:first-child > div:first-child {
   font-family: "Font Awesome 5 Free"; /* If using FontAwesome */
   margin-right: 0.5em;
 }
-
+ 
 aside.admonition-example img {
 display: block;
 }

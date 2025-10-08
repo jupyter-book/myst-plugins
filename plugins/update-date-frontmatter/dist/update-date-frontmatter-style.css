@@ -1,0 +1,5 @@
+/* Remove style from date node, to allow us to add the update date underneath (remove mb-4) */
+
+#skip-to-frontmatter {
+  margin-bottom: 0;
+}
