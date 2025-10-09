@@ -1,5 +1,6 @@
 ---
 updated: October 7, 2025
+abstract: page about updated date
 ---
 
 # Updated-date

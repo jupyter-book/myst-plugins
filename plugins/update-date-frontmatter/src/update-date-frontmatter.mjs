@@ -42,7 +42,7 @@ const updateDateTransform = {
             // Add date node
             node.children.unshift({
                 type: 'div',
-                class: 'font-light text-sm mb-4',
+                class: 'font-light text-sm mb-4 updated-date-container',
                 children: [{
                     type: 'text',
                     value: `Updated: ${fm.updated}`

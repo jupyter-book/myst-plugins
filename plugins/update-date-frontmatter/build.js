@@ -8,7 +8,6 @@ esbuild.build({
     outfile: 'dist/update-date-frontmatter.mjs',
     platform: 'node',
     format: 'esm',
-    minify: true,
     external: ['fs', 'fs/promises', 'os'] // <— do NOT bundle these
 
 }).catch(() => process.exit(1));
