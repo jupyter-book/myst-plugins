@@ -18,7 +18,8 @@ project:
     - plugins/intermezzo-admonition/intermezzo-admonition.mjs
     - plugins/picsum/picsum.mjs
     - plugins/markup/markup.mjs
-    - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
+    # - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
+    - plugins/iframe-to-qr-pdf/dist/iframe-to-qr-pdf.mjs
     - plugins/update-date-frontmatter/dist/update-date-frontmatter.mjs
 
   # To autogenerate a Table of Contents, run "myst init --write-toc"
@@ -32,6 +33,7 @@ project:
     - file: example/intermezzo.md
     - file: example/example.md
     - file: example/iframe-to-thumbnail.md
+    - file: example/iframe-to-qr.md
     - file: example/update-date.md
 
 

@@ -15,3 +15,7 @@ This plugin will replace every iframe directive with the youtube thumbnail for P
 ```{iframe} https://www.youtube.com/embed/seKOq-VMJgY?si=NjrDJRkoPczQbznv
 Overview of Jupyter Book
 ```
+
+:::{note}
+To see the results of this plugin, enable the plugin in the myst.yml file and remove the iframe-to-qr plugin. 
+:::
