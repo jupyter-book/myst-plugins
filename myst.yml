@@ -12,15 +12,15 @@ project:
   github: https://github.com/jupyter-book/myst-plugins
 
   plugins:
-    - plugins/experiment-admonition/experiment-admonition.mjs
-    - plugins/exercise-admonition-pdf/exercise-admonition-pdf.mjs
-    - plugins/example-admonition/example-admonition.mjs
-    - plugins/intermezzo-admonition/intermezzo-admonition.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/experiment-admonition.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/exercise-and-solution-pdf/exercise-admonition-pdf.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/intermezzo-admonition.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/example-admonition.mjs
     - plugins/picsum/picsum.mjs
     - plugins/markup/markup.mjs
     # - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
-    - plugins/iframe-to-qr-pdf/dist/iframe-to-qr-pdf.mjs
-    - plugins/update-date-frontmatter/dist/update-date-frontmatter.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/updated-date-frontmatter/update-date-frontmatter.mjs
 
   # To autogenerate a Table of Contents, run "myst init --write-toc"
   toc:

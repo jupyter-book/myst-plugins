@@ -13,11 +13,14 @@ We distinguish three levels of plugin maturity:
 Once a plugin reaches the stable level, we will create a release for it - it then becomes available through an url. All other levels require a download from this git repository.
 
 ## Gallery of plugins
-|name|functionalities|type|requirements|status|maintainer(s)|
-|---|---|---|---|---|---|
-| experiment | A custom admonition with its transform for converting to pdf | directive & transform | stable | requires a custom css for | Luuk Fröling & Freek Pols |
-| pdf_exercise | A plugin that converts exercises and solutions to numbered exercises and solutions in both LaTeX and Typst pdf | transform | |stable |Luuk Fröling & Freek Pols |
-| iframe | A plugin that replaces iframe elements with a qr code as figure and a caption with the link so that it is accessible in pdf format | transform | | in development |Luuk Fröling & Freek Pols |
-| picsum | A plugin that adds a directive to include random images from picsum.photos | directive | | stable | Angus Hollands |
+|name|functionalities|type|requirements|status|maintainer(s)|Link|
+|---|---|---|---|---|---|---|
+| experiment-admonition | A custom admonition with its transform for converting to pdf | directive & transform | stable | requires custom css | Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/experiment-admonition.mjs) |
+| intermezzo-admonition | A custom admonition with its transform for converting to pdf | directive & transform | stable | requires custom css | Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/intermezzo-admonition.mjs) |
+| example-admonition | A custom admonition with its transform for converting to pdf | directive & transform | stable | requires custom css | Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/example-admonition.mjs) |
+| ex-and-sol-pdf | A plugin that converts exercises and solutions to numbered exercises and solutions in both LaTeX and Typst pdf | transform | |stable |Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/exercise-and-solution-pdf/exercise-admonition-pdf.mjs) |
+| updated-date-frontmatter | A plugin which adds the date of the last update to the top of the page | | |stable |Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/updated-date-frontmatter/update-date-frontmatter.mjs) |
+| iframe | A plugin that replaces iframe elements with a qr code as figure and a caption with the link so that it is accessible in pdf format | transform | | in development |Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs) |
+| picsum | A plugin that adds a directive to include random images from picsum.photos | directive | | stable | Angus Hollands | - |
 
 
