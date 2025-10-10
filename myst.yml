@@ -35,6 +35,7 @@ project:
     - file: example/iframe-to-thumbnail.md
     - file: example/iframe-to-qr.md
     - file: example/update-date.md
+    - file: example/typst-conversion-support.md
 
 
 site:
