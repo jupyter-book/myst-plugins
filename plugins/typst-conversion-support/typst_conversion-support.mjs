@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const DEFAULTS = {
+  "\\\vartheta": "𝜗",
   "\\\\oiiint": "∰",
   "\\\\oiint": "∯",
   "\\\\iiint": "∭",
