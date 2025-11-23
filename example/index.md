@@ -1,4 +1,3 @@
-# Intro to myst plugins
-
-...
+```{include} ../README.md
+```
 
