@@ -18,24 +18,11 @@ Optionally set `GITHUB_TOKEN` for higher rate limits:
 export GITHUB_TOKEN=your_token_here
 ```
 
-## Examples
-
-### In text
+## Example
 
 ::::::{myst:demo}
 Thanks to @kirstiejane and @mfisher87 for their work on MyST!
-::::::
-
-### With citation syntax
-
-::::::{myst:demo}
-See [@rowanc1]'s contributions to the MyST ecosystem.
-::::::
-
-### Multiple mentions
-
-::::::{myst:demo}
-The discussion between @choldgraf, @rowanc1, and @agoose77 led to this feature.
+Note that @thisincorrectusername won't resolve and throw a warning (as it should!), and `@usernamesinbackticks` won't be touched.
 ::::::
 
 ## How it works
@@ -46,5 +33,3 @@ The plugin:
 - Creates profile links automatically
 - Skips mentions in code blocks
 - Filters citation warnings for handled mentions
-
-Set `GITHUB_TOKEN` environment variable for higher rate limits.

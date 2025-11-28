@@ -39,13 +39,3 @@ You can also use custom link text, and the plugin will add state information:
 ::::::{myst:demo}
 For more details, see [this output scroll issue](https://github.com/jupyter-book/jupyter-book/issues/2050) for instructions.
 ::::::
-
-## How it works
-
-The plugin:
-- Fetches issue metadata from GitHub API
-- Replaces bare URLs with issue title + state
-- Adds CSS classes for styling
-- Works with any public GitHub repository
-
-Set `GITHUB_TOKEN` environment variable for higher rate limits.
