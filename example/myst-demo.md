@@ -14,7 +14,7 @@ project:
 
 ## Basic Example
 
-::::::{myst-demo}
+::::::{myst:demo}
 This is **bold** and this is *italic*.
 
 Here's a [link](https://mystmd.org).
@@ -22,7 +22,7 @@ Here's a [link](https://mystmd.org).
 
 ## Lists and Structure
 
-::::::{myst-demo}
+::::::{myst:demo}
 ### A Heading
 
 Here's an unordered list:
@@ -40,7 +40,7 @@ And a numbered list:
 
 ## Code Blocks
 
-::::::{myst-demo}
+::::::{myst:demo}
 Here's some Python code:
 
 ```python
@@ -51,7 +51,7 @@ def hello_world():
 
 ## Admonitions
 
-::::::{myst-demo}
+::::::{myst:demo}
 :::{note}
 This is a note admonition with important information!
 :::
@@ -63,7 +63,7 @@ This is a warning - be careful!
 
 ## Math
 
-::::::{myst-demo}
+::::::{myst:demo}
 Inline math: $E = mc^2$
 
 Display math:
@@ -75,8 +75,8 @@ $$
 
 ## Images and Figures
 
-::::::{myst-demo}
-```{figure} https://source.unsplash.com/random/400x300
+::::::{myst:demo}
+```{figure} https://picsum.photos/seed/myst-demo/400/300.jpg
 :name: random-figure
 
 A random image from Unsplash
@@ -85,16 +85,19 @@ A random image from Unsplash
 
 ## Cross-References
 
-::::::{myst-demo}
+::::::{myst:demo}
 You can reference the figure above: see {ref}`random-figure` for an example.
 ::::::
 
 ## How It Works
 
-The `myst-demo` directive takes any MyST content and displays it in two parts:
+The `myst:demo` directive takes any MyST content and displays it in a single card:
 
-1. **MyST Source** - Shows the raw markdown in a code block
-2. **Rendered Output** - Shows how it actually renders
+1. **MyST Demo** heading (customizable via an argument)
+2. A code block titled “Source MyST” showing the raw markdown
+3. **Rendered output** below
+
+You can also use `myst-demo` as an alias if needed.
 
 This makes it perfect for:
 - Writing MyST documentation

@@ -5,6 +5,7 @@ Automatically decorates GitHub issue links with titles, state badges, and CSS cl
 ## What it does
 
 When you link to a GitHub issue like `https://github.com/owner/repo/issues/123`, this plugin:
+
 - Fetches the issue title and state from GitHub API
 - Replaces bare URLs with the issue title (e.g., `Fix bug in parser [OPEN]`)
 - Adds CSS classes and data attributes for styling
@@ -36,25 +37,9 @@ Set `GITHUB_TOKEN` for higher API rate limits:
 export GITHUB_TOKEN=ghp_your_token_here
 ```
 
-Without a token, you're limited to 60 requests/hour.
-
-## Styling
-
-Each link gets CSS classes you can style:
-
-```css
-.github-issue-link--open::before {
-  content: '●';
-  color: green;
-}
-
-.github-issue-link--closed::before {
-  content: '●';
-  color: purple;
-}
-```
 
 The plugin adds these attributes:
+
 - `class`: `github-issue-link github-issue-link--{open|closed}`
 - `data-state`: `open` or `closed`
 - `data-state-reason`: Why it was closed (e.g., `completed`, `not_planned`)

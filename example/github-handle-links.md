@@ -22,19 +22,19 @@ export GITHUB_TOKEN=your_token_here
 
 ### In text
 
-::::::{myst-demo}
-Thanks to @choldgraf and @rowanc1 for their work on MyST!
+::::::{myst:demo}
+Thanks to @kirstiejane and @mfisher87 for their work on MyST!
 ::::::
 
 ### With citation syntax
 
-::::::{myst-demo}
+::::::{myst:demo}
 See [@rowanc1]'s contributions to the MyST ecosystem.
 ::::::
 
 ### Multiple mentions
 
-::::::{myst-demo}
+::::::{myst:demo}
 The discussion between @choldgraf, @rowanc1, and @agoose77 led to this feature.
 ::::::
 

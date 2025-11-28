@@ -1,58 +1,74 @@
 // MyST Demo Directive Plugin
 // Shows raw MyST content alongside its rendered output
 
-const mystDemoDirective = {
-  name: "myst-demo",
-  doc: "Display raw MyST content and its rendered output in a grouped container",
-  body: {
-    type: String,
-    required: true,
-  },
-  run(data, _vfile, ctx) {
-    const rawContent = data.body?.trim() || "";
+function createDemoDirective(name) {
+  return {
+    name,
+    argument: {
+      type: String,
+      required: false,
+      doc: "Optional title for the demo card",
+    },
+    doc: "Display raw MyST content with rendered output inside a single card",
+    body: {
+      type: String,
+      required: true,
+    },
+    run(data, _vfile, ctx) {
+      const rawContent = data.body?.trim() || "";
+      const title = data.argument?.trim() || "MyST Demo";
 
-    if (!rawContent) {
-      return [];
-    }
+      if (!rawContent) {
+        return [];
+      }
 
-    // Parse the MyST content to get the rendered output
-    const parsed = ctx.parseMyst(rawContent);
+      const parsed = ctx.parseMyst(rawContent) || { children: [] };
 
-    // Create section headings
-    const sourceHeading = {
-      type: "paragraph",
-      children: [
-        { type: "strong", children: [{ type: "text", value: "MyST Source:" }] },
-      ],
-    };
+      const cardNode = {
+        type: "card",
+        data: {
+          hProperties: {
+            className: ["card", "myst-demo-card", "myst-demo"],
+          },
+        },
+        children: [
+          {
+            type: "cardTitle",
+            children: [{ type: "text", value: title }],
+          },
+          {
+            type: "cardBody",
+            children: [
+              {
+                type: "code",
+                lang: "markdown",
+                meta: { caption: "Source MyST" },
+                value: rawContent,
+              },
+          {
+            type: "paragraph",
+            children: [
+              {
+                type: "thematicBreak",
+              },
+            ],
+          },
+          ...parsed.children,
+        ],
+          },
+        ],
+      };
 
-    const outputHeading = {
-      type: "paragraph",
-      children: [
-        { type: "strong", children: [{ type: "text", value: "Rendered Output:" }] },
-      ],
-    };
-
-    // Create a code block - MyST should auto-handle fence length
-    const codeBlock = {
-      type: "code",
-      lang: "markdown",
-      value: rawContent,
-    };
-
-    // Return all elements with a visual separator
-    return [
-      sourceHeading,
-      codeBlock,
-      outputHeading,
-      ...parsed.children,
-    ];
-  },
-};
+      return [cardNode];
+    },
+  };
+}
 
 const plugin = {
   name: "MyST Demo Directive",
-  directives: [mystDemoDirective],
+  directives: [
+    createDemoDirective("myst:demo"),
+  ],
 };
 
 export default plugin;

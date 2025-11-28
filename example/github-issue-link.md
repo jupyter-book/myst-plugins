@@ -22,13 +22,13 @@ export GITHUB_TOKEN=your_token_here
 
 ### Open Issue (🟢)
 
-::::::{myst-demo}
+::::::{myst:demo}
 This open issue https://github.com/jupyter-book/jupyter-book/issues/2481 needs attention.
 ::::::
 
 ### Closed Issue (🟣)
 
-::::::{myst-demo}
+::::::{myst:demo}
 This closed issue https://github.com/jupyter-book/jupyter-book/issues/2050 describes the migration path.
 ::::::
 
@@ -36,7 +36,7 @@ This closed issue https://github.com/jupyter-book/jupyter-book/issues/2050 descr
 
 You can also use custom link text, and the plugin will add state information:
 
-::::::{myst-demo}
+::::::{myst:demo}
 For more details, see [this output scroll issue](https://github.com/jupyter-book/jupyter-book/issues/2050) for instructions.
 ::::::
 

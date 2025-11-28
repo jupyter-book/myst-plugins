@@ -1,14 +1,8 @@
 // GitHub Issue Link Decorator Plugin
 // Automatically decorates GitHub issue links with titles, state, and CSS classes
 
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
-import { join } from "path";
-
 const ISSUE_LINK_REGEX =
   /^https:\/\/github\.com\/([^/]+\/[^/]+)\/issues\/(\d+)(?:[/?#].*)?$/;
-
-const CACHE_DIR = "_build/temp/github-issue-link";
-const CACHE_TTL = 24*3600000; // 24 hours in milliseconds
 
 // ============================================================================
 // Title Cleaning
@@ -22,45 +16,11 @@ function stripBrackets(title) {
 // ============================================================================
 // Cache Management
 // ============================================================================
-
-function getCachePath(repoSlug, issueNumber) {
-  const key = `${repoSlug.replace(/\//g, '-')}-${issueNumber}`;
-  return join(CACHE_DIR, `${key}.json`);
-}
-
-function readIssueCache(repoSlug, issueNumber) {
-  const cachePath = getCachePath(repoSlug, issueNumber);
-  if (!existsSync(cachePath)) return null;
-
-  const data = JSON.parse(readFileSync(cachePath, "utf8"));
-  const age = Date.now() - data.timestamp;
-
-  if (age > CACHE_TTL) return null;
-  return data.issue;
-}
-
-function writeIssueCache(repoSlug, issueNumber, issue) {
-  mkdirSync(CACHE_DIR, { recursive: true });
-  const cachePath = getCachePath(repoSlug, issueNumber);
-  writeFileSync(cachePath, JSON.stringify({
-    timestamp: Date.now(),
-    repoSlug,
-    issueNumber,
-    issue
-  }));
-}
-
 // ============================================================================
 // GitHub API
 // ============================================================================
 
 async function getIssueDetails(repoSlug, issueNumber) {
-  // Check cache first
-  const cached = readIssueCache(repoSlug, issueNumber);
-  if (cached) {
-    return cached;
-  }
-
   const apiUrl = `https://api.github.com/repos/${repoSlug}/issues/${issueNumber}`;
   const headers = { Accept: "application/vnd.github+json" };
   const token = process?.env?.GITHUB_TOKEN;
@@ -84,8 +44,6 @@ async function getIssueDetails(repoSlug, issueNumber) {
     url: data.html_url,
   };
 
-  // Cache the result
-  writeIssueCache(repoSlug, issueNumber, issueDetails);
   return issueDetails;
 }
 
