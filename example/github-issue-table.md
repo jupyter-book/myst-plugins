@@ -18,13 +18,24 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
+**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`, `repo`, `body`, plus any project fields (e.g., `Team Priority`, `Status`) when using a project view
+
+**Sorting**: Use `:sort:` with `column-direction` format (e.g., `reactions-desc`). Multiple columns can be specified separated by commas for left-to-right priority (e.g., `reactions-desc,updated-desc`).
+
+**Templates**: Use `:templates:` to add custom columns with `{{field}}` placeholders, and include the template name in `:columns:`. Most core columns (title, number, author, author_affiliation, repo) auto-link.
+
+**Note**: Set `GITHUB_TOKEN` environment variable to use this plugin.
+
+The same query is reused across tables, so data is only fetched once and cached locally.
+
+
 ## Open PRs in the Jupyter Book organization
 
 Sorted by reactions (descending), then by update date (descending):
 
 ::::::{myst-demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
-:columns: linked_title, author, author_affiliation, reactions, updated
+:columns: title, author, author_affiliation, reactions, updated
 :sort: reactions-desc,updated-desc
 :::
 ::::::
@@ -35,32 +46,32 @@ Shows issues with linked PRs, styled labels, and reactions:
 
 ::::::{myst-demo}
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:2025-11-01..2025-11-20
-:columns: linked_title, linked_prs, labels, reactions
+:columns: title, linked_prs, labels, reactions
 :sort: reactions-desc
 :::
 ::::::
 
 ## GitHub Project Board
 
-Show issues from a specific GitHub project, sorted by team priority then by reactions:
+Show issues from a specific GitHub project view (Team Priorities), which already filters to items that are visible on that view:
 
 ::::::{myst-demo}
-:::{issue-table} https://github.com/orgs/jupyter-book/projects/1
-:columns: linked_title, Team Priority, linked_prs, reactions
-:sort: Team Priority-desc,reactions-desc
+:::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
+:columns: title, Team Priority, linked_prs, reactions
+:sort: reactions-desc, Team Priority-desc
 :::
 ::::::
 
 You can include custom project columns by using the field name (e.g., `Status`, `Team Priority`, etc.) and sort by them.
 
-## Organization-wide Issues
+## Template columns
 
-Show issues across the Jupyter Book organization with linked PRs:
+Add bespoke columns that pull from other fields using `{{field}}` placeholders:
 
 ::::::{myst-demo}
-:::{issue-table} org:jupyter-book is:issue is:open updated:>=2025-11-01
-:columns: linked_title, author_affiliation, linked_prs, labels, reactions
-:sort: updated-desc
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
+:columns: title, repo, author, issue_link, repo_link, issue_cta
+:templates: issue_link=[View issue]({{url}}); repo_link=[Repo home](https://github.com/{{repo}}); issue_cta={button}`Open issue <{{url}}>`
 :::
 ::::::
 
@@ -69,16 +80,8 @@ Show issues across the Jupyter Book organization with linked PRs:
 This example shows all possible columns for recently updated issues:
 
 ::::::{myst-demo}
-:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2024-11-15
-:columns: number, linked_title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, updated
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, updated, repo, body
 :sort: updated-desc
 :::
 ::::::
-
-**Available columns**: `number`, `title`, `linked_title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`
-
-**Sorting**: Use `:sort:` with `column-direction` format (e.g., `reactions-desc`). Multiple columns can be specified separated by commas for left-to-right priority (e.g., `reactions-desc,updated-desc`).
-
-**Note**: Set `GITHUB_TOKEN` environment variable to use this plugin.
-
-The same query is reused across tables, so data is only fetched once and cached locally.

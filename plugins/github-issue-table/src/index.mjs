@@ -2,12 +2,15 @@
 // Renders GitHub issues/PRs as tables from search queries
 
 import { createHash } from "crypto";
-import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync, renameSync } from "fs";
 import { join } from "path";
-import { execSync } from "child_process";
+import { tmpdir } from "os";
+import { fetchIssues } from "./github-api.mjs";
 
 const CACHE_DIR = "_build/temp/github-issues";
 const CACHE_TTL = 24*3600000; // 24 hours in milliseconds
+
+let sharedParseMyst = null; // captured from directive ctx; reused in transform
 
 // ============================================================================
 // Title Cleaning
@@ -46,380 +49,17 @@ function readCache(query) {
 function writeCache(query, items) {
   mkdirSync(CACHE_DIR, { recursive: true });
   const cachePath = getCachePath(query);
-  writeFileSync(cachePath, JSON.stringify({
+  // Write to temp file first, then atomically rename to prevent corruption
+  const tempPath = join(tmpdir(), `github-cache-${Date.now()}-${Math.random().toString(36).substr(2, 9)}.json`);
+  writeFileSync(tempPath, JSON.stringify({
     timestamp: Date.now(),
     query,
     items
   }));
+  renameSync(tempPath, cachePath);
 }
 
-// ============================================================================
-// GitHub API (Synchronous)
-// ============================================================================
-
-function parseProjectUrl(input) {
-  // Parse GitHub project URLs: https://github.com/orgs/ORG/projects/NUMBER
-  if (input.includes('github.com') && input.includes('/projects/')) {
-    try {
-      const url = new URL(input);
-      const pathParts = url.pathname.split('/').filter(Boolean);
-      // Expected: ['orgs', 'org-name', 'projects', 'number'] or ['users', 'username', 'projects', 'number']
-      const projectIndex = pathParts.indexOf('projects');
-      if (projectIndex >= 0 && pathParts.length > projectIndex + 1) {
-        const projectNumber = parseInt(pathParts[projectIndex + 1], 10);
-        if (!isNaN(projectNumber)) {
-          if (pathParts[0] === 'orgs' && pathParts.length > 1) {
-            return { type: 'org', owner: pathParts[1], number: projectNumber };
-          } else if (pathParts[0] === 'users' && pathParts.length > 1) {
-            return { type: 'user', owner: pathParts[1], number: projectNumber };
-          }
-        }
-      }
-    } catch (e) {
-      // Not a valid URL, fall through
-    }
-  }
-  return null;
-}
-
-function normalizeQuery(input) {
-  // Handle GitHub issue/PR list URLs
-  // https://github.com/jupyter-book/jupyter-book/issues?q=is%3Aissue+is%3Aopen
-  if (input.includes('github.com') && input.includes('/issues')) {
-    try {
-      const url = new URL(input);
-      const qParam = url.searchParams.get('q');
-      const pathParts = url.pathname.split('/').filter(Boolean);
-      if (pathParts.length >= 2) {
-        const repo = `${pathParts[0]}/${pathParts[1]}`;
-        return qParam ? `repo:${repo} ${qParam}` : `repo:${repo}`;
-      }
-    } catch (e) {
-      // Fall through to return input as-is
-    }
-  }
-
-  // Otherwise assume it's a direct search query
-  return input;
-}
-
-function fetchProjectIssuesSync(projectInfo, token) {
-  const { type, owner, number } = projectInfo;
-
-  const graphqlQuery = `
-    query($owner: String!, $number: Int!) {
-      ${type === 'org' ? 'organization' : 'user'}(login: $owner) {
-        projectV2(number: $number) {
-          items(first: 100) {
-            nodes {
-              fieldValues(first: 20) {
-                nodes {
-                  ... on ProjectV2ItemFieldTextValue {
-                    text
-                    field { ... on ProjectV2Field { name } }
-                  }
-                  ... on ProjectV2ItemFieldSingleSelectValue {
-                    name
-                    field { ... on ProjectV2SingleSelectField { name } }
-                  }
-                  ... on ProjectV2ItemFieldNumberValue {
-                    number
-                    field { ... on ProjectV2Field { name } }
-                  }
-                  ... on ProjectV2ItemFieldDateValue {
-                    date
-                    field { ... on ProjectV2Field { name } }
-                  }
-                  ... on ProjectV2ItemFieldIterationValue {
-                    title
-                    field { ... on ProjectV2IterationField { name } }
-                  }
-                }
-              }
-              content {
-                ... on Issue {
-                  number
-                  title
-                  url
-                  state
-                  author {
-                    login
-                    ... on User {
-                      company
-                      organizations(first: 3) {
-                        nodes { login }
-                      }
-                    }
-                  }
-                  createdAt
-                  updatedAt
-                  closedAt
-                  labels(first: 10) { nodes { name color } }
-                  reactions { totalCount }
-                  comments { totalCount }
-                  timelineItems(first: 20, itemTypes: [CROSS_REFERENCED_EVENT]) {
-                    nodes {
-                      ... on CrossReferencedEvent {
-                        source {
-                          ... on PullRequest {
-                            number
-                            url
-                            state
-                            mergedAt
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-                ... on PullRequest {
-                  number
-                  title
-                  url
-                  state
-                  author {
-                    login
-                    ... on User {
-                      company
-                      organizations(first: 3) {
-                        nodes { login }
-                      }
-                    }
-                  }
-                  createdAt
-                  updatedAt
-                  closedAt
-                  mergedAt
-                  labels(first: 10) { nodes { name color } }
-                  reactions { totalCount }
-                  comments { totalCount }
-                  isDraft
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  `;
-
-  const variables = { owner, number };
-  const body = JSON.stringify({ query: graphqlQuery, variables });
-
-  const curlCommand = `curl -s -X POST https://api.github.com/graphql \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer ${token}" \
-    -d '${body.replace(/'/g, "'\\''")}'`;
-
-  try {
-    const response = execSync(curlCommand, { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
-    const data = JSON.parse(response);
-
-    if (data.errors) {
-      console.error("GitHub API errors:", data.errors);
-      return [];
-    }
-
-    const ownerData = data.data?.[type === 'org' ? 'organization' : 'user'];
-    const items = ownerData?.projectV2?.items?.nodes || [];
-
-    return items
-      .filter(node => node.content && node.content.number && node.content.title && node.content.url) // Filter out invalid items
-      .map(node => {
-        const item = node.content;
-
-        // Extract author affiliation
-        const author = item.author?.login || "unknown";
-        const company = item.author?.company || "";
-        const orgs = item.author?.organizations?.nodes?.map(o => o.login) || [];
-        const affiliation = company || orgs[0] || "";
-
-        // Extract linked PRs (only for issues)
-        const linkedPRs = (item.timelineItems?.nodes || [])
-          .map(node => node?.source)
-          .filter(source => source?.number)
-          .map(pr => ({
-            number: pr.number,
-            url: pr.url,
-            state: pr.state,
-            merged: pr.mergedAt != null
-          }));
-
-        // Extract project field values
-        const projectFields = {};
-        (node.fieldValues?.nodes || []).forEach(fieldValue => {
-          const fieldName = fieldValue.field?.name;
-          if (fieldName) {
-            // Get the value based on field type
-            const value = fieldValue.text || fieldValue.name || fieldValue.number || fieldValue.date || fieldValue.title;
-            if (value !== undefined && value !== null) {
-              projectFields[fieldName] = value;
-            }
-          }
-        });
-
-        return {
-          number: item.number,
-          title: item.title,
-          url: item.url,
-          state: item.state,
-          author,
-          author_affiliation: affiliation,
-          created: item.createdAt,
-          updated: item.updatedAt,
-          closed: item.closedAt,
-          merged: item.mergedAt,
-          labels: (item.labels?.nodes || []).map(l => ({ name: l.name, color: l.color })),
-          reactions: item.reactions?.totalCount || 0,
-          comments: item.comments?.totalCount || 0,
-          isDraft: item.isDraft || false,
-          linkedPRs,
-          type: item.mergedAt !== undefined ? "PR" : "Issue",
-          projectFields  // Add project-specific fields
-        };
-      });
-  } catch (error) {
-    console.error("Failed to fetch from GitHub project:", error.message);
-    return [];
-  }
-}
-
-function fetchIssuesSync(input, token) {
-  // Check if input is a project URL
-  const projectInfo = parseProjectUrl(input);
-  if (projectInfo) {
-    return fetchProjectIssuesSync(projectInfo, token);
-  }
-
-  const query = normalizeQuery(input);
-
-  const graphqlQuery = `
-    query($query: String!, $first: Int!) {
-      search(query: $query, type: ISSUE, first: $first) {
-        nodes {
-          ... on Issue {
-            number
-            title
-            url
-            state
-            author {
-              login
-              ... on User {
-                company
-                organizations(first: 3) {
-                  nodes { login }
-                }
-              }
-            }
-            createdAt
-            updatedAt
-            closedAt
-            labels(first: 10) { nodes { name color } }
-            reactions { totalCount }
-            comments { totalCount }
-            timelineItems(first: 20, itemTypes: [CROSS_REFERENCED_EVENT]) {
-              nodes {
-                ... on CrossReferencedEvent {
-                  source {
-                    ... on PullRequest {
-                      number
-                      url
-                      state
-                      mergedAt
-                    }
-                  }
-                }
-              }
-            }
-          }
-          ... on PullRequest {
-            number
-            title
-            url
-            state
-            author {
-              login
-              ... on User {
-                company
-                organizations(first: 3) {
-                  nodes { login }
-                }
-              }
-            }
-            createdAt
-            updatedAt
-            closedAt
-            mergedAt
-            labels(first: 10) { nodes { name color } }
-            reactions { totalCount }
-            comments { totalCount }
-            isDraft
-          }
-        }
-      }
-    }
-  `;
-
-  const variables = { query, first: 100 };
-  const body = JSON.stringify({ query: graphqlQuery, variables });
-
-  // Use curl for synchronous HTTP request
-  const curlCommand = `curl -s -X POST https://api.github.com/graphql \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer ${token}" \
-    -d '${body.replace(/'/g, "'\\''")}'`;
-
-  try {
-    const response = execSync(curlCommand, { encoding: "utf8", maxBuffer: 10 * 1024 * 1024 });
-    const data = JSON.parse(response);
-
-    if (data.errors) {
-      console.error("GitHub API errors:", data.errors);
-      return [];
-    }
-
-    return (data.data?.search?.nodes || []).map(item => {
-      // Extract author affiliation (company or first org)
-      const author = item.author?.login || "unknown";
-      const company = item.author?.company || "";
-      const orgs = item.author?.organizations?.nodes?.map(o => o.login) || [];
-      const affiliation = company || orgs[0] || "";
-
-      // Extract linked PRs from cross-referenced events
-      const linkedPRs = (item.timelineItems?.nodes || [])
-        .map(node => node?.source)
-        .filter(source => source?.number)
-        .map(pr => ({
-          number: pr.number,
-          url: pr.url,
-          state: pr.state,
-          merged: pr.mergedAt != null
-        }));
-
-      return {
-        number: item.number,
-        title: item.title,
-        url: item.url,
-        state: item.state,
-        author,
-        author_affiliation: affiliation,
-        created: item.createdAt,
-        updated: item.updatedAt,
-        closed: item.closedAt,
-        merged: item.mergedAt,
-        labels: (item.labels?.nodes || []).map(l => ({ name: l.name, color: l.color })),
-        reactions: item.reactions?.totalCount || 0,
-        comments: item.comments?.totalCount || 0,
-        isDraft: item.isDraft || false,
-        linkedPRs,
-        type: item.mergedAt !== undefined ? "PR" : "Issue"
-      };
-    });
-  } catch (error) {
-    console.error("Failed to fetch from GitHub:", error.message);
-    return [];
-  }
-}
+// GitHub API functions now imported from github-api.mjs
 
 // ============================================================================
 // Table Rendering
@@ -468,19 +108,166 @@ function sortItems(items, sortSpec) {
   });
 }
 
-function formatDate(dateString) {
+function formatDate(dateString, format = "absolute") {
   if (!dateString) return "";
   const date = new Date(dateString);
+
+  if (format === "relative") {
+    const now = Date.now();
+    const diff = now - date.getTime();
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const months = Math.floor(days / 30);
+    const years = Math.floor(days / 365);
+
+    if (years > 0) return `${years}y ago`;
+    if (months > 0) return `${months}mo ago`;
+    if (days > 0) return `${days}d ago`;
+    if (hours > 0) return `${hours}h ago`;
+    if (minutes > 0) return `${minutes}m ago`;
+    return `${seconds}s ago`;
+  }
+
+  // Default to ISO date format (YYYY-MM-DD)
   return date.toISOString().split("T")[0];
 }
 
-function renderCell(item, column) {
+function truncateText(text, maxLength) {
+  if (!text || !maxLength || text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
+}
+
+function parseTemplates(templateString) {
+  if (!templateString) return {};
+  const templates = {};
+  templateString.split(";").forEach(entry => {
+    const [name, ...rest] = entry.split("=");
+    if (!name || rest.length === 0) return;
+    const key = name.trim();
+    const value = rest.join("=").trim();
+    if (key && value) {
+      templates[key] = value;
+    }
+  });
+  return templates;
+}
+
+function fillTemplate(template, item) {
+  if (!template) return "";
+  const replaceField = (field) => {
+    if (!field) return "";
+    const direct = item[field];
+    if (direct !== undefined && direct !== null) return direct;
+    if (item.projectFields && item.projectFields[field] !== undefined && item.projectFields[field] !== null) {
+      return item.projectFields[field];
+    }
+    return "";
+  };
+  return template.replace(/{{\s*([^}]+)\s*}}/g, (_match, fieldName) => {
+    return String(replaceField(fieldName.trim()) ?? "");
+  });
+}
+
+function templateToNodes(filled, parseMyst) {
+  if (!filled) return [{ type: "text", value: "" }];
+
+  // Prefer full MyST parsing so roles (e.g., {button}) render as normal
+  if (typeof parseMyst === "function") {
+    try {
+      const parsed = parseMyst(filled);
+      const children = Array.isArray(parsed?.children) ? parsed.children : [];
+      if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
+        return children[0].children;
+      }
+      return children.length > 0 ? children : [{ type: "text", value: filled }];
+    } catch (err) {
+      console.error("Failed to parse template with MyST parser:", err?.message || err);
+      // Fall through to lightweight parsing
+    }
+  }
+
+  // Fallback: basic markdown links and role-like tokens
+  const nodes = [];
+  const tokenRegex = /(\{[a-zA-Z0-9_-]+\}`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
+  let lastIndex = 0;
+  let match;
+  while ((match = tokenRegex.exec(filled)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push({ type: "text", value: filled.slice(lastIndex, match.index) });
+    }
+    const token = match[0];
+    if (token.startsWith("{")) {
+      const roleMatch = /\{([^}]+)\}`(.+?)`/.exec(token);
+      if (roleMatch) {
+        const body = roleMatch[2].trim();
+        const angleMatch = /(.*)<(.+?)>/.exec(body);
+        const label = (angleMatch ? angleMatch[1] : body).trim();
+        const url = angleMatch ? angleMatch[2].trim() : null;
+        if (url) {
+          nodes.push({
+            type: "link",
+            url,
+            children: [{ type: "text", value: label }]
+          });
+        } else {
+          nodes.push({ type: "text", value: label });
+        }
+      } else {
+        nodes.push({ type: "text", value: token });
+      }
+    } else {
+      // Standard markdown link
+      const linkMatch = /\[([^\]]+)\]\(([^)]+)\)/.exec(token);
+      if (linkMatch) {
+        nodes.push({
+          type: "link",
+          url: linkMatch[2],
+          children: [{ type: "text", value: linkMatch[1] }]
+        });
+      } else {
+        nodes.push({ type: "text", value: token });
+      }
+    }
+    lastIndex = tokenRegex.lastIndex;
+  }
+  if (lastIndex < filled.length) {
+    nodes.push({ type: "text", value: filled.slice(lastIndex) });
+  }
+  return nodes.length > 0 ? nodes : [{ type: "text", value: filled }];
+}
+
+function renderCell(item, column, options = {}) {
+  const { bodyTruncate, dateFormat = "absolute", templates = {}, parseMyst } = options;
+
+  const linkifyHandle = (handle) => {
+    if (!handle) return null;
+    const cleaned = handle.startsWith("@") ? handle.slice(1) : handle;
+    if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(cleaned)) {
+      return null;
+    }
+    return {
+      type: "link",
+      url: `https://github.com/${cleaned}`,
+      children: [{ type: "text", value: handle }],
+    };
+  };
+
   switch (column) {
     case "number":
-      return { type: "text", value: `#${item.number}` };
+      return {
+        type: "link",
+        url: item.url,
+        children: [{ type: "text", value: `#${item.number}` }],
+      };
 
     case "title":
-      return { type: "text", value: stripBrackets(item.title) };
+      return {
+        type: "link",
+        url: item.url,
+        children: [{ type: "text", value: stripBrackets(item.title) }],
+      };
 
     case "linked_title":
       return {
@@ -494,46 +281,76 @@ function renderCell(item, column) {
       return { type: "text", value: `${icon} ${item.state}` };
 
     case "author":
-      return { type: "text", value: item.author };
+      return linkifyHandle(item.author) || { type: "text", value: item.author };
+
+    case "linked_author":
+      if (!item.author) {
+        return { type: "text", value: "" };
+      }
+      return {
+        type: "link",
+        url: `https://github.com/${item.author}`,
+        children: [{ type: "text", value: item.author }]
+      };
 
     case "author_affiliation":
-      return { type: "text", value: item.author_affiliation || "" };
+      if (!item.author_affiliation) {
+        return { type: "text", value: "" };
+      }
+      return (
+        linkifyHandle(item.author_affiliation) || {
+          type: "text",
+          value: item.author_affiliation,
+        }
+      );
 
     case "linked_prs":
       if (!item.linkedPRs || item.linkedPRs.length === 0) {
         return { type: "text", value: "" };
       }
+      const prNodes = [];
+      item.linkedPRs.forEach((pr, idx) => {
+        // Validate PR data
+        if (!pr || !pr.url || !pr.number) {
+          return; // Skip invalid PRs
+        }
+
+        // Determine icon: ❌ closed without merge, 🟢 open, 🟣 merged
+        let icon;
+        if (pr.merged) {
+          icon = "🟣";
+        } else if (pr.state === "OPEN") {
+          icon = "🟢";
+        } else {
+          icon = "❌";
+        }
+
+        if (idx > 0 && prNodes.length > 0) {
+          prNodes.push({ type: "text", value: ", " });
+        }
+        prNodes.push({ type: "text", value: `${icon} ` });
+        prNodes.push({
+          type: "link",
+          url: String(pr.url),
+          children: [{ type: "text", value: `#${pr.number}` }]
+        });
+      });
+
+      // If no valid PRs, return empty text
+      if (prNodes.length === 0) {
+        return { type: "text", value: "" };
+      }
+
       return {
         type: "paragraph",
-        children: item.linkedPRs.flatMap((pr, idx) => {
-          // Determine icon: ❌ closed without merge, 🟢 open, 🟣 merged
-          let icon;
-          if (pr.merged) {
-            icon = "🟣";
-          } else if (pr.state === "OPEN") {
-            icon = "🟢";
-          } else {
-            icon = "❌";
-          }
-
-          const iconText = { type: "text", value: `${icon} ` };
-          const prLink = {
-            type: "link",
-            url: pr.url,
-            children: [{ type: "text", value: `#${pr.number}` }]
-          };
-
-          return idx > 0
-            ? [{ type: "text", value: ", " }, iconText, prLink]
-            : [iconText, prLink];
-        })
+        children: prNodes
       };
 
     case "created":
-      return { type: "text", value: formatDate(item.created) };
+      return { type: "text", value: formatDate(item.created, dateFormat) };
 
     case "updated":
-      return { type: "text", value: formatDate(item.updated) };
+      return { type: "text", value: formatDate(item.updated, dateFormat) };
 
     case "reactions":
       return { type: "text", value: `👍 ${item.reactions}` };
@@ -545,29 +362,44 @@ function renderCell(item, column) {
       if (!item.labels || item.labels.length === 0) {
         return { type: "text", value: "" };
       }
-      // Create styled label badges
+      // Create label text nodes (simplified - no HTML styling in tables)
+      const labelTexts = item.labels
+        .filter(label => label && label.name)
+        .map(label => label.name)
+        .join(", ");
+
+      return { type: "text", value: labelTexts };
+
+    case "repo":
+      if (!item.repo) {
+        return { type: "text", value: "" };
+      }
       return {
-        type: "paragraph",
-        children: item.labels.flatMap((label, idx) => {
-          if (!label || !label.name || !label.color) {
-            return []; // Skip invalid labels
-          }
-          const bgColor = `#${label.color}`;
-          // Calculate contrasting text color
-          const rgb = parseInt(label.color, 16);
-          const r = (rgb >> 16) & 0xff;
-          const g = (rgb >> 8) & 0xff;
-          const b = rgb & 0xff;
-          const brightness = (r * 299 + g * 587 + b * 114) / 1000;
-          const textColor = brightness > 128 ? "#000000" : "#ffffff";
+        type: "link",
+        url: `https://github.com/${item.repo}`,
+        children: [{ type: "text", value: item.repo }],
+      };
 
-          const badge = {
-            type: "html",
-            value: `<span style="background-color: ${bgColor}; color: ${textColor}; padding: 2px 6px; border-radius: 3px; font-size: 0.85em; display: inline-block; margin: 2px;">${label.name}</span>`
-          };
+    case "linked_repo":
+      if (!item.repo) {
+        return { type: "text", value: "" };
+      }
+      return {
+        type: "link",
+        url: `https://github.com/${item.repo}`,
+        children: [{ type: "text", value: item.repo }]
+      };
 
-          return idx > 0 ? [{ type: "text", value: " " }, badge] : [badge];
-        })
+    case "body":
+      const bodyText = truncateText(item.body || "", bodyTruncate);
+      return { type: "text", value: bodyText };
+
+    case "linked_body":
+      const linkedBodyText = truncateText(item.body || "", bodyTruncate);
+      return {
+        type: "link",
+        url: item.url,
+        children: [{ type: "text", value: linkedBodyText }]
       };
 
     default:
@@ -575,41 +407,88 @@ function renderCell(item, column) {
       if (item.projectFields && item.projectFields[column]) {
         return { type: "text", value: String(item.projectFields[column]) };
       }
+      // Custom template column
+      if (templates && templates[column]) {
+        const filled = fillTemplate(templates[column], item);
+        const nodes = templateToNodes(filled, parseMyst);
+        return nodes.length === 1 ? nodes[0] : { type: "paragraph", children: nodes };
+      }
       return { type: "text", value: "" };
   }
 }
 
-function buildTable(items, columns) {
+function validateNode(node) {
+  // Ensure node has required properties
+  if (!node || typeof node !== 'object') {
+    return { type: "text", value: "" };
+  }
+
+  // If node has children, ensure it's an array
+  if ('children' in node && !Array.isArray(node.children)) {
+    // Normalize any non-array children into an array of text nodes to avoid runtime errors
+    node.children = [{ type: "text", value: String(node.children ?? node.value ?? "") }];
+  }
+
+  // Recursively validate children
+  if (Array.isArray(node.children)) {
+    node.children = node.children.map(child => validateNode(child));
+  }
+
+  return node;
+}
+
+function buildTable(items, columns, options = {}) {
   const headerRow = {
     type: "tableRow",
     children: columns.map(col => ({
       type: "tableCell",
-      children: [{
-        type: "paragraph",
-        children: [{ type: "text", value: (col || "").replace(/_/g, " ").toUpperCase() }]
-      }]
+      children: [{ type: "text", value: (col || "").replace(/_/g, " ").toUpperCase() }]
     }))
   };
 
   const dataRows = items.map(item => ({
     type: "tableRow",
-    children: columns.map(col => ({
-      type: "tableCell",
-      children: [{
-        type: "paragraph",
-        children: [renderCell(item, col)]
-      }]
-    }))
+    children: columns.map(col => {
+      const cellContent = renderCell(item, col, options);
+
+      // Defensive check
+      if (!cellContent) {
+        return {
+          type: "tableCell",
+          children: [{ type: "text", value: "" }]
+        };
+      }
+
+      // Table cells should contain phrasing content, not paragraphs
+      // If renderCell returns a paragraph, extract its children
+      let children;
+      if (cellContent.type === "paragraph") {
+        children = Array.isArray(cellContent.children) ? cellContent.children : [{ type: "text", value: "" }];
+      } else {
+        children = [cellContent];
+      }
+
+      // Validate all children nodes
+      children = children.map(child => validateNode(child));
+
+      return {
+        type: "tableCell",
+        children
+      };
+    })
   }));
 
-  return {
+  const table = {
     type: "table",
     children: [headerRow, ...dataRows]
   };
+
+  // Final validation of the entire table structure
+  return validateNode(table);
 }
 
 // ============================================================================
-// Directive
+// Directive (Synchronous - creates placeholder)
 // ============================================================================
 
 const directive = {
@@ -623,11 +502,27 @@ const directive = {
   options: {
     columns: {
       type: String,
-      doc: "Comma-separated column names (default: linked_title,author,state,reactions)"
+      doc: "Comma-separated column names (default: title,author,state,reactions)"
     },
     sort: {
       type: String,
       doc: "Sort by column-direction (e.g., 'reactions-desc')"
+    },
+    limit: {
+      type: Number,
+      doc: "Maximum number of results to display"
+    },
+    "body-truncate": {
+      type: Number,
+      doc: "Truncate body text to this many characters"
+    },
+    "date-format": {
+      type: String,
+      doc: "Date format: 'relative', 'absolute', or strftime pattern"
+    },
+    templates: {
+      type: String,
+      doc: "Custom column templates: name=My text with {{field}} placeholders; separate multiple with semicolons"
     }
   },
   run(data, _vfile, ctx) {
@@ -637,43 +532,142 @@ const directive = {
     }
 
     // Get options
-    const columns = (data.options?.columns || "linked_title,author,state,reactions")
+    const columns = (data.options?.columns || "title,author,state,reactions")
       .split(",")
       .map(c => c.trim());
     const sort = data.options?.sort;
-
-    // Check cache
-    let items = readCache(query);
-
-    // If no cache, fetch data
-    if (!items) {
-      const token = process.env.GITHUB_TOKEN;
-      if (!token) {
-        return ctx.parseMyst("*Error: GITHUB_TOKEN environment variable not set*").children;
-      }
-
-      console.log(`Fetching GitHub data for query: ${query}`);
-      items = fetchIssuesSync(query, token);
-      writeCache(query, items);
-    } else {
-      console.log(`Using cached data for query: ${query}`);
+    const limit = data.options?.limit;
+    const bodyTruncate = data.options?.["body-truncate"];
+    const dateFormat = data.options?.["date-format"];
+    const templates = data.options?.templates;
+    if (!sharedParseMyst && ctx?.parseMyst) {
+      sharedParseMyst = ctx.parseMyst;
     }
 
-    if (items.length === 0) {
-      return ctx.parseMyst("*No issues found matching this query*").children;
-    }
-
-    // Sort and render
-    const sorted = sortItems(items, sort);
-    const table = buildTable(sorted, columns);
-
-    return [table];
+    // Return a placeholder node that the transform will replace
+    return [{
+      type: "githubIssueTablePlaceholder",
+      query,
+      columns,
+      sort,
+      limit,
+      bodyTruncate,
+      dateFormat,
+      templates
+    }];
   }
 };
 
+// ============================================================================
+// Transform (Asynchronous - fetches data and builds table)
+// ============================================================================
+
+function walk(node, callback) {
+  if (!node) return;
+  callback(node);
+  if (Array.isArray(node.children)) {
+    for (const child of node.children) {
+      walk(child, callback);
+    }
+  }
+}
+
+const githubIssueTableTransform = {
+  name: "github-issue-table-transform",
+  stage: "document",
+  doc: "Replace placeholder nodes with GitHub issue tables",
+  plugin: () => {
+    return async (tree) => {
+      const placeholders = [];
+
+      // Find all placeholder nodes
+      walk(tree, (node) => {
+        if (node?.type === "githubIssueTablePlaceholder") {
+          placeholders.push(node);
+        }
+      });
+
+      if (placeholders.length === 0) return;
+
+      const token = process.env.GITHUB_TOKEN;
+      if (!token) {
+        console.error("GITHUB_TOKEN environment variable not set");
+        // Replace placeholders with error messages
+        placeholders.forEach(placeholder => {
+          placeholder.type = "paragraph";
+          placeholder.children = [{ type: "text", value: "*Error: GITHUB_TOKEN environment variable not set*" }];
+          delete placeholder.query;
+          delete placeholder.columns;
+          delete placeholder.sort;
+        });
+        return;
+      }
+
+      // Process each placeholder
+      await Promise.all(
+        placeholders.map(async (placeholder) => {
+          const { query, columns, sort, limit, bodyTruncate, dateFormat, templates: templateString } = placeholder;
+          const parseMyst = sharedParseMyst;
+          const templates = parseTemplates(templateString);
+
+          // Check cache
+          let items = readCache(query);
+
+          // If no cache, fetch data
+          if (!items) {
+            console.log(`Fetching GitHub data for query: ${query}`);
+            items = await fetchIssues(query, token);
+            writeCache(query, items);
+          } else {
+            console.log(`Using cached data for query: ${query}`);
+          }
+
+          if (items.length === 0) {
+            // Replace with "no results" message
+            placeholder.type = "paragraph";
+            placeholder.children = [{ type: "text", value: "*No issues found matching this query*" }];
+            delete placeholder.query;
+            delete placeholder.columns;
+            delete placeholder.sort;
+            delete placeholder.limit;
+            delete placeholder.bodyTruncate;
+            delete placeholder.dateFormat;
+            return;
+          }
+
+          // Sort and limit items
+          let sorted = sortItems(items, sort);
+          if (limit && limit > 0) {
+            sorted = sorted.slice(0, limit);
+          }
+
+          // Build table with options
+          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, templates, parseMyst });
+
+          // Replace placeholder with table
+          placeholder.type = table.type;
+          placeholder.children = table.children;
+          delete placeholder.query;
+          delete placeholder.columns;
+          delete placeholder.sort;
+          delete placeholder.limit;
+          delete placeholder.bodyTruncate;
+          delete placeholder.dateFormat;
+          delete placeholder.templates;
+        })
+      );
+    };
+  }
+};
+
+// ============================================================================
+// Plugin Export
+// ============================================================================
+
 const plugin = {
   name: "GitHub Issue Table",
-  directives: [directive]
+  directives: [directive],
+  transforms: [githubIssueTableTransform]
 };
 
 export default plugin;

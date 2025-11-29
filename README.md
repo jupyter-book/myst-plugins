@@ -23,7 +23,5 @@ Once a plugin reaches the stable level, we will create a release for it - it the
 | iframe | A plugin that replaces iframe elements with a qr code as figure and a caption with the link so that it is accessible in pdf format | transform | | in development |Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs) |
 | picsum | A plugin that adds a directive to include random images from picsum.photos | directive | | stable | Angus Hollands | - |
 | typst-conversion-support | A plugin that converts missing conversions from Latex to Typst | transform | | in development | Freek Pols | - |
-| github-issue-table | Renders GitHub issues/PRs as tables from search queries or project URLs. Supports custom columns, multi-column sorting, styled labels, and project fields | directive | GITHUB_TOKEN | in development | - | - |
-| github-issue-link | Automatically decorates GitHub issue/PR links with titles and state badges | transform | GITHUB_TOKEN (optional) | in development | - | - |
-| github-handle-links | Converts @username mentions to GitHub profile links | transform | GITHUB_TOKEN (optional) | in development | - | - |
+| github-issue-table | Renders GitHub issues/PRs as tables from search queries or project URLs. Supports custom columns, multi-column sorting, styled labels, and project fields | directive | GITHUB_TOKEN | in development | @choldgraf | - |
 
