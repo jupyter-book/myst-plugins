@@ -2,6 +2,16 @@
 // Handles GraphQL queries for issues, PRs, and project boards
 
 // ============================================================================
+// Constants
+// ============================================================================
+
+const PAGINATION_SIZE = 100;
+const MAX_FIELD_VALUES = 20;
+const MAX_ORGANIZATIONS = 3;
+const MAX_LABELS = 10;
+const MAX_TIMELINE_ITEMS = 20;
+
+// ============================================================================
 // URL Parsing
 // ============================================================================
 
@@ -66,6 +76,82 @@ export function normalizeQuery(input) {
   // Otherwise assume it's a direct search query
   return input;
 }
+
+// ============================================================================
+// GraphQL Fragments
+// ============================================================================
+
+const ISSUE_FIELDS_FRAGMENT = `
+  fragment IssueFields on Issue {
+    number
+    title
+    url
+    state
+    body
+    repository {
+      nameWithOwner
+    }
+    author {
+      login
+      ... on User {
+        company
+        organizations(first: ${MAX_ORGANIZATIONS}) {
+          nodes { login }
+        }
+      }
+    }
+    createdAt
+    updatedAt
+    closedAt
+    labels(first: ${MAX_LABELS}) { nodes { name color } }
+    reactions { totalCount }
+    comments { totalCount }
+    timelineItems(first: ${MAX_TIMELINE_ITEMS}, itemTypes: [CROSS_REFERENCED_EVENT]) {
+      nodes {
+        ... on CrossReferencedEvent {
+          source {
+            ... on PullRequest {
+              number
+              url
+              state
+              mergedAt
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+const PR_FIELDS_FRAGMENT = `
+  fragment PRFields on PullRequest {
+    number
+    title
+    url
+    state
+    body
+    repository {
+      nameWithOwner
+    }
+    author {
+      login
+      ... on User {
+        company
+        organizations(first: ${MAX_ORGANIZATIONS}) {
+          nodes { login }
+        }
+      }
+    }
+    createdAt
+    updatedAt
+    closedAt
+    mergedAt
+    labels(first: ${MAX_LABELS}) { nodes { name color } }
+    reactions { totalCount }
+    comments { totalCount }
+    isDraft
+  }
+`;
 
 // ============================================================================
 // GraphQL Queries - Project Boards
@@ -177,12 +263,15 @@ async function fetchProjectIssues(projectInfo, token) {
   const queryArg = itemQuery ? ", query: $itemQuery" : "";
 
   const graphqlQuery = `
+    ${ISSUE_FIELDS_FRAGMENT}
+    ${PR_FIELDS_FRAGMENT}
+
     query($owner: String!, $number: Int!${queryVar}, $cursor: String) {
       ${type === 'org' ? 'organization' : 'user'}(login: $owner) {
         projectV2(number: $number) {
-          items(first: 100${queryArg}, after: $cursor) {
+          items(first: ${PAGINATION_SIZE}${queryArg}, after: $cursor) {
             nodes {
-              fieldValues(first: 20) {
+              fieldValues(first: ${MAX_FIELD_VALUES}) {
                 nodes {
                   ... on ProjectV2ItemFieldTextValue {
                     text
@@ -208,70 +297,10 @@ async function fetchProjectIssues(projectInfo, token) {
               }
               content {
                 ... on Issue {
-                  number
-                  title
-                  url
-                  state
-                  body
-                  repository {
-                    nameWithOwner
-                  }
-                  author {
-                    login
-                    ... on User {
-                      company
-                      organizations(first: 3) {
-                        nodes { login }
-                      }
-                    }
-                  }
-                  createdAt
-                  updatedAt
-                  closedAt
-                  labels(first: 10) { nodes { name color } }
-                  reactions { totalCount }
-                  comments { totalCount }
-                  timelineItems(first: 20, itemTypes: [CROSS_REFERENCED_EVENT]) {
-                    nodes {
-                      ... on CrossReferencedEvent {
-                        source {
-                          ... on PullRequest {
-                            number
-                            url
-                            state
-                            mergedAt
-                          }
-                        }
-                      }
-                    }
-                  }
+                  ...IssueFields
                 }
                 ... on PullRequest {
-                  number
-                  title
-                  url
-                  state
-                  body
-                  repository {
-                    nameWithOwner
-                  }
-                  author {
-                    login
-                    ... on User {
-                      company
-                      organizations(first: 3) {
-                        nodes { login }
-                      }
-                    }
-                  }
-                  createdAt
-                  updatedAt
-                  closedAt
-                  mergedAt
-                  labels(first: 10) { nodes { name color } }
-                  reactions { totalCount }
-                  comments { totalCount }
-                  isDraft
+                  ...PRFields
                 }
               }
             }
@@ -370,74 +399,17 @@ async function fetchProjectIssues(projectInfo, token) {
  */
 async function fetchIssuesFromSearch(query, token) {
   const graphqlQuery = `
+    ${ISSUE_FIELDS_FRAGMENT}
+    ${PR_FIELDS_FRAGMENT}
+
     query($query: String!, $first: Int!, $cursor: String) {
       search(query: $query, type: ISSUE, first: $first, after: $cursor) {
         nodes {
           ... on Issue {
-            number
-            title
-            url
-            state
-            body
-            repository {
-              nameWithOwner
-            }
-            author {
-              login
-              ... on User {
-                company
-                organizations(first: 3) {
-                  nodes { login }
-                }
-              }
-            }
-            createdAt
-            updatedAt
-            closedAt
-            labels(first: 10) { nodes { name color } }
-            reactions { totalCount }
-            comments { totalCount }
-            timelineItems(first: 20, itemTypes: [CROSS_REFERENCED_EVENT]) {
-              nodes {
-                ... on CrossReferencedEvent {
-                  source {
-                    ... on PullRequest {
-                      number
-                      url
-                      state
-                      mergedAt
-                    }
-                  }
-                }
-              }
-            }
+            ...IssueFields
           }
           ... on PullRequest {
-            number
-            title
-            url
-            state
-            body
-            repository {
-              nameWithOwner
-            }
-            author {
-              login
-              ... on User {
-                company
-                organizations(first: 3) {
-                  nodes { login }
-                }
-              }
-            }
-            createdAt
-            updatedAt
-            closedAt
-            mergedAt
-            labels(first: 10) { nodes { name color } }
-            reactions { totalCount }
-            comments { totalCount }
-            isDraft
+            ...PRFields
           }
         }
         pageInfo {
@@ -448,7 +420,7 @@ async function fetchIssuesFromSearch(query, token) {
     }
   `;
 
-  const first = 100;
+  const first = PAGINATION_SIZE;
   let cursor = null;
   let allNodes = [];
 
@@ -556,7 +528,7 @@ function normalizeIssueData(item, projectNode = null) {
     isDraft: item.isDraft || false,
     linkedPRs,
     type: item.mergedAt !== undefined ? "PR" : "Issue",
-    projectFields  // Add project-specific fields
+    ...projectFields  // Flatten project fields into main object
   };
 }
 

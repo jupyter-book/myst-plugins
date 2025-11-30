@@ -59,8 +59,6 @@ function writeCache(query, items) {
   renameSync(tempPath, cachePath);
 }
 
-// GitHub API functions now imported from github-api.mjs
-
 // ============================================================================
 // Table Rendering
 // ============================================================================
@@ -79,14 +77,6 @@ function sortItems(items, sortSpec) {
     for (const { column, ascending } of sortSpecs) {
       let aVal = a[column];
       let bVal = b[column];
-
-      // Check if it's a project field
-      if (aVal === undefined && a.projectFields) {
-        aVal = a.projectFields[column];
-      }
-      if (bVal === undefined && b.projectFields) {
-        bVal = b.projectFields[column];
-      }
 
       // Handle dates
       if (column.includes("created") || column.includes("updated") || column.includes("closed")) {
@@ -156,285 +146,200 @@ function parseTemplates(templateString) {
 
 function fillTemplate(template, item) {
   if (!template) return "";
-  const replaceField = (field) => {
-    if (!field) return "";
-    const direct = item[field];
-    if (direct !== undefined && direct !== null) return direct;
-    if (item.projectFields && item.projectFields[field] !== undefined && item.projectFields[field] !== null) {
-      return item.projectFields[field];
-    }
-    return "";
-  };
   return template.replace(/{{\s*([^}]+)\s*}}/g, (_match, fieldName) => {
-    return String(replaceField(fieldName.trim()) ?? "");
+    const field = fieldName.trim();
+    const value = item[field];
+    return String(value ?? "");
   });
 }
 
 function templateToNodes(filled, parseMyst) {
   if (!filled) return [{ type: "text", value: "" }];
 
-  // Prefer full MyST parsing so roles (e.g., {button}) render as normal
+  // Use MyST parser for template rendering
+  // This allows roles like {button} and standard markdown to work
   if (typeof parseMyst === "function") {
     try {
       const parsed = parseMyst(filled);
       const children = Array.isArray(parsed?.children) ? parsed.children : [];
+
+      // If we got a single paragraph, unwrap it to inline content
       if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
         return children[0].children;
       }
+
+      // Otherwise return all children, or fallback to text node
       return children.length > 0 ? children : [{ type: "text", value: filled }];
     } catch (err) {
       console.error("Failed to parse template with MyST parser:", err?.message || err);
-      // Fall through to lightweight parsing
+      // If parsing fails, return as plain text
+      return [{ type: "text", value: filled }];
     }
   }
 
-  // Fallback: basic markdown links and role-like tokens
-  const nodes = [];
-  const tokenRegex = /(\{[a-zA-Z0-9_-]+\}`[^`]+`|\[[^\]]+\]\([^)]+\))/g;
-  let lastIndex = 0;
-  let match;
-  while ((match = tokenRegex.exec(filled)) !== null) {
-    if (match.index > lastIndex) {
-      nodes.push({ type: "text", value: filled.slice(lastIndex, match.index) });
-    }
-    const token = match[0];
-    if (token.startsWith("{")) {
-      const roleMatch = /\{([^}]+)\}`(.+?)`/.exec(token);
-      if (roleMatch) {
-        const body = roleMatch[2].trim();
-        const angleMatch = /(.*)<(.+?)>/.exec(body);
-        const label = (angleMatch ? angleMatch[1] : body).trim();
-        const url = angleMatch ? angleMatch[2].trim() : null;
-        if (url) {
-          nodes.push({
-            type: "link",
-            url,
-            children: [{ type: "text", value: label }]
-          });
-        } else {
-          nodes.push({ type: "text", value: label });
-        }
-      } else {
-        nodes.push({ type: "text", value: token });
-      }
-    } else {
-      // Standard markdown link
-      const linkMatch = /\[([^\]]+)\]\(([^)]+)\)/.exec(token);
-      if (linkMatch) {
-        nodes.push({
-          type: "link",
-          url: linkMatch[2],
-          children: [{ type: "text", value: linkMatch[1] }]
-        });
-      } else {
-        nodes.push({ type: "text", value: token });
-      }
-    }
-    lastIndex = tokenRegex.lastIndex;
-  }
-  if (lastIndex < filled.length) {
-    nodes.push({ type: "text", value: filled.slice(lastIndex) });
-  }
-  return nodes.length > 0 ? nodes : [{ type: "text", value: filled }];
+  // If no parser available, return as plain text
+  // This is acceptable since this is a MyST plugin and parseMyst should always be available
+  return [{ type: "text", value: filled }];
 }
 
-function renderCell(item, column, options = {}) {
-  const { bodyTruncate, dateFormat = "absolute", templates = {}, parseMyst } = options;
+// Helper to linkify GitHub handles
+function linkifyHandle(handle) {
+  if (!handle) return null;
+  const cleaned = handle.startsWith("@") ? handle.slice(1) : handle;
+  if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(cleaned)) {
+    return null;
+  }
+  return {
+    type: "link",
+    url: `https://github.com/${cleaned}`,
+    children: [{ type: "text", value: handle }],
+  };
+}
 
-  const linkifyHandle = (handle) => {
-    if (!handle) return null;
-    const cleaned = handle.startsWith("@") ? handle.slice(1) : handle;
-    if (!/^[A-Za-z0-9](?:[A-Za-z0-9-]{0,38})$/.test(cleaned)) {
-      return null;
+// Column definition registry mapping column names to render functions
+const COLUMN_DEFINITIONS = {
+  number: (item, options) => ({
+    type: "link",
+    url: item.url,
+    children: [{ type: "text", value: `#${item.number}` }]
+  }),
+
+  title: (item, options) => ({
+    type: "link",
+    url: item.url,
+    children: [{ type: "text", value: stripBrackets(item.title) }]
+  }),
+
+  state: (item, options) => {
+    const icon = item.state === "OPEN" ? "🟢" : "🟣";
+    return { type: "text", value: `${icon} ${item.state}` };
+  },
+
+  author: (item, options) =>
+    linkifyHandle(item.author) || { type: "text", value: item.author || "" },
+
+  author_affiliation: (item, options) => {
+    if (!item.author_affiliation) {
+      return { type: "text", value: "" };
+    }
+    return linkifyHandle(item.author_affiliation) || {
+      type: "text",
+      value: item.author_affiliation
+    };
+  },
+
+  repo: (item, options) => {
+    if (!item.repo) {
+      return { type: "text", value: "" };
     }
     return {
       type: "link",
-      url: `https://github.com/${cleaned}`,
-      children: [{ type: "text", value: handle }],
+      url: `https://github.com/${item.repo}`,
+      children: [{ type: "text", value: item.repo }]
     };
-  };
+  },
 
-  switch (column) {
-    case "number":
-      return {
-        type: "link",
-        url: item.url,
-        children: [{ type: "text", value: `#${item.number}` }],
-      };
+  created: (item, options) => ({
+    type: "text",
+    value: formatDate(item.created, options.dateFormat || "absolute")
+  }),
 
-    case "title":
-      return {
-        type: "link",
-        url: item.url,
-        children: [{ type: "text", value: stripBrackets(item.title) }],
-      };
+  updated: (item, options) => ({
+    type: "text",
+    value: formatDate(item.updated, options.dateFormat || "absolute")
+  }),
 
-    case "linked_title":
-      return {
-        type: "link",
-        url: item.url,
-        children: [{ type: "text", value: stripBrackets(item.title) }]
-      };
+  reactions: (item, options) => ({
+    type: "text",
+    value: `👍 ${item.reactions}`
+  }),
 
-    case "state":
-      const icon = item.state === "OPEN" ? "🟢" : "🟣";
-      return { type: "text", value: `${icon} ${item.state}` };
+  comments: (item, options) => ({
+    type: "text",
+    value: String(item.comments)
+  }),
 
-    case "author":
-      return linkifyHandle(item.author) || { type: "text", value: item.author };
-
-    case "linked_author":
-      if (!item.author) {
-        return { type: "text", value: "" };
-      }
-      return {
-        type: "link",
-        url: `https://github.com/${item.author}`,
-        children: [{ type: "text", value: item.author }]
-      };
-
-    case "author_affiliation":
-      if (!item.author_affiliation) {
-        return { type: "text", value: "" };
-      }
-      return (
-        linkifyHandle(item.author_affiliation) || {
-          type: "text",
-          value: item.author_affiliation,
-        }
-      );
-
-    case "linked_prs":
-      if (!item.linkedPRs || item.linkedPRs.length === 0) {
-        return { type: "text", value: "" };
-      }
-      const prNodes = [];
-      item.linkedPRs.forEach((pr, idx) => {
-        // Validate PR data
-        if (!pr || !pr.url || !pr.number) {
-          return; // Skip invalid PRs
-        }
-
-        // Determine icon: ❌ closed without merge, 🟢 open, 🟣 merged
-        let icon;
-        if (pr.merged) {
-          icon = "🟣";
-        } else if (pr.state === "OPEN") {
-          icon = "🟢";
-        } else {
-          icon = "❌";
-        }
-
-        if (idx > 0 && prNodes.length > 0) {
-          prNodes.push({ type: "text", value: ", " });
-        }
-        prNodes.push({ type: "text", value: `${icon} ` });
-        prNodes.push({
-          type: "link",
-          url: String(pr.url),
-          children: [{ type: "text", value: `#${pr.number}` }]
-        });
-      });
-
-      // If no valid PRs, return empty text
-      if (prNodes.length === 0) {
-        return { type: "text", value: "" };
-      }
-
-      return {
-        type: "paragraph",
-        children: prNodes
-      };
-
-    case "created":
-      return { type: "text", value: formatDate(item.created, dateFormat) };
-
-    case "updated":
-      return { type: "text", value: formatDate(item.updated, dateFormat) };
-
-    case "reactions":
-      return { type: "text", value: `👍 ${item.reactions}` };
-
-    case "comments":
-      return { type: "text", value: String(item.comments) };
-
-    case "labels":
-      if (!item.labels || item.labels.length === 0) {
-        return { type: "text", value: "" };
-      }
-      // Create label text nodes (simplified - no HTML styling in tables)
-      const labelTexts = item.labels
-        .filter(label => label && label.name)
-        .map(label => label.name)
-        .join(", ");
-
-      return { type: "text", value: labelTexts };
-
-    case "repo":
-      if (!item.repo) {
-        return { type: "text", value: "" };
-      }
-      return {
-        type: "link",
-        url: `https://github.com/${item.repo}`,
-        children: [{ type: "text", value: item.repo }],
-      };
-
-    case "linked_repo":
-      if (!item.repo) {
-        return { type: "text", value: "" };
-      }
-      return {
-        type: "link",
-        url: `https://github.com/${item.repo}`,
-        children: [{ type: "text", value: item.repo }]
-      };
-
-    case "body":
-      const bodyText = truncateText(item.body || "", bodyTruncate);
-      return { type: "text", value: bodyText };
-
-    case "linked_body":
-      const linkedBodyText = truncateText(item.body || "", bodyTruncate);
-      return {
-        type: "link",
-        url: item.url,
-        children: [{ type: "text", value: linkedBodyText }]
-      };
-
-    default:
-      // Check if it's a project field
-      if (item.projectFields && item.projectFields[column]) {
-        return { type: "text", value: String(item.projectFields[column]) };
-      }
-      // Custom template column
-      if (templates && templates[column]) {
-        const filled = fillTemplate(templates[column], item);
-        const nodes = templateToNodes(filled, parseMyst);
-        return nodes.length === 1 ? nodes[0] : { type: "paragraph", children: nodes };
-      }
+  labels: (item, options) => {
+    if (!item.labels || item.labels.length === 0) {
       return { type: "text", value: "" };
-  }
-}
+    }
+    const labelTexts = item.labels
+      .filter(label => label && label.name)
+      .map(label => label.name)
+      .join(", ");
+    return { type: "text", value: labelTexts };
+  },
 
-function validateNode(node) {
-  // Ensure node has required properties
-  if (!node || typeof node !== 'object') {
-    return { type: "text", value: "" };
+  linked_prs: (item, options) => {
+    if (!item.linkedPRs || item.linkedPRs.length === 0) {
+      return { type: "text", value: "" };
+    }
+    const prNodes = [];
+    item.linkedPRs.forEach((pr, idx) => {
+      // Validate PR data
+      if (!pr || !pr.url || !pr.number) {
+        return; // Skip invalid PRs
+      }
+
+      // Determine icon: ❌ closed without merge, 🟢 open, 🟣 merged
+      let icon;
+      if (pr.merged) {
+        icon = "🟣";
+      } else if (pr.state === "OPEN") {
+        icon = "🟢";
+      } else {
+        icon = "❌";
+      }
+
+      if (idx > 0 && prNodes.length > 0) {
+        prNodes.push({ type: "text", value: ", " });
+      }
+      prNodes.push({ type: "text", value: `${icon} ` });
+      prNodes.push({
+        type: "link",
+        url: String(pr.url),
+        children: [{ type: "text", value: `#${pr.number}` }]
+      });
+    });
+
+    // If no valid PRs, return empty text
+    if (prNodes.length === 0) {
+      return { type: "text", value: "" };
+    }
+
+    return {
+      type: "paragraph",
+      children: prNodes
+    };
+  },
+
+  body: (item, options) => {
+    const bodyText = truncateText(item.body || "", options.bodyTruncate);
+    return { type: "text", value: bodyText };
+  }
+};
+
+function renderCell(item, column, options = {}) {
+  // Try column definition first
+  const columnDef = COLUMN_DEFINITIONS[column];
+  if (columnDef) {
+    return columnDef(item, options);
   }
 
-  // If node has children, ensure it's an array
-  if ('children' in node && !Array.isArray(node.children)) {
-    // Normalize any non-array children into an array of text nodes to avoid runtime errors
-    node.children = [{ type: "text", value: String(node.children ?? node.value ?? "") }];
+  // Check if column exists on item (includes project fields now that they're flattened)
+  if (item[column] !== undefined) {
+    return { type: "text", value: String(item[column]) };
   }
 
-  // Recursively validate children
-  if (Array.isArray(node.children)) {
-    node.children = node.children.map(child => validateNode(child));
+  // Check custom templates
+  const { templates = {}, parseMyst } = options;
+  if (templates[column]) {
+    const filled = fillTemplate(templates[column], item);
+    const nodes = templateToNodes(filled, parseMyst);
+    return nodes.length === 1 ? nodes[0] : { type: "paragraph", children: nodes };
   }
 
-  return node;
+  return { type: "text", value: "" };
 }
 
 function buildTable(items, columns, options = {}) {
@@ -468,9 +373,6 @@ function buildTable(items, columns, options = {}) {
         children = [cellContent];
       }
 
-      // Validate all children nodes
-      children = children.map(child => validateNode(child));
-
       return {
         type: "tableCell",
         children
@@ -478,13 +380,10 @@ function buildTable(items, columns, options = {}) {
     })
   }));
 
-  const table = {
+  return {
     type: "table",
     children: [headerRow, ...dataRows]
   };
-
-  // Final validation of the entire table structure
-  return validateNode(table);
 }
 
 // ============================================================================
