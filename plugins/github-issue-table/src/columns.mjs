@@ -1,0 +1,156 @@
+// Column Definitions for GitHub Issue Table Plugin
+
+import { stripBrackets, formatDate, truncateText, linkifyHandle, fillTemplate, templateToNodes } from "./utils.mjs";
+
+/**
+ * Column definition registry mapping column names to render functions
+ * Each function receives (item, options) and returns an AST node
+ */
+export const COLUMN_DEFINITIONS = {
+  number: (item, options) => ({
+    type: "link",
+    url: item.url,
+    children: [{ type: "text", value: `#${item.number}` }]
+  }),
+
+  title: (item, options) => ({
+    type: "link",
+    url: item.url,
+    children: [{ type: "text", value: stripBrackets(item.title) }]
+  }),
+
+  state: (item, options) => {
+    const icon = item.state === "OPEN" ? "🟢" : "🟣";
+    return { type: "text", value: `${icon} ${item.state}` };
+  },
+
+  author: (item, options) =>
+    linkifyHandle(item.author) || { type: "text", value: item.author || "" },
+
+  author_affiliation: (item, options) => {
+    if (!item.author_affiliation) {
+      return { type: "text", value: "" };
+    }
+    return linkifyHandle(item.author_affiliation) || {
+      type: "text",
+      value: item.author_affiliation
+    };
+  },
+
+  repo: (item, options) => {
+    if (!item.repo) {
+      return { type: "text", value: "" };
+    }
+    return {
+      type: "link",
+      url: `https://github.com/${item.repo}`,
+      children: [{ type: "text", value: item.repo }]
+    };
+  },
+
+  created: (item, options) => ({
+    type: "text",
+    value: formatDate(item.created, options.dateFormat || "absolute")
+  }),
+
+  updated: (item, options) => ({
+    type: "text",
+    value: formatDate(item.updated, options.dateFormat || "absolute")
+  }),
+
+  reactions: (item, options) => ({
+    type: "text",
+    value: `👍 ${item.reactions}`
+  }),
+
+  comments: (item, options) => ({
+    type: "text",
+    value: String(item.comments)
+  }),
+
+  labels: (item, options) => {
+    if (!item.labels || item.labels.length === 0) {
+      return { type: "text", value: "" };
+    }
+    const labelTexts = item.labels
+      .filter(label => label && label.name)
+      .map(label => label.name)
+      .join(", ");
+    return { type: "text", value: labelTexts };
+  },
+
+  linked_prs: (item, options) => {
+    if (!item.linkedPRs || item.linkedPRs.length === 0) {
+      return { type: "text", value: "" };
+    }
+    const prNodes = [];
+    item.linkedPRs.forEach((pr, idx) => {
+      if (!pr || !pr.url || !pr.number) {
+        return;
+      }
+
+      let icon;
+      if (pr.merged) {
+        icon = "🟣";
+      } else if (pr.state === "OPEN") {
+        icon = "🟢";
+      } else {
+        icon = "❌";
+      }
+
+      if (idx > 0 && prNodes.length > 0) {
+        prNodes.push({ type: "text", value: ", " });
+      }
+      prNodes.push({ type: "text", value: `${icon} ` });
+      prNodes.push({
+        type: "link",
+        url: String(pr.url),
+        children: [{ type: "text", value: `#${pr.number}` }]
+      });
+    });
+
+    if (prNodes.length === 0) {
+      return { type: "text", value: "" };
+    }
+
+    return {
+      type: "paragraph",
+      children: prNodes
+    };
+  },
+
+  body: (item, options) => {
+    const bodyText = truncateText(item.body || "", options.bodyTruncate);
+    return { type: "text", value: bodyText };
+  }
+};
+
+/**
+ * Render a table cell for given column
+ * @param {Object} item - Issue/PR data
+ * @param {string} column - Column name
+ * @param {Object} options - Rendering options
+ * @returns {Object} AST node for cell content
+ */
+export function renderCell(item, column, options = {}) {
+  // Try column definition first
+  const columnDef = COLUMN_DEFINITIONS[column];
+  if (columnDef) {
+    return columnDef(item, options);
+  }
+
+  // Check if column exists on item (includes project fields)
+  if (item[column] !== undefined) {
+    return { type: "text", value: String(item[column]) };
+  }
+
+  // Check custom templates
+  const { templates = {}, parseMyst } = options;
+  if (templates[column]) {
+    const filled = fillTemplate(templates[column], item);
+    const nodes = templateToNodes(filled, parseMyst);
+    return nodes.length === 1 ? nodes[0] : { type: "paragraph", children: nodes };
+  }
+
+  return { type: "text", value: "" };
+}
