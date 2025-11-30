@@ -58,7 +58,7 @@ Show issues from a specific GitHub project view (Team Priorities), which already
 ::::::{myst-demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
 :columns: title, Team Priority, linked_prs, reactions
-:sort: reactions-desc, Team Priority-desc
+:sort: Team Priority-asc, reactions-desc
 :::
 ::::::
 
