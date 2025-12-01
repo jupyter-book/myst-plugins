@@ -8,7 +8,8 @@ downloads:
     - id: pdf_experiment
 ---
 
-# Experiment
+# Custom admonition called Experiment
+
 You can create an **experiment admonition** by adding an `experiment` directive.
 
 ````markdown
