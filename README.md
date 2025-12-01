@@ -25,3 +25,4 @@ Once a plugin reaches the stable level, we will create a release for it - it the
 | typst-conversion-support | A plugin that converts missing conversions from Latex to Typst | transform | | in development | Freek Pols | - |
 | github-issue-link | Automatically decorates GitHub issue/PR links with titles and state badges | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |
 | github-handle-links | Converts `@username` mentions to GitHub profile links | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |
+| emoji-shortcodes | Converts emoji shortcodes (`:smile:`) to unicode emojis (😊) at build time | transform | | in development | Matt Fisher | - |
