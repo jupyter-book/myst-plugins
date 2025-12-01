@@ -4,7 +4,19 @@ Renders GitHub issues and PRs as tables from search queries.
 
 ## Installation
 
-Add to your `myst.yml`:
+### For External Use (Bundled Version)
+
+Use the bundled single-file version from the repository:
+
+```yaml
+project:
+  plugins:
+    - https://raw.githubusercontent.com/jupyter-book/myst-plugins/main/plugins/github-issue-table/dist/index.mjs
+```
+
+### For Local Development
+
+Reference the source files directly:
 
 ```yaml
 project:
@@ -86,3 +98,42 @@ Results are cached in `_build/temp/github-issues/` for 24 hours to speed up buil
 ```bash
 rm -rf _build/temp/github-issues/
 ```
+
+## Development
+
+### Project Structure
+
+The plugin is organized into focused modules:
+
+- `src/index.mjs` - Main plugin (directive, transform, coordination)
+- `src/github-api.mjs` - GitHub GraphQL API integration
+- `src/columns.mjs` - Column definitions and cell rendering
+- `src/cache.mjs` - Cache management (24-hour TTL)
+- `src/utils.mjs` - Utility functions (dates, templates, text)
+
+### Building for Distribution
+
+The plugin uses esbuild to bundle all modules into a single file for distribution.
+
+**⚠️ Manual Build Required:** The bundled `dist/` files are committed to git but are **not auto-generated**. After modifying source files, you must:
+
+```bash
+# Install dependencies (first time only)
+npm install
+
+# Bundle the plugin
+npm run build
+
+# Commit the updated dist files
+git add dist/
+git commit -m "Update bundled plugin"
+```
+
+This creates `dist/index.mjs` - a single-file bundled version that can be:
+- Committed to git and referenced via raw.githubusercontent.com URLs
+- Attached to GitHub releases for versioned distribution
+- Used without worrying about module resolution issues
+
+### Why Bundle?
+
+The source code is split across multiple files for maintainability, but MyST's plugin loader may not reliably resolve relative imports when loading from URLs. Bundling ensures the plugin works as a self-contained module.

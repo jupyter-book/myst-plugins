@@ -9,7 +9,7 @@ Add to your `myst.yml`:
 ```yaml
 project:
   plugins:
-    - https://raw.githubusercontent.com/jupyter-book/myst-plugins/main/plugins/github-issue-table/src/index.mjs
+    - https://raw.githubusercontent.com/jupyter-book/myst-plugins/main/plugins/github-issue-table/dist/index.mjs
 ```
 
 Set the `GITHUB_TOKEN` environment variable for authentication:
