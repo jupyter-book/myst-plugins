@@ -1,6 +1,6 @@
 # MyST Demo Directive
 
-A MyST plugin that displays raw MyST markdown source code alongside its rendered output. Perfect for documentation and tutorials where you want to show both the syntax and the result.
+A MyST plugin that displays raw MyST markdown source code alongside its rendered output in a card.
 
 ## Usage
 
@@ -15,14 +15,13 @@ project:
 ## Features
 
 - Shows MyST source in a code block
-- Displays the rendered output below
-- Useful for documentation, tutorials, and examples
-- Works with any MyST content
+- Displays the rendered output below in the same block
+- Optional argument to set the card title (defaults to “MyST Demo”)
 
 ## Example
 
 ```markdown
-::::::{myst-demo}
+::::::{myst:demo} Custom Title
 This is **bold** and this is *italic*.
 
 - Item 1
@@ -31,14 +30,7 @@ This is **bold** and this is *italic*.
 ```
 
 This will display:
-1. **MyST Source:** - A code block showing the raw markdown
-2. **Rendered Output:** - The formatted result
+1. **MyST Demo** (or your custom title) as the card heading
+2. A code block titled "Source MyST" showing the raw markdown
+3. Rendered output below, inside the same card
 
-## How it Works
-
-The `myst-demo` directive wraps content and:
-1. Displays the raw content as a markdown code block
-2. Parses and renders the content
-3. Shows both side-by-side in the output
-
-This plugin is extensively used in the myst-plugins repository to demonstrate how other plugins work.
