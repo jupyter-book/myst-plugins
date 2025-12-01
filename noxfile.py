@@ -22,3 +22,12 @@ def clean(session):
     """Clean the documentation build artifacts."""
     session.install("mystmd")
     session.run("myst", "clean", "--all")
+
+
+@nox.session
+def release(session):
+    """Create GitHub releases for plugins.
+    
+    See src/release.py for details. This just passes args and kwargs to that script.
+    """
+    session.run("python", "-m", "src.release", *session.posargs)

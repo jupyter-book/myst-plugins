@@ -1,0 +1,22 @@
+{
+  "name": "@jupyter-book/myst-plugin-github-issue-table",
+  "version": "0.1.0",
+  "description": "MyST plugin to render GitHub issues and PRs as tables",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "keywords": [
+    "myst",
+    "plugin",
+    "github",
+    "issues",
+    "markdown"
+  ],
+  "author": "Jupyter Book Team",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.19.0"
+  }
+}

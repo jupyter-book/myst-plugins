@@ -21,6 +21,7 @@ project:
     # - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
     - https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs
     - https://github.com/jupyter-book/myst-plugins/releases/download/updated-date-frontmatter/update-date-frontmatter.mjs
+    - plugins/github-issue-table/src/index.mjs
     - plugins/github-issue-link/src/index.mjs
     - plugins/github-handle-links/src/index.mjs
     - plugins/demo/src/index.mjs
@@ -40,6 +41,7 @@ project:
     - file: example/iframe-to-qr.md
     - file: example/update-date.md
     - file: example/typst-conversion-support.md
+    - file: example/github-issue-table.md
     - file: example/github-issue-link.md
     - file: example/github-handle-links.md
 
