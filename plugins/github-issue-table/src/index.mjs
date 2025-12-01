@@ -114,7 +114,7 @@ const directive = {
     },
     limit: {
       type: Number,
-      doc: "Maximum number of results to display"
+      doc: "Maximum number of results to display (default: 25)"
     },
     "body-truncate": {
       type: Number,
@@ -140,7 +140,7 @@ const directive = {
       .split(",")
       .map(c => c.trim());
     const sort = data.options?.sort;
-    const limit = data.options?.limit;
+    const limit = data.options?.limit ?? 25;  // Default to 25 items
     const bodyTruncate = data.options?.["body-truncate"];
     const dateFormat = data.options?.["date-format"];
     const templates = data.options?.templates;
@@ -216,16 +216,19 @@ const githubIssueTableTransform = {
           const parseMyst = sharedParseMyst;
           const templates = parseTemplates(templateString);
 
+          // Include limit and sort in cache key (different sorts return different "top N" items)
+          const cacheKey = `${query}|limit:${limit}|sort:${sort || "none"}`;
+
           // Check cache
-          let items = readCache(query);
+          let items = readCache(cacheKey);
 
           // If no cache, fetch data
           if (!items) {
-            console.log(`Fetching GitHub data for query: ${query}`);
-            items = await fetchIssues(query, token);
-            writeCache(query, items);
+            console.log(`Fetching GitHub data for query: ${query} (limit: ${limit}, sort: ${sort || "none"})`);
+            items = await fetchIssues(query, token, limit, sort);
+            writeCache(cacheKey, items);
           } else {
-            console.log(`Using cached data for query: ${query}`);
+            console.log(`Using cached data for query: ${query} (limit: ${limit}, sort: ${sort || "none"})`);
           }
 
           if (items.length === 0) {
@@ -241,9 +244,11 @@ const githubIssueTableTransform = {
             return;
           }
 
-          // Sort and limit items
+          // Sort items
           let sorted = sortItems(items, sort);
-          if (limit && limit > 0) {
+
+          // Apply limit after sorting (fetch may have retrieved more items for accurate sorting)
+          if (limit && limit > 0 && sorted.length > limit) {
             sorted = sorted.slice(0, limit);
           }
 

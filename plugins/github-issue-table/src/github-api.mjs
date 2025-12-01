@@ -224,10 +224,12 @@ async function fetchProjectViewFilter(projectInfo, token) {
  * Fetch issues/PRs from a GitHub project board
  * @param {Object} projectInfo - Parsed project info
  * @param {string} token - GitHub API token
+ * @param {number} limit - Maximum number of results to fetch (default: 100)
  * @returns {Promise<Array>} Array of normalized issue/PR objects
  */
-async function fetchProjectIssues(projectInfo, token) {
+async function fetchProjectIssues(projectInfo, token, limit = 100) {
   const { type, owner, number, viewNumber, viewQuery } = projectInfo;
+  const maxLimit = limit || PAGINATION_SIZE;
 
   // Resolve the query used by the project view (if provided)
   let itemQuery = viewQuery ? viewQuery.trim() : null;
@@ -318,7 +320,7 @@ async function fetchProjectIssues(projectInfo, token) {
   let cursor = null;
 
   try {
-    while (true) {
+    while (allItems.length < maxLimit) {
       const variables = itemQuery ? { owner, number, itemQuery, cursor } : { owner, number, cursor };
       const body = JSON.stringify({ query: graphqlQuery, variables });
 
@@ -349,7 +351,7 @@ async function fetchProjectIssues(projectInfo, token) {
       allItems = allItems.concat(items);
 
       const pageInfo = page?.pageInfo;
-      if (!pageInfo?.hasNextPage) {
+      if (!pageInfo?.hasNextPage || allItems.length >= maxLimit) {
         break;
       }
       cursor = pageInfo.endCursor;
@@ -372,7 +374,7 @@ async function fetchProjectIssues(projectInfo, token) {
       });
     };
 
-    return allItems
+    const filtered = allItems
       .filter(node => {
         const item = node?.content;
         if (!item || !item.number || !item.title || !item.url) return false;
@@ -381,6 +383,9 @@ async function fetchProjectIssues(projectInfo, token) {
         return true;
       })
       .map(node => normalizeIssueData(node.content, node));
+
+    // Ensure we don't return more than requested
+    return filtered.slice(0, maxLimit);
   } catch (error) {
     console.error("Failed to fetch from GitHub project:", error.message);
     return [];
@@ -392,12 +397,50 @@ async function fetchProjectIssues(projectInfo, token) {
 // ============================================================================
 
 /**
+ * Map sort specification to GitHub search sort parameter
+ * @param {string} sortSpec - Sort specification (e.g., "reactions-desc")
+ * @returns {string|null} GitHub search sort parameter or null if not supported
+ */
+function mapSortToGitHubSearch(sortSpec) {
+  if (!sortSpec) return null;
+
+  // Parse first sort spec (primary sort) - GitHub search only supports one
+  const [column, direction = "desc"] = sortSpec.split(",")[0].trim().split("-");
+  const col = column.trim().toLowerCase();
+  const dir = direction.trim().toLowerCase();
+
+  // Map to GitHub search sort options
+  // See: https://docs.github.com/en/search-github/searching-on-github/sorting-search-results
+  // Note: GitHub search does NOT support sort:reactions, only sort:interactions
+  const sortMap = {
+    "interactions": "interactions",
+    "updated": "updated",
+    "created": "created",
+    "comments": "comments"
+  };
+
+  const githubSort = sortMap[col];
+  if (!githubSort) return null;
+
+  // GitHub search uses sort:field-direction format
+  return `sort:${githubSort}-${dir}`;
+}
+
+/**
  * Fetch issues/PRs using GitHub search API
  * @param {string} query - Search query
  * @param {string} token - GitHub API token
+ * @param {number} limit - Maximum number of results to fetch (default: 100)
+ * @param {string} sortSpec - Sort specification (e.g., "reactions-desc,updated-desc")
  * @returns {Promise<Array>} Array of normalized issue/PR objects
  */
-async function fetchIssuesFromSearch(query, token) {
+async function fetchIssuesFromSearch(query, token, limit = 100, sortSpec = null) {
+  // Append sort to query if supported by GitHub search
+  let searchQuery = query;
+  const githubSort = mapSortToGitHubSearch(sortSpec);
+  if (githubSort) {
+    searchQuery = `${query} ${githubSort}`;
+  }
   const graphqlQuery = `
     ${ISSUE_FIELDS_FRAGMENT}
     ${PR_FIELDS_FRAGMENT}
@@ -420,13 +463,17 @@ async function fetchIssuesFromSearch(query, token) {
     }
   `;
 
-  const first = PAGINATION_SIZE;
   let cursor = null;
   let allNodes = [];
+  const maxLimit = limit || PAGINATION_SIZE;
 
   try {
-    while (true) {
-      const variables = { query, first, cursor };
+    while (allNodes.length < maxLimit) {
+      // Fetch exactly what we need, or PAGINATION_SIZE, whichever is smaller
+      const remainingNeeded = maxLimit - allNodes.length;
+      const first = Math.min(remainingNeeded, PAGINATION_SIZE);
+
+      const variables = { query: searchQuery, first, cursor };
       const body = JSON.stringify({ query: graphqlQuery, variables });
 
       const response = await fetch('https://api.github.com/graphql', {
@@ -454,13 +501,14 @@ async function fetchIssuesFromSearch(query, token) {
       const nodes = page?.nodes || [];
       allNodes = allNodes.concat(nodes);
 
-      if (!page?.pageInfo?.hasNextPage) {
+      if (!page?.pageInfo?.hasNextPage || allNodes.length >= maxLimit) {
         break;
       }
       cursor = page.pageInfo.endCursor;
     }
 
-    return allNodes.map(item => normalizeIssueData(item));
+    // Ensure we don't return more than requested
+    return allNodes.slice(0, maxLimit).map(item => normalizeIssueData(item));
   } catch (error) {
     console.error("Failed to fetch from GitHub:", error.message);
     return [];
@@ -540,16 +588,27 @@ function normalizeIssueData(item, projectNode = null) {
  * Fetch issues/PRs from GitHub (handles both search queries and project URLs)
  * @param {string} input - Search query or project URL
  * @param {string} token - GitHub API token
+ * @param {number} limit - Maximum number of results to fetch (default: 100)
+ * @param {string} sortSpec - Sort specification (e.g., "reactions-desc,updated-desc")
  * @returns {Promise<Array>} Array of normalized issue/PR objects
  */
-export async function fetchIssues(input, token) {
+export async function fetchIssues(input, token, limit = 100, sortSpec = null) {
   // Check if input is a project URL
   const projectInfo = parseProjectUrl(input);
   if (projectInfo) {
-    return await fetchProjectIssues(projectInfo, token);
+    // Note: Project queries don't support server-side sorting via GraphQL
+    return await fetchProjectIssues(projectInfo, token, limit);
   }
 
   // Otherwise treat as search query
   const query = normalizeQuery(input);
-  return await fetchIssuesFromSearch(query, token);
+
+  // Check if the sort is supported by GitHub API
+  const githubSort = mapSortToGitHubSearch(sortSpec);
+
+  // If sort is NOT supported by GitHub (like reactions), fetch more items
+  // so JavaScript sorting can find the true top N
+  const fetchLimit = githubSort ? limit : Math.max(limit * 4, 100);
+
+  return await fetchIssuesFromSearch(query, token, fetchLimit, sortSpec);
 }
