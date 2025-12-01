@@ -33,7 +33,7 @@ The same query is reused across tables, so data is only fetched once and cached 
 
 Sorted by reactions (descending), then by update date (descending):
 
-::::::{myst-demo}
+::::::{myst:demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
 :columns: title, author, author_affiliation, reactions, updated
 :sort: reactions-desc,updated-desc
@@ -44,7 +44,7 @@ Sorted by reactions (descending), then by update date (descending):
 
 Shows issues with linked PRs, styled labels, and reactions:
 
-::::::{myst-demo}
+::::::{myst:demo}
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:2025-11-01..2025-11-20
 :columns: title, linked_prs, labels, reactions
 :sort: reactions-desc
@@ -55,7 +55,7 @@ Shows issues with linked PRs, styled labels, and reactions:
 
 Show issues from a specific GitHub project view (Team Priorities), which already filters to items that are visible on that view:
 
-::::::{myst-demo}
+::::::{myst:demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
 :columns: title, Team Priority, linked_prs, reactions
 :sort: Team Priority-asc, reactions-desc
@@ -68,7 +68,7 @@ You can include custom project columns by using the field name (e.g., `Status`, 
 
 Add bespoke columns that pull from other fields using `{{field}}` placeholders:
 
-::::::{myst-demo}
+::::::{myst:demo}
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
 :columns: title, repo, author, issue_link, repo_link, issue_cta
 :templates: issue_link=[View issue]({{url}}); repo_link=[Repo home](https://github.com/{{repo}}); issue_cta={button}`Open issue <{{url}}>`
@@ -79,7 +79,7 @@ Add bespoke columns that pull from other fields using `{{field}}` placeholders:
 
 This example shows all possible columns for recently updated issues:
 
-::::::{myst-demo}
+::::::{myst:demo}
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
 :columns: number, title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, updated, repo, body
 :sort: updated-desc

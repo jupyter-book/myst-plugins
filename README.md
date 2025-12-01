@@ -12,6 +12,16 @@ We distinguish three levels of plugin maturity:
 
 Once a plugin reaches the stable level, we will create a release for it - it then becomes available through an url. All other levels require a download from this git repository.
 
+## Creating Releases
+
+We use GitHub releases to share plugins in a way that others can reference and use.
+
+Do do so, use the `src/release.py` script.
+It will print a `gh` command to generate a release for the plugin you specify.
+See the docstring of that script for usage information.
+
+**Note:** Release tags are named after the plugin (e.g., `github-issue-table`), not semantic versions. Future releases of the same plugin should update the existing release or use dated tags if versioning is needed.
+
 ## Gallery of plugins
 |name|functionalities|type|requirements|status|maintainer(s)|Embed link|
 |---|---|---|---|---|---|---|
@@ -24,6 +34,5 @@ Once a plugin reaches the stable level, we will create a release for it - it the
 | picsum | A plugin that adds a directive to include random images from picsum.photos | directive | | stable | Angus Hollands | - |
 | typst-conversion-support | A plugin that converts missing conversions from Latex to Typst | transform | | in development | Freek Pols | - |
 | github-issue-table | Renders GitHub issues/PRs as tables from search queries or project URLs. Supports custom columns, multi-column sorting, styled labels, and project fields | directive | GITHUB_TOKEN | in development | @choldgraf | - |
-
 | github-issue-link | Automatically decorates GitHub issue/PR links with titles and state badges | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |
 | github-handle-links | Converts `@username` mentions to GitHub profile links | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |

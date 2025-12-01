@@ -1,6 +1,6 @@
 // GitHub Issue Table Plugin for MyST
 // Bundled version - see https://github.com/jupyter-book/myst-plugins
-// Generated: 2025-11-30T17:10:08.168Z
+// Generated: 2025-12-01T21:29:46.121Z
 
 
 // src/github-api.mjs
