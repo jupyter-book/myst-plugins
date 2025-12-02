@@ -68,10 +68,10 @@ def list_plugins(plugins_dir):
     for plugin_dir in all_plugin_dirs:
         plugin_name = plugin_dir.name
 
-        # Check for existing release (pattern: plugin-name-*)
+        # Check for existing release (pattern: plugin-name@*)
         try:
             result = subprocess.run(
-                ["git", "tag", "-l", f"{plugin_name}-*", "--sort=-version:refname"],
+                ["git", "tag", "-l", f"{plugin_name}@*", "--sort=-version:refname"],
                 capture_output=True,
                 text=True,
                 check=True
@@ -108,9 +108,9 @@ def list_plugins(plugins_dir):
 def check_changes_since_release(plugin_name, plugin_dir):
     """Check if plugin has changes since last release."""
     try:
-        # Find most recent tag for this plugin (pattern: plugin-name-*)
+        # Find most recent tag for this plugin (pattern: plugin-name@*)
         result = subprocess.run(
-            ["git", "tag", "-l", f"{plugin_name}-*", "--sort=-version:refname"],
+            ["git", "tag", "-l", f"{plugin_name}@*", "--sort=-version:refname"],
             capture_output=True,
             text=True,
             check=True
@@ -195,7 +195,7 @@ def create_release(plugin_name, release_assets, deploy=False):
     """Create a GitHub release."""
     # Generate date-based tag
     today = datetime.date.today().isoformat()
-    tag_name = f"{plugin_name}-{today}"
+    tag_name = f"{plugin_name}@{today}"
 
     # Generate link to plugin README
     readme_url = f"https://github.com/jupyter-book/myst-plugins/tree/main/plugins/{plugin_name}"
