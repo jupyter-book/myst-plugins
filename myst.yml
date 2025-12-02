@@ -25,6 +25,7 @@ project:
     - plugins/github-issue-link/src/index.mjs
     - plugins/github-handle-links/src/index.mjs
     - plugins/demo/src/index.mjs
+    - plugins/emoji-shortcodes/emoji-shortcodes.mjs
 
   # To autogenerate a Table of Contents, run "myst init --write-toc"
   toc:
@@ -44,6 +45,7 @@ project:
     - file: example/github-issue-table.md
     - file: example/github-issue-link.md
     - file: example/github-handle-links.md
+    - file: example/emoji-shortcodes.md
 
 
 site:
