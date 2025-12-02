@@ -73,7 +73,6 @@ export const COLUMN_DEFINITIONS = {
       return { type: "text", value: "" };
     }
 
-    const { parseMyst } = options;
     const labelNodes = [];
 
     item.labels
@@ -83,29 +82,13 @@ export const COLUMN_DEFINITIONS = {
           labelNodes.push({ type: "text", value: " " });
         }
 
-        // Use parseMyst to parse guilabel syntax
-        if (typeof parseMyst === "function") {
-          try {
-            const mystSyntax = `{kbd}\`${label.name}\``;
-            const parsed = parseMyst(mystSyntax);
-            const children = Array.isArray(parsed?.children) ? parsed.children : [];
-
-            // Extract inline content from parsed result
-            if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
-              labelNodes.push(...children[0].children);
-            } else if (children.length > 0) {
-              labelNodes.push(...children);
-            } else {
-              labelNodes.push({ type: "text", value: label.name });
-            }
-          } catch (err) {
-            console.error("Failed to parse label with MyST:", err?.message || err);
-            labelNodes.push({ type: "text", value: label.name });
-          }
-        } else {
-          // Fallback if parseMyst not available
-          labelNodes.push({ type: "text", value: label.name });
-        }
+        // Create keyboard node with blue background
+        labelNodes.push({
+          type: "keyboard",
+          children: [
+            { type: "text", value: label.name }
+          ]
+        });
       });
 
     if (labelNodes.length === 0) {
