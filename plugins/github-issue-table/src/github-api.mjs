@@ -384,50 +384,48 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
 // ============================================================================
 
 /**
- * Map sort specification to GitHub search sort parameter
+ * Check if sort can be handled by GitHub search API
  * @param {string} sortSpec - Sort specification (e.g., "reactions-desc")
- * @returns {string|null} GitHub search sort parameter or null if not supported
+ * @returns {Object} { supported: boolean, sortQuery: string|null }
  */
-function mapSortToGitHubSearch(sortSpec) {
-  if (!sortSpec) return null;
+function getGitHubSort(sortSpec) {
+  if (!sortSpec) return { supported: false, sortQuery: null };
 
-  // Parse first sort spec (primary sort) - GitHub search only supports one
-  const [column, direction = "desc"] = sortSpec.split(",")[0].trim().split("-");
+  // Check if it's single-column sort (GitHub only supports one)
+  const sortParts = sortSpec.split(",");
+  if (sortParts.length > 1) {
+    // Multi-column sort - needs client-side handling
+    return { supported: false, sortQuery: null };
+  }
+
+  // Parse single sort spec
+  const [column, direction = "desc"] = sortSpec.trim().split("-");
   const col = column.trim().toLowerCase();
   const dir = direction.trim().toLowerCase();
 
-  // Map to GitHub search sort options
-  // See: https://docs.github.com/en/search-github/searching-on-github/sorting-search-results
-  // Note: GitHub search does NOT support sort:reactions, only sort:interactions
-  const sortMap = {
-    "interactions": "interactions",
-    "updated": "updated",
-    "created": "created",
-    "comments": "comments"
-  };
+  // Check if GitHub supports this sort field
+  // See: https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results
+  const githubSupported = ["reactions", "interactions", "comments", "created", "updated"];
 
-  const githubSort = sortMap[col];
-  if (!githubSort) return null;
+  if (!githubSupported.includes(col)) {
+    // Unsupported field (e.g., project fields) - needs client-side handling
+    return { supported: false, sortQuery: null };
+  }
 
-  // GitHub search uses sort:field-direction format
-  return `sort:${githubSort}-${dir}`;
+  // Build GitHub search sort query
+  return { supported: true, sortQuery: `sort:${col}-${dir}` };
 }
 
 /**
  * Fetch issues/PRs using GitHub search API
- * @param {string} query - Search query
+ * @param {string} query - Search query (may already include sort:)
  * @param {string} token - GitHub API token
  * @param {number} limit - Maximum number of results to fetch (default: 100)
- * @param {string} sortSpec - Sort specification (e.g., "reactions-desc,updated-desc")
  * @returns {Promise<Array>} Array of normalized issue/PR objects
  */
-async function fetchIssuesFromSearch(query, token, limit = 100, sortSpec = null) {
-  // Append sort to query if supported by GitHub search
-  let searchQuery = query;
-  const githubSort = mapSortToGitHubSearch(sortSpec);
-  if (githubSort) {
-    searchQuery = `${query} ${githubSort}`;
-  }
+async function fetchIssuesFromSearch(query, token, limit = 100) {
+  // Query may already include sort: parameter from getGitHubSort()
+  const searchQuery = query;
   const graphqlQuery = `
     ${ISSUE_FIELDS_FRAGMENT}
     ${PR_FIELDS_FRAGMENT}
@@ -588,14 +586,23 @@ export async function fetchIssues(input, token, limit = 100, sortSpec = null) {
   }
 
   // Otherwise treat as search query
-  const query = normalizeQuery(input);
+  let query = normalizeQuery(input);
 
-  // Check if the sort is supported by GitHub API
-  const githubSort = mapSortToGitHubSearch(sortSpec);
+  // Check if sort can be handled by GitHub
+  const { supported, sortQuery } = getGitHubSort(sortSpec);
 
-  // If sort is NOT supported by GitHub (like reactions), fetch more items
-  // so JavaScript sorting can find the true top N
-  const fetchLimit = githubSort ? limit : Math.max(limit * 4, 100);
+  let fetchLimit;
+  if (supported && sortQuery) {
+    // GitHub supports this sort - append to query and fetch only what we need
+    query = `${query} ${sortQuery}`;
+    fetchLimit = limit;
+  } else if (sortSpec) {
+    // Multi-column or unsupported field - fetch more for client-side sorting
+    fetchLimit = Math.max(limit * 3, 100);
+  } else {
+    // No sort specified - fetch what we need
+    fetchLimit = limit;
+  }
 
-  return await fetchIssuesFromSearch(query, token, fetchLimit, sortSpec);
+  return await fetchIssuesFromSearch(query, token, fetchLimit);
 }

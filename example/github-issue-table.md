@@ -20,7 +20,9 @@ export GITHUB_TOKEN=your_token_here
 
 **Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`, `closed`, `repo`, `body`, `summary`, plus any project fields (e.g., `Team Priority`, `Status`) when using a project view
 
-**Sorting**: Use `:sort:` with `column-direction` format (e.g., `reactions-desc`). Multiple columns can be specified separated by commas for left-to-right priority (e.g., `reactions-desc,updated-desc`).
+**Sorting**: Two approaches available:
+- **Recommended:** Use GitHub's native `sort:` in your query (e.g., `org:jupyter-book is:issue sort:reactions-desc`). Supported fields: `reactions`, `interactions`, `comments`, `created`, `updated`. See [GitHub's sorting docs](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results).
+- **Advanced:** Use `:sort:` option for multi-column sorting (e.g., `:sort: reactions-desc,updated-desc`) or project fields (e.g., `:sort: Team Priority-asc`).
 
 **Limit**: By default, tables fetch and show 25 items from the GitHub API. Use `:limit:` to fetch more (e.g., `:limit: 50`) or fewer results. This reduces API calls and helps avoid rate limits.
 
@@ -39,7 +41,15 @@ The same query is reused across tables, so data is only fetched once and cached 
 
 ## Open PRs in the Jupyter Book organization
 
-Sorted by reactions (descending), then by update date (descending):
+Using GitHub's native sort (recommended for single-column sorting):
+
+::::::{myst:demo}
+:::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 sort:reactions-desc
+:columns: title, author, author_affiliation, reactions, updated
+:::
+::::::
+
+Or use `:sort:` option for multi-column sorting:
 
 ::::::{myst:demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
@@ -62,12 +72,11 @@ Use `:date-format:` to show relative dates (e.g., "2d ago") instead of absolute 
 
 ## Jupyter Book Team Issues with Linked PRs
 
-Shows issues with linked PRs, styled labels, and reactions:
+Shows issues with linked PRs, styled labels, and reactions (using GitHub native sort):
 
 ::::::{myst:demo}
-:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:2025-11-01..2025-11-20
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:2025-11-01..2025-11-20 sort:reactions-desc
 :columns: title, linked_prs, labels, reactions
-:sort: reactions-desc
 :::
 ::::::
 
