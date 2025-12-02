@@ -72,11 +72,50 @@ export const COLUMN_DEFINITIONS = {
     if (!item.labels || item.labels.length === 0) {
       return { type: "text", value: "" };
     }
-    const labelTexts = item.labels
+
+    const { parseMyst } = options;
+    const labelNodes = [];
+
+    item.labels
       .filter(label => label && label.name)
-      .map(label => label.name)
-      .join(", ");
-    return { type: "text", value: labelTexts };
+      .forEach((label, idx) => {
+        if (idx > 0) {
+          labelNodes.push({ type: "text", value: " " });
+        }
+
+        // Use parseMyst to parse guilabel syntax
+        if (typeof parseMyst === "function") {
+          try {
+            const mystSyntax = `{kbd}\`${label.name}\``;
+            const parsed = parseMyst(mystSyntax);
+            const children = Array.isArray(parsed?.children) ? parsed.children : [];
+
+            // Extract inline content from parsed result
+            if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
+              labelNodes.push(...children[0].children);
+            } else if (children.length > 0) {
+              labelNodes.push(...children);
+            } else {
+              labelNodes.push({ type: "text", value: label.name });
+            }
+          } catch (err) {
+            console.error("Failed to parse label with MyST:", err?.message || err);
+            labelNodes.push({ type: "text", value: label.name });
+          }
+        } else {
+          // Fallback if parseMyst not available
+          labelNodes.push({ type: "text", value: label.name });
+        }
+      });
+
+    if (labelNodes.length === 0) {
+      return { type: "text", value: "" };
+    }
+
+    return {
+      type: "paragraph",
+      children: labelNodes
+    };
   },
 
   linked_prs: (item, options) => {
