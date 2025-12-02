@@ -1,6 +1,6 @@
 // Column Definitions for GitHub Issue Table Plugin
 
-import { stripBrackets, formatDate, truncateText, linkifyHandle, fillTemplate, templateToNodes } from "./utils.mjs";
+import { stripBrackets, stripHeaders, formatDate, truncateText, linkifyHandle, fillTemplate, templateToNodes } from "./utils.mjs";
 
 /**
  * Column definition registry mapping column names to render functions
@@ -120,7 +120,35 @@ export const COLUMN_DEFINITIONS = {
   },
 
   body: (item, options) => {
-    const bodyText = truncateText(item.body || "", options.bodyTruncate);
+    // Strip headers first
+    let bodyText = stripHeaders(item.body || "");
+
+    // Then truncate if specified
+    bodyText = truncateText(bodyText, options.bodyTruncate);
+
+    // Parse with MyST if parseMyst is available
+    const { parseMyst } = options;
+    if (typeof parseMyst === "function" && bodyText) {
+      try {
+        const parsed = parseMyst(bodyText);
+        const children = Array.isArray(parsed?.children) ? parsed.children : [];
+
+        // Return the parsed content
+        if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
+          // Unwrap single paragraph to inline content
+          return { type: "paragraph", children: children[0].children };
+        }
+
+        return children.length > 0
+          ? { type: "paragraph", children }
+          : { type: "text", value: bodyText };
+      } catch (err) {
+        console.error("Failed to parse body with MyST parser:", err?.message || err);
+        return { type: "text", value: bodyText };
+      }
+    }
+
+    // Fallback to plain text if no parseMyst
     return { type: "text", value: bodyText };
   }
 };

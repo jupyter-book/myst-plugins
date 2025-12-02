@@ -11,6 +11,20 @@ export function stripBrackets(title) {
 }
 
 /**
+ * Strip header lines (lines starting with #) from text
+ * @param {string} text - Text to clean
+ * @returns {string} Text with header lines removed
+ */
+export function stripHeaders(text) {
+  if (!text) return "";
+  return text
+    .split("\n")
+    .filter(line => !line.trim().startsWith("#"))
+    .join("\n")
+    .trim();
+}
+
+/**
  * Format date as relative or absolute
  * @param {string} dateString - ISO date string
  * @param {string} format - "relative" or "absolute"

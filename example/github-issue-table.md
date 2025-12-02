@@ -77,6 +77,23 @@ Add bespoke columns that pull from other fields using `{{field}}` placeholders:
 :::
 ::::::
 
+## Issue Body with MyST Parsing
+
+The `body` column parses issue bodies as MyST markdown (stripping header lines first) and supports truncation:
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
+:columns: title, author, body
+:body-truncate: 200
+:limit: 5
+:::
+::::::
+
+The body column will:
+- Strip out any header lines (lines starting with `#`)
+- Parse the remaining content as MyST markdown (preserving links, formatting, etc.)
+- Truncate to the specified character length if `:body-truncate:` is set
+
 ## All Available Columns
 
 This example shows all possible columns for recently updated issues:
