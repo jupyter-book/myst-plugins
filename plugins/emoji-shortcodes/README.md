@@ -1,7 +1,3 @@
-> [!IMPORTANT]
-> This plugin's source code has moved to <https://github.com/jupyter-book/myst-plugins/>
-> This repo will no longer be updated.
-
 A [MySTMD](https://github.com/jupyter-book/mystmd) plugin adding support for
 transforming emoji shortcodes (`:smile:`) to unicode (😊) at build-time.
 
