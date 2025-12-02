@@ -251,15 +251,8 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
     return [];
   }
 
-  // If the view filter doesn't specify state, mirror the UI default by only requesting open items.
-  if (itemQuery) {
-    const normalized = itemQuery.toLowerCase();
-    const mentionsState = ["is:open", "is:closed", "state:open", "state:closed", "is:merged", "state:merged"]
-      .some(token => normalized.includes(token));
-    if (!mentionsState) {
-      itemQuery = `${itemQuery} is:open`.trim();
-    }
-  }
+  // Use the view's filter as-is
+  // The project view's own filters determine what's visible (excluding archived items)
 
   const queryVar = itemQuery ? ", $itemQuery: String" : "";
   const queryArg = itemQuery ? ", query: $itemQuery" : "";
@@ -358,11 +351,6 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
     }
 
     const normalizedQuery = (itemQuery || "").toLowerCase();
-    const allowClosed =
-      normalizedQuery.includes("is:closed") ||
-      normalizedQuery.includes("state:closed") ||
-      normalizedQuery.includes("is:merged") ||
-      normalizedQuery.includes("state:merged");
     const requiresTeamPriority = normalizedQuery.includes("has:team-priority");
 
     const hasTeamPriority = (node) => {
@@ -378,7 +366,6 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
       .filter(node => {
         const item = node?.content;
         if (!item || !item.number || !item.title || !item.url) return false;
-        if (!allowClosed && item.state !== "OPEN") return false;
         if (requiresTeamPriority && !hasTeamPriority(node)) return false;
         return true;
       })

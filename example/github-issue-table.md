@@ -55,7 +55,8 @@ Shows issues with linked PRs, styled labels, and reactions:
 
 ## GitHub Project Board
 
-Show issues from a specific GitHub project view (Team Priorities), which already filters to items that are visible on that view:
+Show issues from a specific GitHub project view (Team Priorities).
+In this case, the board's own filter acts as our filter, there is no extra "search query" for project boards.
 
 ::::::{myst:demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
