@@ -58,6 +58,11 @@ export const COLUMN_DEFINITIONS = {
     value: formatDate(item.updated, options.dateFormat || "absolute")
   }),
 
+  closed: (item, options) => ({
+    type: "text",
+    value: formatDate(item.closed, options.dateFormat || "absolute")
+  }),
+
   reactions: (item, options) => ({
     type: "text",
     value: `👍 ${item.reactions}`

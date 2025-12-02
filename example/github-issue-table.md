@@ -18,11 +18,15 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
-**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`, `repo`, `body`, plus any project fields (e.g., `Team Priority`, `Status`) when using a project view
+**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`, `closed`, `repo`, `body`, plus any project fields (e.g., `Team Priority`, `Status`) when using a project view
 
 **Sorting**: Use `:sort:` with `column-direction` format (e.g., `reactions-desc`). Multiple columns can be specified separated by commas for left-to-right priority (e.g., `reactions-desc,updated-desc`).
 
 **Limit**: By default, tables fetch and show 25 items from the GitHub API. Use `:limit:` to fetch more (e.g., `:limit: 50`) or fewer results. This reduces API calls and helps avoid rate limits.
+
+**Date format**: Use `:date-format:` to control how dates in `created`, `updated`, and `closed` columns are displayed. Options: `relative` (e.g., "2d ago"), `absolute` (default, YYYY-MM-DD), or a custom strftime pattern.
+
+**Body truncation**: Use `:body-truncate:` to limit the character length of the `body` column (e.g., `:body-truncate: 200`).
 
 **Templates**: Use `:templates:` to add custom columns with `{{field}}` placeholders, and include the template name in `:columns:`. Most core columns (title, number, author, author_affiliation, repo) auto-link.
 
@@ -39,6 +43,18 @@ Sorted by reactions (descending), then by update date (descending):
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
 :columns: title, author, author_affiliation, reactions, updated
 :sort: reactions-desc,updated-desc
+:::
+::::::
+
+## Date Formatting
+
+Use `:date-format:` to show relative dates (e.g., "2d ago") instead of absolute dates:
+
+::::::{myst:demo}
+:::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
+:columns: title, author, created, updated
+:date-format: relative
+:limit: 10
 :::
 ::::::
 
@@ -99,9 +115,16 @@ The body column will:
 
 This example shows all possible columns for recently updated issues:
 
-::::::{myst:demo}
-:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
-:columns: number, title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, updated, repo, body
+%not using myst:demo because we can't horizontally scroll
+```
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, closed, updated, repo, body
 :sort: updated-desc
 :::
-::::::
+```
+
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, closed, updated, repo, body
+:sort: updated-desc
+:format-date: relative
+:::
