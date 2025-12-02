@@ -149,3 +149,64 @@ export function linkifyHandle(handle) {
     children: [{ type: "text", value: handle }],
   };
 }
+
+/**
+ * Extract summary from issue body
+ * @param {string} body - Issue body text
+ * @param {string} summaryHeader - Comma-separated keywords to search for (default: "summary,context,overview,description,background,user story")
+ * @param {number} bodyTruncate - Truncation length (only applied in fallback case)
+ * @returns {string} Extracted summary text
+ */
+export function extractSummary(body, summaryHeader = "summary,context,overview,description,background,user story", bodyTruncate = null) {
+  if (!body) return "";
+
+  const lines = body.split("\n");
+  const keywords = summaryHeader.split(",").map(k => k.trim().toLowerCase());
+
+  // Look for headers with matching keywords
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    const headerMatch = line.match(/^(#{1,4})\s+(.+)$/);
+
+    if (headerMatch) {
+      const headerText = headerMatch[2].toLowerCase();
+
+      // Check if header contains any keyword
+      if (keywords.some(keyword => headerText.includes(keyword))) {
+        // Extract content from next line until next header (any level)
+        const contentLines = [];
+        for (let j = i + 1; j < lines.length; j++) {
+          const nextLine = lines[j].trim();
+
+          // Stop at any header
+          if (nextLine.match(/^#{1,4}\s+/)) {
+            break;
+          }
+
+          contentLines.push(lines[j]);
+        }
+
+        // Return extracted content, strip whitespace (no truncation for explicit sections)
+        return contentLines.join("\n").trim();
+      }
+    }
+  }
+
+  // Fallback: extract from start until first header or horizontal rule
+  const contentLines = [];
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Stop at first header or horizontal rule
+    if (trimmed.match(/^#{1,4}\s+/) || trimmed.match(/^---+$/)) {
+      break;
+    }
+
+    contentLines.push(line);
+  }
+
+  const fallbackContent = contentLines.join("\n").trim();
+
+  // Apply truncation only in fallback case
+  return truncateText(fallbackContent, bodyTruncate);
+}

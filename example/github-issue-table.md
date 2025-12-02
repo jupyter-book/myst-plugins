@@ -18,7 +18,7 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
-**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`, `closed`, `repo`, `body`, plus any project fields (e.g., `Team Priority`, `Status`) when using a project view
+**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`, `closed`, `repo`, `body`, `summary`, plus any project fields (e.g., `Team Priority`, `Status`) when using a project view
 
 **Sorting**: Use `:sort:` with `column-direction` format (e.g., `reactions-desc`). Multiple columns can be specified separated by commas for left-to-right priority (e.g., `reactions-desc,updated-desc`).
 
@@ -26,7 +26,9 @@ export GITHUB_TOKEN=your_token_here
 
 **Date format**: Use `:date-format:` to control how dates in `created`, `updated`, and `closed` columns are displayed. Options: `relative` (e.g., "2d ago"), `absolute` (default, YYYY-MM-DD), or a custom strftime pattern.
 
-**Body truncation**: Use `:body-truncate:` to limit the character length of the `body` column (e.g., `:body-truncate: 200`).
+**Body truncation**: Use `:body-truncate:` to limit the character length of the `body` column (e.g., `:body-truncate: 200`). This also applies to the `summary` column when using the fallback extraction mode.
+
+**Summary column**: Use the `summary` column to extract intelligent summaries from issue bodies. By default, it searches for headers containing "summary", "context", "overview", "description", "background", or "user story" (case-insensitive) and extracts that section's content up to the next header. If no matching header is found, it extracts everything before the first header or horizontal rule. Use `:summary-header:` to customize the keywords (e.g., `:summary-header: tldr,abstract`).
 
 **Templates**: Use `:templates:` to add custom columns with `{{field}}` placeholders, and include the template name in `:columns:`. Most core columns (title, number, author, author_affiliation, repo) auto-link.
 
@@ -91,6 +93,33 @@ Add bespoke columns that pull from other fields using `{{field}}` placeholders:
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
 :columns: title, repo, author, issue_link, repo_link, issue_cta
 :templates: issue_link=[View issue]({{url}}); repo_link=[Repo home](https://github.com/{{repo}}); issue_cta={button}`Open issue <{{url}}>`
+:::
+::::::
+
+## Issue Summary Column
+
+The `summary` column intelligently extracts summaries from issue bodies:
+
+::::::{myst:demo}
+:::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
+:columns: title, author, summary
+:limit: 5
+:::
+::::::
+
+The summary column will:
+- Search for headers containing "summary", "context", "overview", "description", "background", or "user story" (case-insensitive)
+- Extract the content under that header up to the next header
+- If no matching header is found, extract everything before the first header or horizontal rule
+- Parse the extracted content as MyST markdown
+
+You can customize the keywords to search for:
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
+:columns: title, author, summary
+:summary-header: tldr,abstract,problem
+:limit: 5
 :::
 ::::::
 

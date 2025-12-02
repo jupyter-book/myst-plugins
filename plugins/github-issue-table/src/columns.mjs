@@ -1,6 +1,6 @@
 // Column Definitions for GitHub Issue Table Plugin
 
-import { stripBrackets, stripHeaders, formatDate, truncateText, linkifyHandle, fillTemplate, templateToNodes } from "./utils.mjs";
+import { stripBrackets, stripHeaders, formatDate, truncateText, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
 
 /**
  * Column definition registry mapping column names to render functions
@@ -177,6 +177,44 @@ export const COLUMN_DEFINITIONS = {
 
     // Fallback to plain text if no parseMyst
     return { type: "text", value: bodyText };
+  },
+
+  summary: (item, options) => {
+    // Extract summary using header keywords or fallback logic
+    const summaryText = extractSummary(
+      item.body || "",
+      options.summaryHeader || "summary,context,overview,description,background,user story",
+      options.bodyTruncate
+    );
+
+    if (!summaryText) {
+      return { type: "text", value: "" };
+    }
+
+    // Parse with MyST if parseMyst is available
+    const { parseMyst } = options;
+    if (typeof parseMyst === "function") {
+      try {
+        const parsed = parseMyst(summaryText);
+        const children = Array.isArray(parsed?.children) ? parsed.children : [];
+
+        // Return the parsed content
+        if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
+          // Unwrap single paragraph to inline content
+          return { type: "paragraph", children: children[0].children };
+        }
+
+        return children.length > 0
+          ? { type: "paragraph", children }
+          : { type: "text", value: summaryText };
+      } catch (err) {
+        console.error("Failed to parse summary with MyST parser:", err?.message || err);
+        return { type: "text", value: summaryText };
+      }
+    }
+
+    // Fallback to plain text if no parseMyst
+    return { type: "text", value: summaryText };
   }
 };
 

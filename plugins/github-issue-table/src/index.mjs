@@ -124,6 +124,10 @@ const directive = {
       type: String,
       doc: "Date format: 'relative', 'absolute', or strftime pattern"
     },
+    "summary-header": {
+      type: String,
+      doc: "Comma-separated keywords to search for in summary extraction (e.g., 'summary,context,overview')"
+    },
     templates: {
       type: String,
       doc: "Custom column templates: name=My text with {{field}} placeholders; separate multiple with semicolons"
@@ -143,6 +147,7 @@ const directive = {
     const limit = data.options?.limit ?? 25;  // Default to 25 items
     const bodyTruncate = data.options?.["body-truncate"];
     const dateFormat = data.options?.["date-format"];
+    const summaryHeader = data.options?.["summary-header"];
     const templates = data.options?.templates;
 
     // Capture parseMyst for later use in transform
@@ -159,6 +164,7 @@ const directive = {
       limit,
       bodyTruncate,
       dateFormat,
+      summaryHeader,
       templates
     }];
   }
@@ -212,7 +218,7 @@ const githubIssueTableTransform = {
       // Process each placeholder
       await Promise.all(
         placeholders.map(async (placeholder) => {
-          const { query, columns, sort, limit, bodyTruncate, dateFormat, templates: templateString } = placeholder;
+          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, templates: templateString } = placeholder;
           const parseMyst = sharedParseMyst;
           const templates = parseTemplates(templateString);
 
@@ -253,7 +259,7 @@ const githubIssueTableTransform = {
           }
 
           // Build table with options
-          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, templates, parseMyst });
+          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, templates, parseMyst });
 
           // Replace placeholder with table
           placeholder.type = table.type;
@@ -264,6 +270,7 @@ const githubIssueTableTransform = {
           delete placeholder.limit;
           delete placeholder.bodyTruncate;
           delete placeholder.dateFormat;
+          delete placeholder.summaryHeader;
           delete placeholder.templates;
         })
       );
