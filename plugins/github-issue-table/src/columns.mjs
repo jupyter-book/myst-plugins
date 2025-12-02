@@ -84,12 +84,23 @@ export const COLUMN_DEFINITIONS = {
       .filter(label => label && label.name)
       .forEach((label, idx) => {
         if (idx > 0) {
-          labelNodes.push({ type: "text", value: " " });
+          // Add line break between labels
+          labelNodes.push({ type: "break" });
         }
 
-        // Create keyboard node with blue background
+        // Create span with styling for labels
+        // Using inline styles only (no Tailwind classes needed)
         labelNodes.push({
-          type: "keyboard",
+          type: "span",
+          style: {
+            display: "inline-block",
+            fontSize: "0.875rem",
+            whiteSpace: "nowrap",
+            padding: "0.125rem 0.5rem",
+            margin: "0.125rem 0",
+            borderRadius: "0.25rem",
+            backgroundColor: "#dbeafe"
+          },
           children: [
             { type: "text", value: label.name }
           ]
