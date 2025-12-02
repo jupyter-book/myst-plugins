@@ -1,9 +1,8 @@
 // Cache Management for GitHub Issue Table Plugin
 
 import { createHash } from "crypto";
-import { existsSync, readFileSync, writeFileSync, mkdirSync, renameSync } from "fs";
+import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
-import { tmpdir } from "os";
 
 const CACHE_DIR = "_build/temp/github-issues";
 const CACHE_TTL = 24 * 3600000; // 24 hours in milliseconds
@@ -44,19 +43,16 @@ export function readCache(query) {
 }
 
 /**
- * Write data to cache atomically
+ * Write data to cache
  * @param {string} query - Query string
  * @param {Array} items - Items to cache
  */
 export function writeCache(query, items) {
   mkdirSync(CACHE_DIR, { recursive: true });
   const cachePath = getCachePath(query);
-  // Write to temp file first, then atomically rename to prevent corruption
-  const tempPath = join(tmpdir(), `github-cache-${Date.now()}-${Math.random().toString(36).substring(2, 11)}.json`);
-  writeFileSync(tempPath, JSON.stringify({
+  writeFileSync(cachePath, JSON.stringify({
     timestamp: Date.now(),
     query,
     items
   }));
-  renameSync(tempPath, cachePath);
 }
