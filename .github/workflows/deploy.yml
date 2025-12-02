@@ -40,7 +40,7 @@ jobs:
         run: npm install -g mystmd
       - name: Build HTML Assets
         env:
-          GITHUB_TOKEN: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          GITHUB_TOKEN: ${{ secrets.READ_ONLY_TOKEN }}
         run: myst build --html
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3

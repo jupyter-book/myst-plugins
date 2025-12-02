@@ -44,6 +44,7 @@ Examples:
     python src/release.py --all --deploy
 """
 
+import datetime
 import subprocess
 import sys
 from pathlib import Path
@@ -67,19 +68,22 @@ def list_plugins(plugins_dir):
     for plugin_dir in all_plugin_dirs:
         plugin_name = plugin_dir.name
 
-        # Check for existing release
+        # Check for existing release (pattern: plugin-name-*)
         try:
             result = subprocess.run(
-                ["git", "tag", "-l", plugin_name],
+                ["git", "tag", "-l", f"{plugin_name}-*", "--sort=-version:refname"],
                 capture_output=True,
                 text=True,
                 check=True
             )
 
-            if result.stdout.strip():
-                # Get release date
+            tags = result.stdout.strip().split('\n')
+            latest_tag = tags[0] if tags and tags[0] else None
+
+            if latest_tag:
+                # Get release date from tag
                 date_result = subprocess.run(
-                    ["git", "log", "-1", "--format=%ai", plugin_name],
+                    ["git", "log", "-1", "--format=%ai", latest_tag],
                     capture_output=True,
                     text=True,
                     check=True
@@ -104,17 +108,21 @@ def list_plugins(plugins_dir):
 def check_changes_since_release(plugin_name, plugin_dir):
     """Check if plugin has changes since last release."""
     try:
+        # Find most recent tag for this plugin (pattern: plugin-name-*)
         result = subprocess.run(
-            ["git", "tag", "-l", plugin_name],
+            ["git", "tag", "-l", f"{plugin_name}-*", "--sort=-version:refname"],
             capture_output=True,
             text=True,
             check=True
         )
 
-        if result.stdout.strip():
+        tags = result.stdout.strip().split('\n')
+        latest_tag = tags[0] if tags and tags[0] else None
+
+        if latest_tag:
             # Tag exists, check for changes since tag
             diff_result = subprocess.run(
-                ["git", "diff", "--quiet", plugin_name,
+                ["git", "diff", "--quiet", latest_tag,
                  "HEAD", "--", str(plugin_dir)],
                 capture_output=True
             )
@@ -185,6 +193,10 @@ def collect_release_assets(plugin_dir, built=False):
 
 def create_release(plugin_name, release_assets, deploy=False):
     """Create a GitHub release."""
+    # Generate date-based tag
+    today = datetime.date.today().isoformat()
+    tag_name = f"{plugin_name}-{today}"
+
     # Generate link to plugin README
     readme_url = f"https://github.com/jupyter-book/myst-plugins/tree/main/plugins/{plugin_name}"
     notes = f"See plugin documentation: {readme_url}"
@@ -195,7 +207,7 @@ def create_release(plugin_name, release_assets, deploy=False):
         for asset in release_assets
     ]
     release_cmd = [
-        "gh", "release", "create", plugin_name,
+        "gh", "release", "create", tag_name,
         "--title", plugin_name.replace("-", " ").title(),
         "--notes", notes
     ] + asset_paths
@@ -219,7 +231,7 @@ def create_release(plugin_name, release_assets, deploy=False):
             return False
     else:
         title = plugin_name.replace("-", " ").title()
-        log(f'  Command: gh release create {plugin_name} --title "{title}" --notes "{notes}" {asset_paths[0]}')
+        log(f'  Command: gh release create {tag_name} --title "{title}" --notes "{notes}" {asset_paths[0]}')
         log("  (dry-run mode, use --deploy to execute)")
         return True
 
