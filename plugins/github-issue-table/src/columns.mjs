@@ -63,9 +63,63 @@ export const COLUMN_DEFINITIONS = {
     value: formatDate(item.closed, options.dateFormat || "absolute")
   }),
 
-  reactions: (item, options) => ({
+  reactions: (item, options) => {
+    // Show all reaction types with counts
+    const reactionParts = [];
+
+    if (item.reactions_thumbsup > 0) reactionParts.push(`👍 ${item.reactions_thumbsup}`);
+    if (item.reactions_heart > 0) reactionParts.push(`❤️ ${item.reactions_heart}`);
+    if (item.reactions_rocket > 0) reactionParts.push(`🚀 ${item.reactions_rocket}`);
+    if (item.reactions_hooray > 0) reactionParts.push(`🎉 ${item.reactions_hooray}`);
+    if (item.reactions_laugh > 0) reactionParts.push(`😄 ${item.reactions_laugh}`);
+    if (item.reactions_eyes > 0) reactionParts.push(`👀 ${item.reactions_eyes}`);
+    if (item.reactions_confused > 0) reactionParts.push(`😕 ${item.reactions_confused}`);
+    if (item.reactions_thumbsdown > 0) reactionParts.push(`👎 ${item.reactions_thumbsdown}`);
+
+    return {
+      type: "text",
+      value: reactionParts.length > 0 ? reactionParts.join(" · ") : " "
+    };
+  },
+
+  reactions_thumbsup: (item, options) => ({
     type: "text",
-    value: `👍 ${item.reactions}`
+    value: `👍 ${item.reactions_thumbsup}`
+  }),
+
+  reactions_thumbsdown: (item, options) => ({
+    type: "text",
+    value: `👎 ${item.reactions_thumbsdown}`
+  }),
+
+  reactions_laugh: (item, options) => ({
+    type: "text",
+    value: `😄 ${item.reactions_laugh}`
+  }),
+
+  reactions_hooray: (item, options) => ({
+    type: "text",
+    value: `🎉 ${item.reactions_hooray}`
+  }),
+
+  reactions_confused: (item, options) => ({
+    type: "text",
+    value: `😕 ${item.reactions_confused}`
+  }),
+
+  reactions_heart: (item, options) => ({
+    type: "text",
+    value: `❤️ ${item.reactions_heart}`
+  }),
+
+  reactions_rocket: (item, options) => ({
+    type: "text",
+    value: `🚀 ${item.reactions_rocket}`
+  }),
+
+  reactions_eyes: (item, options) => ({
+    type: "text",
+    value: `👀 ${item.reactions_eyes}`
   }),
 
   comments: (item, options) => ({

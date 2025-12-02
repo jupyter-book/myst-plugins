@@ -18,7 +18,7 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
-**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions`, `comments`, `created`, `updated`, `closed`, `repo`, `body`, `summary`, plus any project fields (e.g., `Team Priority`, `Status`) when using a project view
+**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions` (shows all reaction types with counts), `comments`, `created`, `updated`, `closed`, `repo`, `body`, `summary`, plus individual reaction types: `reactions_thumbsup` (👍), `reactions_thumbsdown` (👎), `reactions_laugh` (😄), `reactions_hooray` (🎉), `reactions_confused` (😕), `reactions_heart` (❤️), `reactions_rocket` (🚀), `reactions_eyes` (👀), and any project fields (e.g., `Team Priority`, `Status`) when using a project view
 
 **Sorting**: Two approaches available:
 - **Recommended:** Use GitHub's native `sort:` in your query (e.g., `org:jupyter-book is:issue sort:reactions-desc`). Supported fields: `reactions`, `interactions`, `comments`, `created`, `updated`. See [GitHub's sorting docs](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results).
@@ -49,12 +49,21 @@ Using GitHub's native sort (recommended for single-column sorting):
 :::
 ::::::
 
+Show individual reaction types:
+
+::::::{myst:demo}
+:::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 sort:reactions-desc
+:columns: title, reactions_thumbsup, reactions_heart, reactions_rocket
+:limit: 10
+:::
+::::::
+
 Or use `:sort:` option for multi-column sorting:
 
 ::::::{myst:demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
 :columns: title, author, author_affiliation, reactions, updated
-:sort: reactions-desc,updated-desc
+:sort: reactions_thumbsup-desc,updated-desc
 :::
 ::::::
 
@@ -88,7 +97,7 @@ In this case, the board's own filter acts as our filter, there is no extra "sear
 ::::::{myst:demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
 :columns: title, Team Priority, linked_prs, reactions
-:sort: Team Priority-asc, reactions-desc
+:sort: Team Priority-asc, reactions_thumbsup-desc
 :::
 ::::::
 

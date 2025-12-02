@@ -105,6 +105,14 @@ const ISSUE_FIELDS_FRAGMENT = `
     closedAt
     labels(first: ${MAX_LABELS}) { nodes { name color } }
     reactions { totalCount }
+    reactions_thumbsup: reactions(content: THUMBS_UP) { totalCount }
+    reactions_thumbsdown: reactions(content: THUMBS_DOWN) { totalCount }
+    reactions_laugh: reactions(content: LAUGH) { totalCount }
+    reactions_hooray: reactions(content: HOORAY) { totalCount }
+    reactions_confused: reactions(content: CONFUSED) { totalCount }
+    reactions_heart: reactions(content: HEART) { totalCount }
+    reactions_rocket: reactions(content: ROCKET) { totalCount }
+    reactions_eyes: reactions(content: EYES) { totalCount }
     comments { totalCount }
     timelineItems(first: ${MAX_TIMELINE_ITEMS}, itemTypes: [CROSS_REFERENCED_EVENT]) {
       nodes {
@@ -148,6 +156,14 @@ const PR_FIELDS_FRAGMENT = `
     mergedAt
     labels(first: ${MAX_LABELS}) { nodes { name color } }
     reactions { totalCount }
+    reactions_thumbsup: reactions(content: THUMBS_UP) { totalCount }
+    reactions_thumbsdown: reactions(content: THUMBS_DOWN) { totalCount }
+    reactions_laugh: reactions(content: LAUGH) { totalCount }
+    reactions_hooray: reactions(content: HOORAY) { totalCount }
+    reactions_confused: reactions(content: CONFUSED) { totalCount }
+    reactions_heart: reactions(content: HEART) { totalCount }
+    reactions_rocket: reactions(content: ROCKET) { totalCount }
+    reactions_eyes: reactions(content: EYES) { totalCount }
     comments { totalCount }
     isDraft
   }
@@ -556,7 +572,15 @@ function normalizeIssueData(item, projectNode = null) {
     closed: item.closedAt,
     merged: item.mergedAt,
     labels: (item.labels?.nodes || []).map(l => ({ name: l.name, color: l.color })),
-    reactions: item.reactions?.totalCount || 0,
+    interactions: item.reactions?.totalCount || 0,
+    reactions_thumbsup: item.reactions_thumbsup?.totalCount || 0,
+    reactions_thumbsdown: item.reactions_thumbsdown?.totalCount || 0,
+    reactions_laugh: item.reactions_laugh?.totalCount || 0,
+    reactions_hooray: item.reactions_hooray?.totalCount || 0,
+    reactions_confused: item.reactions_confused?.totalCount || 0,
+    reactions_heart: item.reactions_heart?.totalCount || 0,
+    reactions_rocket: item.reactions_rocket?.totalCount || 0,
+    reactions_eyes: item.reactions_eyes?.totalCount || 0,
     comments: item.comments?.totalCount || 0,
     isDraft: item.isDraft || false,
     linkedPRs,

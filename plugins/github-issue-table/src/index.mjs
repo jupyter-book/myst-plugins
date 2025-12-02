@@ -33,6 +33,12 @@ function sortItems(items, sortSpec) {
         bVal = bVal ? new Date(bVal).getTime() : 0;
       }
 
+      // Handle numeric fields (interactions and individual reactions)
+      if (column === "interactions" || column.startsWith("reactions_")) {
+        aVal = Number(aVal) || 0;
+        bVal = Number(bVal) || 0;
+      }
+
       // Handle null/undefined
       if (aVal == null && bVal == null) continue;
       if (aVal == null) return 1;
