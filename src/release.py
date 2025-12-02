@@ -186,6 +186,11 @@ def collect_release_assets(plugin_dir, built=False):
         # Use all .mjs files in plugin directory
         assets = list(plugin_dir.glob("*.mjs"))
         if not assets:
+            # Try src/ directory as fallback
+            src_dir = plugin_dir / "src"
+            if src_dir.exists():
+                assets = list(src_dir.glob("*.mjs"))
+        if not assets:
             log(f"No .mjs files found in {plugin_dir}", "error")
             return []
         return assets
