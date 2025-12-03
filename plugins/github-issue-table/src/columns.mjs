@@ -153,7 +153,8 @@ export const COLUMN_DEFINITIONS = {
             padding: "0.125rem 0.5rem",
             margin: "0.125rem 0",
             borderRadius: "0.25rem",
-            backgroundColor: "#dbeafe"
+            backgroundColor: "#dbeafe",
+            color: "#000000ff"
           },
           children: [
             { type: "text", value: label.name }
