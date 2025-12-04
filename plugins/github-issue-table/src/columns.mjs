@@ -222,12 +222,6 @@ export const COLUMN_DEFINITIONS = {
     return renderPRList(closing);
   },
 
-  // Alias for backwards compatibility
-  closing_pr: (item, options) => {
-    const closing = item?.closingPRs ?? (item.linkedPRs || []).filter(pr => pr?.willClose);
-    return renderPRList(closing);
-  },
-
   body: (item, options) => {
     // Strip headers first
     let bodyText = stripHeaders(item.body || "");
