@@ -18,7 +18,7 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
-**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `reactions` (shows all reaction types with counts), `comments`, `created`, `updated`, `closed`, `repo`, `body`, `summary`, plus individual reaction types: `reactions_thumbsup` (👍), `reactions_thumbsdown` (👎), `reactions_laugh` (😄), `reactions_hooray` (🎉), `reactions_confused` (😕), `reactions_heart` (❤️), `reactions_rocket` (🚀), `reactions_eyes` (👀), and any project fields (e.g., `Team Priority`, `Status`) when using a project view
+**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `closing_prs` (PRs that will close the issue), `reactions` (shows all reaction types with counts), `comments`, `created`, `updated`, `closed`, `repo`, `body`, `summary`, plus individual reaction types: `reactions_thumbsup` (👍), `reactions_thumbsdown` (👎), `reactions_laugh` (😄), `reactions_hooray` (🎉), `reactions_confused` (😕), `reactions_heart` (❤️), `reactions_rocket` (🚀), `reactions_eyes` (👀), and any project fields (e.g., `Team Priority`, `Status`) when using a project view
 
 **Sorting**: Two approaches available:
 - **Recommended:** Use GitHub's native `sort:` in your query (e.g., `org:jupyter-book is:issue sort:reactions-desc`). Supported fields: `reactions`, `interactions`, `comments`, `created`, `updated`. See [GitHub's sorting docs](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results).
@@ -79,13 +79,14 @@ Use `:date-format:` to show relative dates (e.g., "2d ago") instead of absolute 
 :::
 ::::::
 
-## Jupyter Book Team Issues with Linked PRs
+## Jupyter Book Issues (Closed + Closing PRs)
 
-Shows issues with linked PRs, styled labels, and reactions (using GitHub native sort):
+Shows recently updated issues (open or closed) so you can see closed items alongside any closing PRs:
 
 ::::::{myst:demo}
-:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:2025-11-01..2025-11-20 sort:reactions-desc
-:columns: title, linked_prs, labels, reactions
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-25..2025-12-05 sort:updated-desc
+:columns: title, linked_prs, closing_prs, labels, reactions
+:limit: 10
 :::
 ::::::
 
@@ -96,7 +97,7 @@ In this case, the board's own filter acts as our filter, there is no extra "sear
 
 ::::::{myst:demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
-:columns: title, Team Priority, linked_prs, reactions
+:columns: title, Team Priority, linked_prs, closing_prs, reactions
 :sort: Team Priority-asc, reactions_thumbsup-desc
 :::
 ::::::
@@ -165,13 +166,13 @@ This example shows all possible columns for recently updated issues:
 %not using myst:demo because we can't horizontally scroll
 ```
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
-:columns: number, title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, closed, updated, repo, body
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, reactions, comments, created, closed, updated, repo, body
 :sort: updated-desc
 :::
 ```
 
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
-:columns: number, title, author, author_affiliation, state, labels, linked_prs, reactions, comments, created, closed, updated, repo, body
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, reactions, comments, created, closed, updated, repo, body
 :sort: updated-desc
 :format-date: relative
 :::

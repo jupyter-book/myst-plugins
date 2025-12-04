@@ -2,6 +2,47 @@
 
 import { stripBrackets, stripHeaders, formatDate, truncateText, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
 
+function renderPRList(prs) {
+  if (!prs || prs.length === 0) {
+    return { type: "text", value: "" };
+  }
+
+  const prNodes = [];
+  prs.forEach((pr, idx) => {
+    if (!pr || !pr.url || !pr.number) {
+      return;
+    }
+
+    let icon;
+    if (pr.merged) {
+      icon = "🟣";
+    } else if (pr.state === "OPEN") {
+      icon = "🟢";
+    } else {
+      icon = "❌";
+    }
+
+    if (idx > 0 && prNodes.length > 0) {
+      prNodes.push({ type: "text", value: " · " });
+    }
+    prNodes.push({ type: "text", value: `${icon} ` });
+    prNodes.push({
+      type: "link",
+      url: String(pr.url),
+      children: [{ type: "text", value: `#${pr.number}` }]
+    });
+  });
+
+  if (prNodes.length === 0) {
+    return { type: "text", value: "" };
+  }
+
+  return {
+    type: "paragraph",
+    children: prNodes
+  };
+}
+
 /**
  * Column definition registry mapping column names to render functions
  * Each function receives (item, options) and returns an AST node
@@ -173,43 +214,18 @@ export const COLUMN_DEFINITIONS = {
   },
 
   linked_prs: (item, options) => {
-    if (!item.linkedPRs || item.linkedPRs.length === 0) {
-      return { type: "text", value: "" };
-    }
-    const prNodes = [];
-    item.linkedPRs.forEach((pr, idx) => {
-      if (!pr || !pr.url || !pr.number) {
-        return;
-      }
+    return renderPRList(item.linkedPRs);
+  },
 
-      let icon;
-      if (pr.merged) {
-        icon = "🟣";
-      } else if (pr.state === "OPEN") {
-        icon = "🟢";
-      } else {
-        icon = "❌";
-      }
+  closing_prs: (item, options) => {
+    const closing = item?.closingPRs ?? (item.linkedPRs || []).filter(pr => pr?.willClose);
+    return renderPRList(closing);
+  },
 
-      if (idx > 0 && prNodes.length > 0) {
-        prNodes.push({ type: "text", value: ", " });
-      }
-      prNodes.push({ type: "text", value: `${icon} ` });
-      prNodes.push({
-        type: "link",
-        url: String(pr.url),
-        children: [{ type: "text", value: `#${pr.number}` }]
-      });
-    });
-
-    if (prNodes.length === 0) {
-      return { type: "text", value: "" };
-    }
-
-    return {
-      type: "paragraph",
-      children: prNodes
-    };
+  // Alias for backwards compatibility
+  closing_pr: (item, options) => {
+    const closing = item?.closingPRs ?? (item.linkedPRs || []).filter(pr => pr?.willClose);
+    return renderPRList(closing);
   },
 
   body: (item, options) => {
