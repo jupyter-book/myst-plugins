@@ -117,6 +117,7 @@ const ISSUE_FIELDS_FRAGMENT = `
     timelineItems(first: ${MAX_TIMELINE_ITEMS}, itemTypes: [CROSS_REFERENCED_EVENT]) {
       nodes {
         ... on CrossReferencedEvent {
+          willCloseTarget
           source {
             ... on PullRequest {
               number
@@ -534,15 +535,23 @@ function normalizeIssueData(item, projectNode = null) {
   const affiliation = company || orgs[0] || "";
 
   // Extract linked PRs from cross-referenced events (issues only)
-  const linkedPRs = (item.timelineItems?.nodes || [])
-    .map(node => node?.source)
-    .filter(source => source?.number)
-    .map(pr => ({
-      number: pr.number,
-      url: pr.url,
-      state: pr.state,
-      merged: pr.mergedAt != null
-    }));
+  const timelineNodes = item.timelineItems?.nodes || [];
+  const linkedPRs = timelineNodes
+    .map(node => {
+      const pr = node?.source;
+      if (!pr?.number) {
+        return null;
+      }
+      return {
+        number: pr.number,
+        url: pr.url,
+        state: pr.state,
+        merged: pr.mergedAt != null,
+        willClose: Boolean(node?.willCloseTarget)
+      };
+    })
+    .filter(Boolean);
+  const closingPRs = linkedPRs.filter(pr => pr.willClose);
 
   // Extract project field values (if available)
   const projectFields = {};
@@ -584,6 +593,7 @@ function normalizeIssueData(item, projectNode = null) {
     comments: item.comments?.totalCount || 0,
     isDraft: item.isDraft || false,
     linkedPRs,
+    closingPRs,
     type: item.mergedAt !== undefined ? "PR" : "Issue",
     ...projectFields  // Flatten project fields into main object
   };
