@@ -222,6 +222,51 @@ export const COLUMN_DEFINITIONS = {
     return renderPRList(closing);
   },
 
+  sub_issues: (item, options) => {
+    const trackedIssues = item.trackedIssues || [];
+
+    if (trackedIssues.length === 0) {
+      return { type: "text", value: "" };
+    }
+
+    const contentNodes = [];
+    trackedIssues.forEach((sub, idx) => {
+      if (idx > 0) {
+        contentNodes.push({ type: "break" });
+      }
+
+      const icon = sub.state === "OPEN" ? "🟢" : "🟣";
+
+      contentNodes.push({ type: "text", value: `${icon} ` });
+      contentNodes.push({
+        type: "link",
+        url: sub.url,
+        children: [{ type: "text", value: `#${sub.number}` }]
+      });
+      contentNodes.push({
+        type: "text",
+        value: ` • ${formatDate(sub.updated, options.dateFormat || "absolute")}`
+      });
+    });
+
+    return {
+      type: "dropdown",
+      children: [
+        {
+          type: "summary",
+          children: [{
+            type: "text",
+            value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
+          }]
+        },
+        {
+          type: "paragraph",
+          children: contentNodes
+        }
+      ]
+    };
+  },
+
   body: (item, options) => {
     // Strip headers first
     let bodyText = stripHeaders(item.body || "");
