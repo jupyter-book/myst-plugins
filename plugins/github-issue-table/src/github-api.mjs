@@ -129,6 +129,15 @@ const ISSUE_FIELDS_FRAGMENT = `
         }
       }
     }
+    trackedIssues(first: 20) {
+      nodes {
+        number
+        title
+        url
+        updatedAt
+        state
+      }
+    }
   }
 `;
 
