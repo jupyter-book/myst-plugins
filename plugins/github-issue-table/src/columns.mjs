@@ -250,7 +250,7 @@ export const COLUMN_DEFINITIONS = {
     });
 
     return {
-      type: "dropdown",
+      type: "details",
       children: [
         {
           type: "summary",
