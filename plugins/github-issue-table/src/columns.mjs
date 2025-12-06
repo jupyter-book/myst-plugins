@@ -60,6 +60,71 @@ export const COLUMN_DEFINITIONS = {
     children: [{ type: "text", value: stripBrackets(item.title) }]
   }),
 
+  title_with_sub_issues: (item, options) => {
+    const trackedIssues = item.trackedIssues || [];
+
+    // Start with the title link
+    const children = [
+      {
+        type: "link",
+        url: item.url,
+        children: [{ type: "text", value: stripBrackets(item.title) }]
+      }
+    ];
+
+    // Add sub-issues dropdown if any exist
+    if (trackedIssues.length > 0) {
+      // Sort by last updated (most recent first)
+      const sorted = [...trackedIssues].sort((a, b) => {
+        const aTime = a.updated ? new Date(a.updated).getTime() : 0;
+        const bTime = b.updated ? new Date(b.updated).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      const subIssueNodes = [];
+      sorted.forEach((sub, idx) => {
+        if (idx > 0) {
+          subIssueNodes.push({ type: "break" });
+        }
+
+        const icon = sub.state === "OPEN" ? "🟢" : "🟣";
+        subIssueNodes.push({ type: "text", value: `${icon} ` });
+        subIssueNodes.push({
+          type: "link",
+          url: sub.url,
+          children: [{ type: "text", value: `#${sub.number}` }]
+        });
+        subIssueNodes.push({
+          type: "text",
+          value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
+        });
+      });
+
+      children.push({ type: "break" });
+      children.push({
+        type: "details",
+        children: [
+          {
+            type: "summary",
+            children: [{
+              type: "text",
+              value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
+            }]
+          },
+          {
+            type: "paragraph",
+            children: subIssueNodes
+          }
+        ]
+      });
+    }
+
+    return {
+      type: "paragraph",
+      children
+    };
+  },
+
   state: (item, options) => {
     const icon = item.state === "OPEN" ? "🟢" : "🟣";
     return { type: "text", value: `${icon} ${item.state}` };
