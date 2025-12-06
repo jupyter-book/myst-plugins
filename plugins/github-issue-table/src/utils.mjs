@@ -63,8 +63,27 @@ export function formatDate(dateString, format = "absolute") {
  * @returns {string} Truncated text
  */
 export function truncateText(text, maxLength) {
-  if (!text || !maxLength || text.length <= maxLength) return text;
-  return text.substring(0, maxLength) + "...";
+  return truncateTextWithFlag(text, maxLength).text;
+}
+
+/**
+ * Truncate text and return metadata about whether truncation occurred
+ * @param {string} text - Text to truncate
+ * @param {number} maxLength - Maximum length
+ * @returns {Object} Object with truncated text and flag
+ */
+export function truncateTextWithFlag(text, maxLength) {
+  if (!text || !maxLength || text.length <= maxLength) {
+    return { text, truncated: false };
+  }
+
+  // Prefer breaking at a whitespace boundary so words are not split
+  const slice = text.substring(0, maxLength);
+  const lastSpace = Math.max(slice.lastIndexOf(" "), slice.lastIndexOf("\n"), slice.lastIndexOf("\t"));
+  const cutoff = lastSpace > 0 ? lastSpace : maxLength;
+  const trimmed = text.substring(0, cutoff).trimEnd();
+
+  return { text: `${trimmed}...`, truncated: true };
 }
 
 /**
@@ -154,10 +173,10 @@ export function linkifyHandle(handle) {
  * Extract summary from issue body
  * @param {string} body - Issue body text
  * @param {string} summaryHeader - Comma-separated keywords to search for (default: "summary,context,overview,description,background,user story")
- * @param {number} bodyTruncate - Truncation length (only applied in fallback case)
+ * @param {number} truncateLength - Truncation length (only applied in fallback case)
  * @returns {string} Extracted summary text
  */
-export function extractSummary(body, summaryHeader = "summary,context,overview,description,background,user story", bodyTruncate = null) {
+export function extractSummary(body, summaryHeader = "summary,context,overview,description,background,user story", truncateLength = null) {
   if (!body) return "";
 
   const lines = body.split("\n");
@@ -208,5 +227,5 @@ export function extractSummary(body, summaryHeader = "summary,context,overview,d
   const fallbackContent = contentLines.join("\n").trim();
 
   // Apply truncation only in fallback case
-  return truncateText(fallbackContent, bodyTruncate);
+  return truncateText(fallbackContent, truncateLength);
 }

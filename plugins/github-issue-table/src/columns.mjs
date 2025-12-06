@@ -1,6 +1,48 @@
 // Column Definitions for GitHub Issue Table Plugin
 
-import { stripBrackets, stripHeaders, formatDate, truncateText, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
+import { stripBrackets, stripHeaders, formatDate, truncateTextWithFlag, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
+
+// Parse text through MyST (when available) and return inline children
+function renderInlineContent(text, parseMyst) {
+  if (!text) {
+    return [{ type: "text", value: "" }];
+  }
+
+  try {
+    const parsed = parseMyst(text);
+    const children = Array.isArray(parsed?.children) ? parsed.children : [];
+    if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
+      return children[0].children;
+    }
+    return children.length > 0 ? children : [{ type: "text", value: text }];
+  } catch (err) {
+    console.error("Failed to parse content with MyST parser:", err?.message || err);
+    return [{ type: "text", value: text }];
+  }
+}
+
+// Wrap inline nodes in a paragraph
+function renderParagraphFromInline(inlineNodes) {
+  return { type: "paragraph", children: inlineNodes };
+}
+
+// Shared renderer for long-form fields (body, description, summary) with truncation + link out
+function renderLongFormText(text, { parseMyst, truncateLength, stripHeaderLines = false, issueUrl = "" }) {
+  const cleanedText = stripHeaderLines ? stripHeaders(text || "") : (text || "");
+  const { text: truncatedText, truncated } = truncateTextWithFlag(cleanedText, truncateLength);
+
+  const inlineNodes = renderInlineContent(truncatedText, parseMyst);
+  if (truncated && issueUrl) {
+    inlineNodes.push({ type: "text", value: " " });
+    inlineNodes.push({
+      type: "link",
+      url: issueUrl,
+      children: [{ type: "text", value: "Read more" }]
+    });
+  }
+
+  return renderParagraphFromInline(inlineNodes);
+}
 
 function renderPRList(prs) {
   if (!prs || prs.length === 0) {
@@ -222,75 +264,39 @@ export const COLUMN_DEFINITIONS = {
     return renderPRList(closing);
   },
 
-  body: (item, options) => {
-    // Strip headers first
-    let bodyText = stripHeaders(item.body || "");
+  body: (item, options) =>
+    renderLongFormText(item.body, {
+      parseMyst: options.parseMyst,
+      truncateLength: options.bodyTruncate,
+      stripHeaderLines: true,
+      issueUrl: item.url
+    }),
 
-    // Then truncate if specified
-    bodyText = truncateText(bodyText, options.bodyTruncate);
-
-    // Parse with MyST if parseMyst is available
-    const { parseMyst } = options;
-    if (typeof parseMyst === "function" && bodyText) {
-      try {
-        const parsed = parseMyst(bodyText);
-        const children = Array.isArray(parsed?.children) ? parsed.children : [];
-
-        // Return the parsed content
-        if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
-          // Unwrap single paragraph to inline content
-          return { type: "paragraph", children: children[0].children };
-        }
-
-        return children.length > 0
-          ? { type: "paragraph", children }
-          : { type: "text", value: bodyText };
-      } catch (err) {
-        console.error("Failed to parse body with MyST parser:", err?.message || err);
-        return { type: "text", value: bodyText };
-      }
-    }
-
-    // Fallback to plain text if no parseMyst
-    return { type: "text", value: bodyText };
-  },
+  description: (item, options) =>
+    renderLongFormText(item.description ?? item.Description, {
+      parseMyst: options.parseMyst,
+      truncateLength: options.bodyTruncate,
+      issueUrl: item.url
+    }),
 
   summary: (item, options) => {
+    const summaryLimit = options.summaryTruncate ?? options.bodyTruncate;
     // Extract summary using header keywords or fallback logic
     const summaryText = extractSummary(
       item.body || "",
       options.summaryHeader || "summary,context,overview,description,background,user story",
-      options.bodyTruncate
+      summaryLimit
     );
 
     if (!summaryText) {
       return { type: "text", value: "" };
     }
 
-    // Parse with MyST if parseMyst is available
-    const { parseMyst } = options;
-    if (typeof parseMyst === "function") {
-      try {
-        const parsed = parseMyst(summaryText);
-        const children = Array.isArray(parsed?.children) ? parsed.children : [];
-
-        // Return the parsed content
-        if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
-          // Unwrap single paragraph to inline content
-          return { type: "paragraph", children: children[0].children };
-        }
-
-        return children.length > 0
-          ? { type: "paragraph", children }
-          : { type: "text", value: summaryText };
-      } catch (err) {
-        console.error("Failed to parse summary with MyST parser:", err?.message || err);
-        return { type: "text", value: summaryText };
-      }
-    }
-
-    // Fallback to plain text if no parseMyst
-    return { type: "text", value: summaryText };
+    return renderLongFormText(summaryText, {
+      parseMyst: options.parseMyst,
+      truncateLength: summaryLimit,
+      issueUrl: item.url
+    });
   }
 };
 
@@ -302,8 +308,10 @@ export const COLUMN_DEFINITIONS = {
  * @returns {Object} AST node for cell content
  */
 export function renderCell(item, column, options = {}) {
+  const normalizedColumn = typeof column === "string" ? column.toLowerCase() : column;
+
   // Try column definition first
-  const columnDef = COLUMN_DEFINITIONS[column];
+  const columnDef = COLUMN_DEFINITIONS[column] || COLUMN_DEFINITIONS[normalizedColumn];
   if (columnDef) {
     return columnDef(item, options);
   }
