@@ -129,6 +129,15 @@ const ISSUE_FIELDS_FRAGMENT = `
         }
       }
     }
+    trackedIssues(first: 20) {
+      nodes {
+        number
+        title
+        url
+        updatedAt
+        state
+      }
+    }
   }
 `;
 
@@ -553,6 +562,15 @@ function normalizeIssueData(item, projectNode = null) {
     .filter(Boolean);
   const closingPRs = linkedPRs.filter(pr => pr.willClose);
 
+  // Extract tracked issues (sub-issues)
+  const trackedIssues = (item.trackedIssues?.nodes || []).map(sub => ({
+    number: sub.number,
+    title: sub.title,
+    url: sub.url,
+    updated: sub.updatedAt,
+    state: sub.state
+  }));
+
   // Extract project field values (if available)
   const projectFields = {};
   if (projectNode?.fieldValues?.nodes) {
@@ -594,6 +612,7 @@ function normalizeIssueData(item, projectNode = null) {
     isDraft: item.isDraft || false,
     linkedPRs,
     closingPRs,
+    trackedIssues,
     type: item.mergedAt !== undefined ? "PR" : "Issue",
     ...projectFields  // Flatten project fields into main object
   };

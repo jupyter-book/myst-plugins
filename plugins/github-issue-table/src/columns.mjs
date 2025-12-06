@@ -25,11 +25,17 @@ function renderPRList(prs) {
     if (idx > 0 && prNodes.length > 0) {
       prNodes.push({ type: "text", value: " · " });
     }
-    prNodes.push({ type: "text", value: `${icon} ` });
+    // Wrap icon and link in a span to prevent line breaking between them
     prNodes.push({
-      type: "link",
-      url: String(pr.url),
-      children: [{ type: "text", value: `#${pr.number}` }]
+      type: "span",
+      children: [
+        { type: "text", value: `${icon}\u00A0` },
+        {
+          type: "link",
+          url: String(pr.url),
+          children: [{ type: "text", value: `#${pr.number}` }]
+        }
+      ]
     });
   });
 
@@ -59,6 +65,71 @@ export const COLUMN_DEFINITIONS = {
     url: item.url,
     children: [{ type: "text", value: stripBrackets(item.title) }]
   }),
+
+  "title-sub_issues": (item, options) => {
+    const trackedIssues = item.trackedIssues || [];
+
+    // Start with the title link
+    const children = [
+      {
+        type: "link",
+        url: item.url,
+        children: [{ type: "text", value: stripBrackets(item.title) }]
+      }
+    ];
+
+    // Add sub-issues dropdown if any exist
+    if (trackedIssues.length > 0) {
+      // Sort by last updated (most recent first)
+      const sorted = [...trackedIssues].sort((a, b) => {
+        const aTime = a.updated ? new Date(a.updated).getTime() : 0;
+        const bTime = b.updated ? new Date(b.updated).getTime() : 0;
+        return bTime - aTime;
+      });
+
+      const subIssueNodes = [];
+      sorted.forEach((sub, idx) => {
+        if (idx > 0) {
+          subIssueNodes.push({ type: "break" });
+        }
+
+        const icon = sub.state === "OPEN" ? "🟢" : "🟣";
+        subIssueNodes.push({ type: "text", value: `${icon} ` });
+        subIssueNodes.push({
+          type: "link",
+          url: sub.url,
+          children: [{ type: "text", value: sub.title || `#${sub.number}` }]
+        });
+        subIssueNodes.push({
+          type: "text",
+          value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
+        });
+      });
+
+      children.push({ type: "text", value: " " });
+      children.push({
+        type: "details",
+        children: [
+          {
+            type: "summary",
+            children: [{
+              type: "text",
+              value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
+            }]
+          },
+          {
+            type: "paragraph",
+            children: subIssueNodes
+          }
+        ]
+      });
+    }
+
+    return {
+      type: "paragraph",
+      children
+    };
+  },
 
   state: (item, options) => {
     const icon = item.state === "OPEN" ? "🟢" : "🟣";
@@ -106,20 +177,41 @@ export const COLUMN_DEFINITIONS = {
 
   reactions: (item, options) => {
     // Show all reaction types with counts
-    const reactionParts = [];
+    const reactionNodes = [];
 
-    if (item.reactions_thumbsup > 0) reactionParts.push(`👍 ${item.reactions_thumbsup}`);
-    if (item.reactions_heart > 0) reactionParts.push(`❤️ ${item.reactions_heart}`);
-    if (item.reactions_rocket > 0) reactionParts.push(`🚀 ${item.reactions_rocket}`);
-    if (item.reactions_hooray > 0) reactionParts.push(`🎉 ${item.reactions_hooray}`);
-    if (item.reactions_laugh > 0) reactionParts.push(`😄 ${item.reactions_laugh}`);
-    if (item.reactions_eyes > 0) reactionParts.push(`👀 ${item.reactions_eyes}`);
-    if (item.reactions_confused > 0) reactionParts.push(`😕 ${item.reactions_confused}`);
-    if (item.reactions_thumbsdown > 0) reactionParts.push(`👎 ${item.reactions_thumbsdown}`);
+    const reactions = [
+      { emoji: "👍", count: item.reactions_thumbsup },
+      { emoji: "❤️", count: item.reactions_heart },
+      { emoji: "🚀", count: item.reactions_rocket },
+      { emoji: "🎉", count: item.reactions_hooray },
+      { emoji: "😄", count: item.reactions_laugh },
+      { emoji: "👀", count: item.reactions_eyes },
+      { emoji: "😕", count: item.reactions_confused },
+      { emoji: "👎", count: item.reactions_thumbsdown }
+    ];
+
+    reactions.forEach(({ emoji, count }) => {
+      if (count > 0) {
+        if (reactionNodes.length > 0) {
+          reactionNodes.push({ type: "text", value: " · " });
+        }
+        // Wrap emoji and count in span to prevent line breaking
+        reactionNodes.push({
+          type: "span",
+          children: [
+            { type: "text", value: `${emoji}\u00A0${count}` }
+          ]
+        });
+      }
+    });
+
+    if (reactionNodes.length === 0) {
+      return { type: "text", value: " " };
+    }
 
     return {
-      type: "text",
-      value: reactionParts.length > 0 ? reactionParts.join(" · ") : " "
+      type: "paragraph",
+      children: reactionNodes
     };
   },
 
@@ -220,6 +312,58 @@ export const COLUMN_DEFINITIONS = {
   closing_prs: (item, options) => {
     const closing = item?.closingPRs ?? (item.linkedPRs || []).filter(pr => pr?.willClose);
     return renderPRList(closing);
+  },
+
+  sub_issues: (item, options) => {
+    const trackedIssues = item.trackedIssues || [];
+
+    if (trackedIssues.length === 0) {
+      return { type: "text", value: "" };
+    }
+
+    // Sort by last updated (most recent first)
+    const sorted = [...trackedIssues].sort((a, b) => {
+      const aTime = a.updated ? new Date(a.updated).getTime() : 0;
+      const bTime = b.updated ? new Date(b.updated).getTime() : 0;
+      return bTime - aTime;
+    });
+
+    const contentNodes = [];
+    sorted.forEach((sub, idx) => {
+      if (idx > 0) {
+        contentNodes.push({ type: "break" });
+      }
+
+      const icon = sub.state === "OPEN" ? "🟢" : "🟣";
+
+      contentNodes.push({ type: "text", value: `${icon} ` });
+      contentNodes.push({
+        type: "link",
+        url: sub.url,
+        children: [{ type: "text", value: sub.title || `#${sub.number}` }]
+      });
+      contentNodes.push({
+        type: "text",
+        value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
+      });
+    });
+
+    return {
+      type: "details",
+      children: [
+        {
+          type: "summary",
+          children: [{
+            type: "text",
+            value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
+          }]
+        },
+        {
+          type: "paragraph",
+          children: contentNodes
+        }
+      ]
+    };
   },
 
   body: (item, options) => {
