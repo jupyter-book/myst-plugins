@@ -23,9 +23,10 @@ function renderPRList(prs) {
     }
 
     if (idx > 0 && prNodes.length > 0) {
-      prNodes.push({ type: "text", value: " · " });
+      prNodes.push({ type: "break" });
     }
-    prNodes.push({ type: "text", value: `${icon} ` });
+    // Use non-breaking space to keep icon and number together
+    prNodes.push({ type: "text", value: `${icon}\u00A0` });
     prNodes.push({
       type: "link",
       url: String(pr.url),

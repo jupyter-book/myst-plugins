@@ -1,6 +1,6 @@
 // GitHub Issue Table Plugin for MyST
 // Bundled version - see https://github.com/jupyter-book/myst-plugins
-// Generated: 2025-12-06T18:32:29.657Z
+// Generated: 2025-12-06T18:34:51.136Z
 
 
 // src/github-api.mjs
@@ -679,9 +679,9 @@ function renderPRList(prs) {
       icon = "\u274C";
     }
     if (idx > 0 && prNodes.length > 0) {
-      prNodes.push({ type: "text", value: " \xB7 " });
+      prNodes.push({ type: "break" });
     }
-    prNodes.push({ type: "text", value: `${icon} ` });
+    prNodes.push({ type: "text", value: `${icon}\xA0` });
     prNodes.push({
       type: "link",
       url: String(pr.url),
