@@ -138,6 +138,10 @@ const directive = {
       type: Number,
       doc: "Truncate summary text to this many characters"
     },
+    "show-sub-issues": {
+      type: Boolean,
+      doc: "If true, include tracked sub-issues inline under the title column"
+    },
     templates: {
       type: String,
       doc: "Custom column templates: name=My text with {{field}} placeholders; separate multiple with semicolons"
@@ -159,6 +163,7 @@ const directive = {
     const dateFormat = data.options?.["date-format"];
     const summaryHeader = data.options?.["summary-header"];
     const summaryTruncate = data.options?.["summary-truncate"];
+    const showSubIssues = Boolean(data.options?.["show-sub-issues"]);
     const templates = data.options?.templates;
 
     // Capture parseMyst for later use in transform
@@ -177,6 +182,7 @@ const directive = {
       dateFormat,
       summaryHeader,
       summaryTruncate,
+      showSubIssues,
       templates
     }];
   }
@@ -228,6 +234,7 @@ const githubIssueTableTransform = {
           delete placeholder.dateFormat;
           delete placeholder.summaryHeader;
           delete placeholder.summaryTruncate;
+          delete placeholder.showSubIssues;
           delete placeholder.templates;
         });
         return;
@@ -236,7 +243,7 @@ const githubIssueTableTransform = {
       // Process each placeholder
       await Promise.all(
         placeholders.map(async (placeholder) => {
-          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, templates: templateString } = placeholder;
+          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, showSubIssues, templates: templateString } = placeholder;
           const parseMyst = sharedParseMyst;
           const templates = parseTemplates(templateString);
 
@@ -267,6 +274,7 @@ const githubIssueTableTransform = {
             delete placeholder.dateFormat;
             delete placeholder.summaryHeader;
             delete placeholder.summaryTruncate;
+            delete placeholder.showSubIssues;
             return;
           }
 
@@ -279,7 +287,7 @@ const githubIssueTableTransform = {
           }
 
           // Build table with options
-          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, templates, parseMyst });
+          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, showSubIssues, templates, parseMyst });
 
           // Replace placeholder with table
           placeholder.type = table.type;
@@ -292,6 +300,7 @@ const githubIssueTableTransform = {
           delete placeholder.dateFormat;
           delete placeholder.summaryHeader;
           delete placeholder.summaryTruncate;
+          delete placeholder.showSubIssues;
           delete placeholder.templates;
         })
       );
