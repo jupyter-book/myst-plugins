@@ -353,15 +353,14 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
       });
 
       if (!response.ok) {
-        console.error(`GitHub API error: ${response.status} ${response.statusText}`);
-        return allItems;
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
 
       if (data.errors) {
-        console.error("GitHub API errors:", data.errors);
-        return allItems;
+        const message = data.errors?.[0]?.message || "Unknown GitHub API error";
+        throw new Error(message);
       }
 
       const ownerData = data.data?.[type === 'org' ? 'organization' : 'user'];
@@ -401,7 +400,7 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
     return filtered.slice(0, maxLimit);
   } catch (error) {
     console.error("Failed to fetch from GitHub project:", error.message);
-    return [];
+    throw error;
   }
 }
 
@@ -497,15 +496,14 @@ async function fetchIssuesFromSearch(query, token, limit = 100) {
       });
 
       if (!response.ok) {
-        console.error(`GitHub API error: ${response.status} ${response.statusText}`);
-        break;
+        throw new Error(`GitHub API error: ${response.status} ${response.statusText}`);
       }
 
       const data = await response.json();
 
       if (data.errors) {
-        console.error("GitHub API errors:", data.errors);
-        break;
+        const message = data.errors?.[0]?.message || "Unknown GitHub API error";
+        throw new Error(message);
       }
 
       const page = data.data?.search;
@@ -522,7 +520,7 @@ async function fetchIssuesFromSearch(query, token, limit = 100) {
     return allNodes.slice(0, maxLimit).map(item => normalizeIssueData(item));
   } catch (error) {
     console.error("Failed to fetch from GitHub:", error.message);
-    return [];
+    throw error;
   }
 }
 

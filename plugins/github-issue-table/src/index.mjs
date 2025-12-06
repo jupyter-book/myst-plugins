@@ -255,9 +255,26 @@ const githubIssueTableTransform = {
 
           // If no cache, fetch data
           if (!items) {
-            console.log(`Fetching GitHub data for query: ${query} (limit: ${limit}, sort: ${sort || "none"})`);
-            items = await fetchIssues(query, token, limit, sort);
-            writeCache(cacheKey, items);
+            try {
+              console.log(`Fetching GitHub data for query: ${query} (limit: ${limit}, sort: ${sort || "none"})`);
+              items = await fetchIssues(query, token, limit, sort);
+              writeCache(cacheKey, items);
+            } catch (err) {
+              console.error("Error fetching GitHub data:", err);
+              placeholder.type = "paragraph";
+              placeholder.children = [{ type: "text", value: `*Error fetching GitHub data: ${err?.message || err}*` }];
+              delete placeholder.query;
+              delete placeholder.columns;
+              delete placeholder.sort;
+              delete placeholder.limit;
+              delete placeholder.bodyTruncate;
+              delete placeholder.dateFormat;
+              delete placeholder.summaryHeader;
+              delete placeholder.summaryTruncate;
+              delete placeholder.showSubIssues;
+              delete placeholder.templates;
+              return;
+            }
           } else {
             console.log(`Using cached data for query: ${query} (limit: ${limit}, sort: ${sort || "none"})`);
           }
