@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Cache directory relative to test file
-const CACHE_DIR = path.join(__dirname, '..', '..', '..', 'example', '_build', 'temp', 'github-issues');
+const CACHE_DIR = path.join(__dirname, '..', '..', '..', '_build', 'temp', 'github-issues');
 
 describe('GitHub Issue Table Cache Validation', () => {
   test('cache directory exists', () => {
