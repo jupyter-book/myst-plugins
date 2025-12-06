@@ -1,6 +1,6 @@
 // GitHub Issue Table Plugin for MyST
 // Bundled version - see https://github.com/jupyter-book/myst-plugins
-// Generated: 2025-12-06T18:10:41.911Z
+// Generated: 2025-12-06T18:12:41.375Z
 
 
 // src/github-api.mjs
@@ -848,8 +848,13 @@ var COLUMN_DEFINITIONS = {
     if (trackedIssues.length === 0) {
       return { type: "text", value: "" };
     }
+    const sorted = [...trackedIssues].sort((a, b) => {
+      const aTime = a.updated ? new Date(a.updated).getTime() : 0;
+      const bTime = b.updated ? new Date(b.updated).getTime() : 0;
+      return bTime - aTime;
+    });
     const contentNodes = [];
-    trackedIssues.forEach((sub, idx) => {
+    sorted.forEach((sub, idx) => {
       if (idx > 0) {
         contentNodes.push({ type: "break" });
       }
@@ -862,7 +867,7 @@ var COLUMN_DEFINITIONS = {
       });
       contentNodes.push({
         type: "text",
-        value: ` \u2022 ${formatDate(sub.updated, options.dateFormat || "absolute")}`
+        value: ` \u2022 ${formatDate(sub.updated, options.dateFormat || "relative")}`
       });
     });
     return {

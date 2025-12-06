@@ -229,8 +229,15 @@ export const COLUMN_DEFINITIONS = {
       return { type: "text", value: "" };
     }
 
+    // Sort by last updated (most recent first)
+    const sorted = [...trackedIssues].sort((a, b) => {
+      const aTime = a.updated ? new Date(a.updated).getTime() : 0;
+      const bTime = b.updated ? new Date(b.updated).getTime() : 0;
+      return bTime - aTime;
+    });
+
     const contentNodes = [];
-    trackedIssues.forEach((sub, idx) => {
+    sorted.forEach((sub, idx) => {
       if (idx > 0) {
         contentNodes.push({ type: "break" });
       }
@@ -245,7 +252,7 @@ export const COLUMN_DEFINITIONS = {
       });
       contentNodes.push({
         type: "text",
-        value: ` • ${formatDate(sub.updated, options.dateFormat || "absolute")}`
+        value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
       });
     });
 
