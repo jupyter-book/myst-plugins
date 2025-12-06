@@ -92,7 +92,7 @@ export const COLUMN_DEFINITIONS = {
         subIssueNodes.push({
           type: "link",
           url: sub.url,
-          children: [{ type: "text", value: `#${sub.number}` }]
+          children: [{ type: "text", value: sub.title || `#${sub.number}` }]
         });
         subIssueNodes.push({
           type: "text",
@@ -100,7 +100,7 @@ export const COLUMN_DEFINITIONS = {
         });
       });
 
-      children.push({ type: "break" });
+      children.push({ type: "text", value: " " });
       children.push({
         type: "details",
         children: [
@@ -313,7 +313,7 @@ export const COLUMN_DEFINITIONS = {
       contentNodes.push({
         type: "link",
         url: sub.url,
-        children: [{ type: "text", value: `#${sub.number}` }]
+        children: [{ type: "text", value: sub.title || `#${sub.number}` }]
       });
       contentNodes.push({
         type: "text",
