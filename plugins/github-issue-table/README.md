@@ -25,3 +25,18 @@ export GITHUB_TOKEN=ghp_your_token_here
 ```
 
 Results are cached in `_build/temp/github-issues/` for 24 hours to speed up builds and reduce API rate limit usage.
+
+## Testing
+
+Run tests to validate that GitHub queries return data:
+
+```bash
+# Build example docs first (creates cache files)
+nox -s docs
+
+# Run tests
+cd plugins/github-issue-table
+npm test
+```
+
+Tests validate that cache files exist and contain non-empty results from GitHub queries.
