@@ -95,9 +95,8 @@ Shows recently updated issues (open or closed) so you can see closed items along
 Show issues with their tracked sub-tasks using GitHub's native sub-issue feature. The `sub_issues` column displays a dropdown with each sub-issue's state, number, and last update:
 
 ::::::{myst:demo}
-:::{issue-table} repo:jupyter/notebook is:issue state:open
+:::{issue-table} repo:jupyter-book/mystmd is:issue 1026
 :columns: number, title, sub_issues, updated
-:limit: 10
 :::
 ::::::
 
