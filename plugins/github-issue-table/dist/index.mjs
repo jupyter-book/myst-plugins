@@ -1,6 +1,6 @@
 // GitHub Issue Table Plugin for MyST
 // Bundled version - see https://github.com/jupyter-book/myst-plugins
-// Generated: 2025-12-06T18:36:21.442Z
+// Generated: 2025-12-06T18:37:41.967Z
 
 
 // src/github-api.mjs
@@ -804,26 +804,36 @@ var COLUMN_DEFINITIONS = {
     value: formatDate(item.closed, options.dateFormat || "absolute")
   }),
   reactions: (item, options) => {
-    const reactionParts = [];
-    if (item.reactions_thumbsup > 0)
-      reactionParts.push(`\u{1F44D} ${item.reactions_thumbsup}`);
-    if (item.reactions_heart > 0)
-      reactionParts.push(`\u2764\uFE0F ${item.reactions_heart}`);
-    if (item.reactions_rocket > 0)
-      reactionParts.push(`\u{1F680} ${item.reactions_rocket}`);
-    if (item.reactions_hooray > 0)
-      reactionParts.push(`\u{1F389} ${item.reactions_hooray}`);
-    if (item.reactions_laugh > 0)
-      reactionParts.push(`\u{1F604} ${item.reactions_laugh}`);
-    if (item.reactions_eyes > 0)
-      reactionParts.push(`\u{1F440} ${item.reactions_eyes}`);
-    if (item.reactions_confused > 0)
-      reactionParts.push(`\u{1F615} ${item.reactions_confused}`);
-    if (item.reactions_thumbsdown > 0)
-      reactionParts.push(`\u{1F44E} ${item.reactions_thumbsdown}`);
+    const reactionNodes = [];
+    const reactions = [
+      { emoji: "\u{1F44D}", count: item.reactions_thumbsup },
+      { emoji: "\u2764\uFE0F", count: item.reactions_heart },
+      { emoji: "\u{1F680}", count: item.reactions_rocket },
+      { emoji: "\u{1F389}", count: item.reactions_hooray },
+      { emoji: "\u{1F604}", count: item.reactions_laugh },
+      { emoji: "\u{1F440}", count: item.reactions_eyes },
+      { emoji: "\u{1F615}", count: item.reactions_confused },
+      { emoji: "\u{1F44E}", count: item.reactions_thumbsdown }
+    ];
+    reactions.forEach(({ emoji, count }) => {
+      if (count > 0) {
+        if (reactionNodes.length > 0) {
+          reactionNodes.push({ type: "text", value: " \xB7 " });
+        }
+        reactionNodes.push({
+          type: "span",
+          children: [
+            { type: "text", value: `${emoji}\xA0${count}` }
+          ]
+        });
+      }
+    });
+    if (reactionNodes.length === 0) {
+      return { type: "text", value: " " };
+    }
     return {
-      type: "text",
-      value: reactionParts.length > 0 ? reactionParts.join(" \xB7 ") : " "
+      type: "paragraph",
+      children: reactionNodes
     };
   },
   reactions_thumbsup: (item, options) => ({

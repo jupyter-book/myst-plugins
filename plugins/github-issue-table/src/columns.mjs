@@ -177,20 +177,41 @@ export const COLUMN_DEFINITIONS = {
 
   reactions: (item, options) => {
     // Show all reaction types with counts
-    const reactionParts = [];
+    const reactionNodes = [];
 
-    if (item.reactions_thumbsup > 0) reactionParts.push(`👍 ${item.reactions_thumbsup}`);
-    if (item.reactions_heart > 0) reactionParts.push(`❤️ ${item.reactions_heart}`);
-    if (item.reactions_rocket > 0) reactionParts.push(`🚀 ${item.reactions_rocket}`);
-    if (item.reactions_hooray > 0) reactionParts.push(`🎉 ${item.reactions_hooray}`);
-    if (item.reactions_laugh > 0) reactionParts.push(`😄 ${item.reactions_laugh}`);
-    if (item.reactions_eyes > 0) reactionParts.push(`👀 ${item.reactions_eyes}`);
-    if (item.reactions_confused > 0) reactionParts.push(`😕 ${item.reactions_confused}`);
-    if (item.reactions_thumbsdown > 0) reactionParts.push(`👎 ${item.reactions_thumbsdown}`);
+    const reactions = [
+      { emoji: "👍", count: item.reactions_thumbsup },
+      { emoji: "❤️", count: item.reactions_heart },
+      { emoji: "🚀", count: item.reactions_rocket },
+      { emoji: "🎉", count: item.reactions_hooray },
+      { emoji: "😄", count: item.reactions_laugh },
+      { emoji: "👀", count: item.reactions_eyes },
+      { emoji: "😕", count: item.reactions_confused },
+      { emoji: "👎", count: item.reactions_thumbsdown }
+    ];
+
+    reactions.forEach(({ emoji, count }) => {
+      if (count > 0) {
+        if (reactionNodes.length > 0) {
+          reactionNodes.push({ type: "text", value: " · " });
+        }
+        // Wrap emoji and count in span to prevent line breaking
+        reactionNodes.push({
+          type: "span",
+          children: [
+            { type: "text", value: `${emoji}\u00A0${count}` }
+          ]
+        });
+      }
+    });
+
+    if (reactionNodes.length === 0) {
+      return { type: "text", value: " " };
+    }
 
     return {
-      type: "text",
-      value: reactionParts.length > 0 ? reactionParts.join(" · ") : " "
+      type: "paragraph",
+      children: reactionNodes
     };
   },
 
