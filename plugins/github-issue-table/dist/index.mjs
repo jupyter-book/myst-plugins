@@ -1,6 +1,6 @@
 // GitHub Issue Table Plugin for MyST
 // Bundled version - see https://github.com/jupyter-book/myst-plugins
-// Generated: 2025-12-06T18:25:09.871Z
+// Generated: 2025-12-06T18:32:29.657Z
 
 
 // src/github-api.mjs
@@ -707,7 +707,7 @@ var COLUMN_DEFINITIONS = {
     url: item.url,
     children: [{ type: "text", value: stripBrackets(item.title) }]
   }),
-  title_with_sub_issues: (item, options) => {
+  "title-sub_issues": (item, options) => {
     const trackedIssues = item.trackedIssues || [];
     const children = [
       {

@@ -60,7 +60,7 @@ export const COLUMN_DEFINITIONS = {
     children: [{ type: "text", value: stripBrackets(item.title) }]
   }),
 
-  title_with_sub_issues: (item, options) => {
+  "title-sub_issues": (item, options) => {
     const trackedIssues = item.trackedIssues || [];
 
     // Start with the title link

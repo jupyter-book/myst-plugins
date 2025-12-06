@@ -92,11 +92,11 @@ Shows recently updated issues (open or closed) so you can see closed items along
 
 ## Sub-Issues
 
-Show issues with their tracked sub-tasks using GitHub's native sub-issue feature. Use `title_with_sub_issues` to display the issue title with an inline sub-issues dropdown:
+Show issues with their tracked sub-tasks using GitHub's native sub-issue feature. Use `title-sub_issues` to display the issue title with an inline sub-issues dropdown:
 
 ::::::{myst:demo}
 :::{issue-table} repo:jupyter-book/mystmd is:issue 189
-:columns: number, title_with_sub_issues, updated
+:columns: number, title-sub_issues, updated
 :limit: 5
 :::
 ::::::
