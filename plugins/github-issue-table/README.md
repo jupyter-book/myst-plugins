@@ -2,6 +2,10 @@
 
 Renders GitHub issues and PRs as tables from search queries.
 
+> **Warning**: This will change rapidly!
+> 
+> Chris is prototyping this for the Jupyter Book docs and for now is iterating on it very quickly. At some point it'll slow down, but he's also using this as an experiment to see how useful LLMs are for generating plugins, so this will probably change a lot and be highly variable in its code updates!
+
 ## Installation
 
 Use the bundled single-file version from the repository in a `myst.yml` file:
