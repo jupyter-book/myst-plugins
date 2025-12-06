@@ -389,7 +389,7 @@ export const COLUMN_DEFINITIONS = {
       truncateLength: summaryLimit,
       issueUrl: item.url
     });
-  }
+  },
 
   sub_issues: (item, options) => {
     const trackedIssues = item.trackedIssues || [];
