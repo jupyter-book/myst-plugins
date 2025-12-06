@@ -18,7 +18,7 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
-**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `closing_prs` (PRs that will close the issue), `reactions` (shows all reaction types with counts), `comments`, `created`, `updated`, `closed`, `repo`, `body`, `description`, `summary`, plus individual reaction types: `reactions_thumbsup` (👍), `reactions_thumbsdown` (👎), `reactions_laugh` (😄), `reactions_hooray` (🎉), `reactions_confused` (😕), `reactions_heart` (❤️), `reactions_rocket` (🚀), `reactions_eyes` (👀), and any project fields (e.g., `Team Priority`, `Status`) when using a project view
+**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `closing_prs` (PRs that will close the issue),  `sub_issues` (tracked sub-issues), `reactions` (shows all reaction types with counts), `comments`, `created`, `updated`, `closed`, `repo`, `body`, `description`, `summary`, plus individual reaction types: `reactions_thumbsup` (👍), `reactions_thumbsdown` (👎), `reactions_laugh` (😄), `reactions_hooray` (🎉), `reactions_confused` (😕), `reactions_heart` (❤️), `reactions_rocket` (🚀), `reactions_eyes` (👀), and any project fields (e.g., `Team Priority`, `Status`) when using a project view
 
 **Sorting**: Two approaches available:
 - **Recommended:** Use GitHub's native `sort:` in your query (e.g., `org:jupyter-book is:issue sort:reactions-desc`). Supported fields: `reactions`, `interactions`, `comments`, `created`, `updated`. See [GitHub's sorting docs](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results).
@@ -90,6 +90,19 @@ Shows recently updated issues (open or closed) so you can see closed items along
 :::
 ::::::
 
+## Sub-Issues
+
+Show issues with their tracked sub-tasks using GitHub's native sub-issue feature. Use `title-sub_issues` to display the issue title with an inline sub-issues dropdown:
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/mystmd is:issue 189
+:columns: number, title-sub_issues, updated
+:limit: 5
+:::
+::::::
+
+You can also use a separate `sub_issues` column if you prefer a dedicated column.
+
 ## GitHub Project Board
 
 Show issues from a specific GitHub project view (Team Priorities).
@@ -151,7 +164,7 @@ This example shows all possible columns for recently updated issues:
 %not using myst:demo because we can't horizontally scroll
 ```
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
-:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, reactions, comments, created, closed, updated, repo, body, summary
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, sub_issues, reactions, comments, created, closed, updated, repo, body, summary
 :sort: updated-desc
 :body-truncate: 100
 :summary-truncate: 50
@@ -159,7 +172,7 @@ This example shows all possible columns for recently updated issues:
 ```
 
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
-:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, reactions, comments, created, closed, updated, repo, body, summary
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, sub_issues, reactions, comments, created, closed, updated, repo, body, summary
 :sort: updated-desc
 :body-truncate: 100
 :summary-truncate: 50
