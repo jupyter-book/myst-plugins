@@ -23,14 +23,19 @@ function renderPRList(prs) {
     }
 
     if (idx > 0 && prNodes.length > 0) {
-      prNodes.push({ type: "break" });
+      prNodes.push({ type: "text", value: " · " });
     }
-    // Use non-breaking space to keep icon and number together
-    prNodes.push({ type: "text", value: `${icon}\u00A0` });
+    // Wrap icon and link in a span to prevent line breaking between them
     prNodes.push({
-      type: "link",
-      url: String(pr.url),
-      children: [{ type: "text", value: `#${pr.number}` }]
+      type: "span",
+      children: [
+        { type: "text", value: `${icon}\u00A0` },
+        {
+          type: "link",
+          url: String(pr.url),
+          children: [{ type: "text", value: `#${pr.number}` }]
+        }
+      ]
     });
   });
 
