@@ -5,7 +5,9 @@
   "type": "module",
   "main": "dist/index.mjs",
   "scripts": {
-    "build": "node build.mjs"
+    "build": "node build.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest watch"
   },
   "keywords": [
     "myst",
@@ -17,6 +19,7 @@
   "author": "Jupyter Book Team",
   "license": "MIT",
   "devDependencies": {
-    "esbuild": "^0.19.0"
+    "esbuild": "^0.19.0",
+    "vitest": "^3.2.4"
   }
 }
