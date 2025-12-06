@@ -134,6 +134,10 @@ const directive = {
       type: String,
       doc: "Comma-separated keywords to search for in summary extraction (e.g., 'summary,context,overview')"
     },
+    "summary-truncate": {
+      type: Number,
+      doc: "Truncate summary text to this many characters"
+    },
     templates: {
       type: String,
       doc: "Custom column templates: name=My text with {{field}} placeholders; separate multiple with semicolons"
@@ -154,6 +158,7 @@ const directive = {
     const bodyTruncate = data.options?.["body-truncate"];
     const dateFormat = data.options?.["date-format"];
     const summaryHeader = data.options?.["summary-header"];
+    const summaryTruncate = data.options?.["summary-truncate"];
     const templates = data.options?.templates;
 
     // Capture parseMyst for later use in transform
@@ -171,6 +176,7 @@ const directive = {
       bodyTruncate,
       dateFormat,
       summaryHeader,
+      summaryTruncate,
       templates
     }];
   }
@@ -217,6 +223,12 @@ const githubIssueTableTransform = {
           delete placeholder.query;
           delete placeholder.columns;
           delete placeholder.sort;
+          delete placeholder.limit;
+          delete placeholder.bodyTruncate;
+          delete placeholder.dateFormat;
+          delete placeholder.summaryHeader;
+          delete placeholder.summaryTruncate;
+          delete placeholder.templates;
         });
         return;
       }
@@ -224,7 +236,7 @@ const githubIssueTableTransform = {
       // Process each placeholder
       await Promise.all(
         placeholders.map(async (placeholder) => {
-          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, templates: templateString } = placeholder;
+          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, templates: templateString } = placeholder;
           const parseMyst = sharedParseMyst;
           const templates = parseTemplates(templateString);
 
@@ -253,6 +265,8 @@ const githubIssueTableTransform = {
             delete placeholder.limit;
             delete placeholder.bodyTruncate;
             delete placeholder.dateFormat;
+            delete placeholder.summaryHeader;
+            delete placeholder.summaryTruncate;
             return;
           }
 
@@ -265,7 +279,7 @@ const githubIssueTableTransform = {
           }
 
           // Build table with options
-          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, templates, parseMyst });
+          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, templates, parseMyst });
 
           // Replace placeholder with table
           placeholder.type = table.type;
@@ -277,6 +291,7 @@ const githubIssueTableTransform = {
           delete placeholder.bodyTruncate;
           delete placeholder.dateFormat;
           delete placeholder.summaryHeader;
+          delete placeholder.summaryTruncate;
           delete placeholder.templates;
         })
       );

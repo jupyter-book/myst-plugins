@@ -18,7 +18,7 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
-**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `closing_prs` (PRs that will close the issue), `sub_issues` (tracked sub-issues), `reactions` (shows all reaction types with counts), `comments`, `created`, `updated`, `closed`, `repo`, `body`, `summary`, plus individual reaction types: `reactions_thumbsup` (👍), `reactions_thumbsdown` (👎), `reactions_laugh` (😄), `reactions_hooray` (🎉), `reactions_confused` (😕), `reactions_heart` (❤️), `reactions_rocket` (🚀), `reactions_eyes` (👀), and any project fields (e.g., `Team Priority`, `Status`) when using a project view
+**Available columns**: `number`, `title`, `author`, `author_affiliation`, `state`, `labels`, `linked_prs`, `closing_prs` (PRs that will close the issue),  `sub_issues` (tracked sub-issues), `reactions` (shows all reaction types with counts), `comments`, `created`, `updated`, `closed`, `repo`, `body`, `description`, `summary`, plus individual reaction types: `reactions_thumbsup` (👍), `reactions_thumbsdown` (👎), `reactions_laugh` (😄), `reactions_hooray` (🎉), `reactions_confused` (😕), `reactions_heart` (❤️), `reactions_rocket` (🚀), `reactions_eyes` (👀), and any project fields (e.g., `Team Priority`, `Status`) when using a project view
 
 **Sorting**: Two approaches available:
 - **Recommended:** Use GitHub's native `sort:` in your query (e.g., `org:jupyter-book is:issue sort:reactions-desc`). Supported fields: `reactions`, `interactions`, `comments`, `created`, `updated`. See [GitHub's sorting docs](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results).
@@ -28,9 +28,9 @@ export GITHUB_TOKEN=your_token_here
 
 **Date format**: Use `:date-format:` to control how dates in `created`, `updated`, and `closed` columns are displayed. Options: `relative` (e.g., "2d ago"), `absolute` (default, YYYY-MM-DD), or a custom strftime pattern.
 
-**Body truncation**: Use `:body-truncate:` to limit the character length of the `body` column (e.g., `:body-truncate: 200`). This also applies to the `summary` column when using the fallback extraction mode.
+**Body truncation**: Use `:body-truncate:` to limit the character length of the `body` and `description` columns (e.g., `:body-truncate: 200`). Truncated values append a “Read more” link to the issue on GitHub. The `summary` column can be capped separately with `:summary-truncate:` (falls back to `:body-truncate:` when not set) and will also add a “Read more” link when truncated.
 
-**Summary column**: Use the `summary` column to extract intelligent summaries from issue bodies. By default, it searches for headers containing "summary", "context", "overview", "description", "background", or "user story" (case-insensitive) and extracts that section's content up to the next header. If no matching header is found, it extracts everything before the first header or horizontal rule. Use `:summary-header:` to customize the keywords (e.g., `:summary-header: tldr,abstract`).
+**Summary column**: Use the `summary` column to extract intelligent summaries from issue bodies. By default, it searches for headers containing "summary", "context", "overview", "description", "background", or "user story" (case-insensitive) and extracts that section's content up to the next header. If no matching header is found, it extracts everything before the first header or horizontal rule. Use `:summary-header:` to customize the keywords (e.g., `:summary-header: tldr,abstract`) and `:summary-truncate:` to cap the rendered length (it will fall back to `:body-truncate:` when not provided).
 
 **Templates**: Use `:templates:` to add custom columns with `{{field}}` placeholders, and include the template name in `:columns:`. Most core columns (title, number, author, author_affiliation, repo) auto-link.
 
@@ -134,8 +134,10 @@ The `summary` column intelligently extracts summaries from issue bodies:
 
 ::::::{myst:demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
-:columns: title, author, summary
+:columns: title, author, body, summary
 :limit: 5
+:summary-truncate: 150
+:body-truncate: 200
 :::
 ::::::
 
@@ -155,23 +157,6 @@ You can customize the keywords to search for:
 :::
 ::::::
 
-## Issue Body with MyST Parsing
-
-The `body` column parses issue bodies as MyST markdown (stripping header lines first) and supports truncation:
-
-::::::{myst:demo}
-:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
-:columns: title, author, body
-:body-truncate: 200
-:limit: 5
-:::
-::::::
-
-The body column will:
-- Strip out any header lines (lines starting with `#`)
-- Parse the remaining content as MyST markdown (preserving links, formatting, etc.)
-- Truncate to the specified character length if `:body-truncate:` is set
-
 ## All Available Columns
 
 This example shows all possible columns for recently updated issues:
@@ -179,13 +164,16 @@ This example shows all possible columns for recently updated issues:
 %not using myst:demo because we can't horizontally scroll
 ```
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
-:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, sub_issues, reactions, comments, created, closed, updated, repo, body
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, sub_issues, reactions, comments, created, closed, updated, repo, body, summary
 :sort: updated-desc
+:body-truncate: 100
+:summary-truncate: 50
 :::
 ```
 
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-15..2025-11-20
-:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, sub_issues, reactions, comments, created, closed, updated, repo, body
+:columns: number, title, author, author_affiliation, state, labels, linked_prs, closing_prs, sub_issues, reactions, comments, created, closed, updated, repo, body, summary
 :sort: updated-desc
-:format-date: relative
+:body-truncate: 100
+:summary-truncate: 50
 :::
