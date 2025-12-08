@@ -4,7 +4,7 @@
 import { fetchIssues } from "./github-api.mjs";
 import { readCache, writeCache } from "./cache.mjs";
 import { parseTemplates } from "./utils.mjs";
-import { renderCell } from "./columns.mjs";
+import { renderCell, renderSubIssuesBlock } from "./columns.mjs";
 
 let sharedParseMyst = null; // captured from directive ctx; reused in transform
 
@@ -91,6 +91,24 @@ function buildTable(items, columns, options = {}) {
     })
   }));
 
+  // Post-process: add sub-issues to specified column if requested
+  const { subIssuesIn } = options;
+  if (subIssuesIn && columns.includes(subIssuesIn)) {
+    const columnIndex = columns.indexOf(subIssuesIn);
+    dataRows.forEach((row, idx) => {
+      const item = items[idx];
+      const cell = row.children[columnIndex];
+      const subIssuesBlock = renderSubIssuesBlock(item, options);
+
+      if (subIssuesBlock) {
+        // Add spacing before sub-issues block
+        cell.children.push({ type: "text", value: " " });
+        // Append the sub-issues block to the cell
+        cell.children.push(subIssuesBlock);
+      }
+    });
+  }
+
   return {
     type: "table",
     children: [headerRow, ...dataRows]
@@ -138,9 +156,9 @@ const directive = {
       type: Number,
       doc: "Truncate summary text to this many characters"
     },
-    "show-sub-issues": {
-      type: Boolean,
-      doc: "If true, include tracked sub-issues inline under the title column"
+    "append-sub-issues": {
+      type: String,
+      doc: "Column name where sub-issues should be displayed inline (e.g., 'title')"
     },
     templates: {
       type: String,
@@ -163,7 +181,7 @@ const directive = {
     const dateFormat = data.options?.["date-format"];
     const summaryHeader = data.options?.["summary-header"];
     const summaryTruncate = data.options?.["summary-truncate"];
-    const showSubIssues = Boolean(data.options?.["show-sub-issues"]);
+    const subIssuesIn = data.options?.["append-sub-issues"];
     const templates = data.options?.templates;
 
     // Capture parseMyst for later use in transform
@@ -182,7 +200,7 @@ const directive = {
       dateFormat,
       summaryHeader,
       summaryTruncate,
-      showSubIssues,
+      subIssuesIn,
       templates
     }];
   }
@@ -234,7 +252,7 @@ const githubIssueTableTransform = {
           delete placeholder.dateFormat;
           delete placeholder.summaryHeader;
           delete placeholder.summaryTruncate;
-          delete placeholder.showSubIssues;
+          delete placeholder.subIssuesIn;
           delete placeholder.templates;
         });
         return;
@@ -243,7 +261,24 @@ const githubIssueTableTransform = {
       // Process each placeholder
       await Promise.all(
         placeholders.map(async (placeholder) => {
-          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, showSubIssues, templates: templateString } = placeholder;
+          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, templates: templateString } = placeholder;
+
+          // Validate append-sub-issues column if specified
+          if (subIssuesIn && !columns.includes(subIssuesIn)) {
+            placeholder.type = "paragraph";
+            placeholder.children = [{ type: "text", value: `*Error: append-sub-issues column "${subIssuesIn}" not found in columns list*` }];
+            delete placeholder.query;
+            delete placeholder.columns;
+            delete placeholder.sort;
+            delete placeholder.limit;
+            delete placeholder.bodyTruncate;
+            delete placeholder.dateFormat;
+            delete placeholder.summaryHeader;
+            delete placeholder.summaryTruncate;
+            delete placeholder.subIssuesIn;
+            delete placeholder.templates;
+            return;
+          }
           const parseMyst = sharedParseMyst;
           const templates = parseTemplates(templateString);
 
@@ -271,7 +306,7 @@ const githubIssueTableTransform = {
               delete placeholder.dateFormat;
               delete placeholder.summaryHeader;
               delete placeholder.summaryTruncate;
-              delete placeholder.showSubIssues;
+              delete placeholder.subIssuesIn;
               delete placeholder.templates;
               return;
             }
@@ -291,7 +326,7 @@ const githubIssueTableTransform = {
             delete placeholder.dateFormat;
             delete placeholder.summaryHeader;
             delete placeholder.summaryTruncate;
-            delete placeholder.showSubIssues;
+            delete placeholder.subIssuesIn;
             return;
           }
 
@@ -304,7 +339,7 @@ const githubIssueTableTransform = {
           }
 
           // Build table with options
-          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, showSubIssues, templates, parseMyst });
+          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, templates, parseMyst });
 
           // Replace placeholder with table
           placeholder.type = table.type;
@@ -317,7 +352,7 @@ const githubIssueTableTransform = {
           delete placeholder.dateFormat;
           delete placeholder.summaryHeader;
           delete placeholder.summaryTruncate;
-          delete placeholder.showSubIssues;
+          delete placeholder.subIssuesIn;
           delete placeholder.templates;
         })
       );

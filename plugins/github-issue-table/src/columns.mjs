@@ -11,10 +11,25 @@ function renderInlineContent(text, parseMyst) {
   try {
     const parsed = parseMyst(text);
     const children = Array.isArray(parsed?.children) ? parsed.children : [];
+
+    // If single paragraph, return its inline children
     if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
       return children[0].children;
     }
-    return children.length > 0 ? children : [{ type: "text", value: text }];
+
+    // If multiple paragraphs or block elements, extract inline content from all paragraphs
+    // and concatenate with line breaks to keep everything inline
+    const inlineNodes = [];
+    children.forEach((child, idx) => {
+      if (child?.type === "paragraph" && Array.isArray(child.children)) {
+        if (idx > 0) {
+          inlineNodes.push({ type: "break" });
+        }
+        inlineNodes.push(...child.children);
+      }
+    });
+
+    return inlineNodes.length > 0 ? inlineNodes : [{ type: "text", value: text }];
   } catch (err) {
     console.error("Failed to parse content with MyST parser:", err?.message || err);
     return [{ type: "text", value: text }];
@@ -91,62 +106,55 @@ function renderPRList(prs) {
   };
 }
 
-function renderTitleWithSubIssues(item, options) {
+// Render sub-issues as a details/summary block
+function renderSubIssuesBlock(item, options) {
   const trackedIssues = item.trackedIssues || [];
 
-  // Start with the title link
-  const children = [renderTitleLink(item)];
-
-  // Add sub-issues dropdown if any exist
-  if (trackedIssues.length > 0) {
-    // Sort by last updated (most recent first)
-    const sorted = [...trackedIssues].sort((a, b) => {
-      const aTime = a.updated ? new Date(a.updated).getTime() : 0;
-      const bTime = b.updated ? new Date(b.updated).getTime() : 0;
-      return bTime - aTime;
-    });
-
-    const subIssueNodes = [];
-    sorted.forEach((sub, idx) => {
-      if (idx > 0) {
-        subIssueNodes.push({ type: "break" });
-      }
-
-      const icon = sub.state === "OPEN" ? "🟢" : "🟣";
-      subIssueNodes.push({ type: "text", value: `${icon} ` });
-      subIssueNodes.push({
-        type: "link",
-        url: sub.url,
-        children: [{ type: "text", value: sub.title || `#${sub.number}` }]
-      });
-      subIssueNodes.push({
-        type: "text",
-        value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
-      });
-    });
-
-    children.push({ type: "text", value: " " });
-    children.push({
-      type: "details",
-      children: [
-        {
-          type: "summary",
-          children: [{
-            type: "text",
-            value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
-          }]
-        },
-        {
-          type: "paragraph",
-          children: subIssueNodes
-        }
-      ]
-    });
+  if (trackedIssues.length === 0) {
+    return null;
   }
 
+  // Sort by last updated (most recent first)
+  const sorted = [...trackedIssues].sort((a, b) => {
+    const aTime = a.updated ? new Date(a.updated).getTime() : 0;
+    const bTime = b.updated ? new Date(b.updated).getTime() : 0;
+    return bTime - aTime;
+  });
+
+  const subIssueNodes = [];
+  sorted.forEach((sub, idx) => {
+    if (idx > 0) {
+      subIssueNodes.push({ type: "break" });
+    }
+
+    const icon = sub.state === "OPEN" ? "🟢" : "🟣";
+    subIssueNodes.push({ type: "text", value: `${icon} ` });
+    subIssueNodes.push({
+      type: "link",
+      url: sub.url,
+      children: [{ type: "text", value: sub.title || `#${sub.number}` }]
+    });
+    subIssueNodes.push({
+      type: "text",
+      value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
+    });
+  });
+
   return {
-    type: "paragraph",
-    children
+    type: "details",
+    children: [
+      {
+        type: "summary",
+        children: [{
+          type: "text",
+          value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
+        }]
+      },
+      {
+        type: "paragraph",
+        children: subIssueNodes
+      }
+    ]
   };
 }
 
@@ -169,8 +177,7 @@ export const COLUMN_DEFINITIONS = {
     children: [{ type: "text", value: `#${item.number}` }]
   }),
 
-  title: (item, options) =>
-    options?.showSubIssues ? renderTitleWithSubIssues(item, options) : renderTitleLink(item),
+  title: (item, options) => renderTitleLink(item),
 
   state: (item, options) => {
     const icon = item.state === "OPEN" ? "🟢" : "🟣";
@@ -442,6 +449,11 @@ export const COLUMN_DEFINITIONS = {
     };
   },
 };
+
+/**
+ * Export sub-issues block renderer for use in buildTable
+ */
+export { renderSubIssuesBlock };
 
 /**
  * Render a table cell for given column

@@ -18,11 +18,17 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
+**Token scopes**
+
+- For fine-grained PATs: `Issues (read-only)`, `Pull requests (read-only)`, and `Projects (read-only)` if you query project boards; `Metadata` is implied.
+- For classic PATs: `repo` (or `public_repo` for public data only), `read:org` (for org project views), and `project` (for project boards).
+- GitHub Actions `GITHUB_TOKEN` usually works for public data but may need `permissions: contents: read, issues: read, pull-requests: read, projects: read` in the workflow if you query projects.
+- Fine-grained PATs must also be installed on every repository you query (and on repos referenced by org projects). A 401 with correct scopes usually means the token isn’t granted to one of the repos in your query.
+
 **Available columns**:
 
 - `number`
 - `title`
-  - Set `:show-sub-issues:` to `true` to render tracked sub-issues inline under the `title` column instead of a separate `sub_issues` column.
 - `author`
 - `author_affiliation`
 - `state`
@@ -123,17 +129,17 @@ Shows recently updated issues (open or closed) so you can see closed items along
 
 ## Sub-Issues
 
-Show issues with their tracked sub-tasks using GitHub's native sub-issue feature. Use `:show-sub-issues:` to inline sub-issues under the `title` column:
+Show issues with their tracked sub-tasks using GitHub's native sub-issue feature. Use `:append-sub-issues: [column]` to inline sub-issues at the bottom of a specific column:
 
 ::::::{myst:demo}
 :::{issue-table} repo:jupyter-book/mystmd is:issue 189
 :columns: number, title, updated
-:show-sub-issues: true
+:append-sub-issues: title
 :limit: 5
 :::
 ::::::
 
-You can also use a separate `sub_issues` column if you prefer a dedicated column.
+You can also use a separate `sub_issues` column if you prefer a dedicated column, or display sub-issues in any other column like `updated` or `author`.
 
 ## GitHub Project Board
 
