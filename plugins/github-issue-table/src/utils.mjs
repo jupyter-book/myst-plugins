@@ -173,10 +173,9 @@ export function linkifyHandle(handle) {
  * Extract summary from issue body
  * @param {string} body - Issue body text
  * @param {string} summaryHeader - Comma-separated keywords to search for (default: "summary,context,overview,description,background,user story")
- * @param {number} truncateLength - Truncation length (only applied in fallback case)
  * @returns {string} Extracted summary text
  */
-export function extractSummary(body, summaryHeader = "summary,context,overview,description,background,user story", truncateLength = null) {
+export function extractSummary(body, summaryHeader = "summary,context,overview,description,background,user story") {
   if (!body) return "";
 
   const lines = body.split("\n");
@@ -224,8 +223,5 @@ export function extractSummary(body, summaryHeader = "summary,context,overview,d
     contentLines.push(line);
   }
 
-  const fallbackContent = contentLines.join("\n").trim();
-
-  // Apply truncation only in fallback case
-  return truncateText(fallbackContent, truncateLength);
+  return contentLines.join("\n").trim();
 }
