@@ -52,7 +52,7 @@ function renderLongFormText(text, { parseMyst, truncateLength, stripHeaderLines 
     inlineNodes.push({
       type: "link",
       url: issueUrl,
-      children: [{ type: "text", value: "Read more" }]
+      children: [{ type: "text", value: "More" }],
     });
   }
 
@@ -382,8 +382,7 @@ export const COLUMN_DEFINITIONS = {
     // Extract summary using header keywords or fallback logic
     const summaryText = extractSummary(
       item.body || "",
-      options.summaryHeader || "summary,context,overview,description,background,user story",
-      summaryLimit
+      options.summaryHeader || "summary,context,overview,description,background,user story"
     );
 
     if (!summaryText) {
