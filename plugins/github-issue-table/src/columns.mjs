@@ -108,14 +108,14 @@ function renderPRList(prs) {
 
 // Render sub-issues as a details/summary block
 function renderSubIssuesBlock(item, options) {
-  const trackedIssues = item.trackedIssues || [];
+  const subIssues = item.subIssues || [];
 
-  if (trackedIssues.length === 0) {
+  if (subIssues.length === 0) {
     return null;
   }
 
   // Sort by last updated (most recent first)
-  const sorted = [...trackedIssues].sort((a, b) => {
+  const sorted = [...subIssues].sort((a, b) => {
     const aTime = a.updated ? new Date(a.updated).getTime() : 0;
     const bTime = b.updated ? new Date(b.updated).getTime() : 0;
     return bTime - aTime;
@@ -147,7 +147,7 @@ function renderSubIssuesBlock(item, options) {
         type: "summary",
         children: [{
           type: "text",
-          value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
+          value: `${subIssues.length} sub-issue${subIssues.length === 1 ? '' : 's'}`
         }]
       },
       {
@@ -398,14 +398,14 @@ export const COLUMN_DEFINITIONS = {
   },
 
   sub_issues: (item, options) => {
-    const trackedIssues = item.trackedIssues || [];
+    const subIssues = item.subIssues || [];
 
-    if (trackedIssues.length === 0) {
+    if (subIssues.length === 0) {
       return { type: "text", value: "" };
     }
 
     // Sort by last updated (most recent first)
-    const sorted = [...trackedIssues].sort((a, b) => {
+    const sorted = [...subIssues].sort((a, b) => {
       const aTime = a.updated ? new Date(a.updated).getTime() : 0;
       const bTime = b.updated ? new Date(b.updated).getTime() : 0;
       return bTime - aTime;
@@ -438,7 +438,7 @@ export const COLUMN_DEFINITIONS = {
           type: "summary",
           children: [{
             type: "text",
-            value: `${trackedIssues.length} sub-issue${trackedIssues.length === 1 ? '' : 's'}`
+            value: `${subIssues.length} sub-issue${subIssues.length === 1 ? '' : 's'}`
           }]
         },
         {

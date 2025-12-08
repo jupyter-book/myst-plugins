@@ -129,7 +129,7 @@ const ISSUE_FIELDS_FRAGMENT = `
         }
       }
     }
-    trackedIssues(first: 20) {
+    subIssues(first: 100) {
       nodes {
         number
         title
@@ -560,8 +560,8 @@ function normalizeIssueData(item, projectNode = null) {
     .filter(Boolean);
   const closingPRs = linkedPRs.filter(pr => pr.willClose);
 
-  // Extract tracked issues (sub-issues)
-  const trackedIssues = (item.trackedIssues?.nodes || []).map(sub => ({
+  // Extract sub-issues
+  const subIssues = (item.subIssues?.nodes || []).map(sub => ({
     number: sub.number,
     title: sub.title,
     url: sub.url,
@@ -610,7 +610,7 @@ function normalizeIssueData(item, projectNode = null) {
     isDraft: item.isDraft || false,
     linkedPRs,
     closingPRs,
-    trackedIssues,
+    subIssues,
     type: item.mergedAt !== undefined ? "PR" : "Issue",
     ...projectFields  // Flatten project fields into main object
   };
