@@ -286,14 +286,25 @@ const githubIssueTableTransform = {
           const cacheKey = `${query}|limit:${limit}|sort:${sort || "none"}`;
 
           // Check cache
-          let items = readCache(cacheKey);
+          let cachedData = readCache(cacheKey);
+          let items;
+          let effectiveSort = sort; // The sort to actually use
 
           // If no cache, fetch data
-          if (!items) {
+          if (!cachedData) {
             try {
               console.log(`Fetching GitHub data for query: ${query} (limit: ${limit}, sort: ${sort || "none"})`);
-              items = await fetchIssues(query, token, limit, sort);
-              writeCache(cacheKey, items);
+              const { items: fetchedItems, viewSort } = await fetchIssues(query, token, limit, sort);
+
+              // Use view's sort as default if no explicit sort was provided
+              if (!sort && viewSort) {
+                effectiveSort = viewSort;
+                console.log(`Using project view's sort: ${viewSort}`);
+              }
+
+              cachedData = { items: fetchedItems, viewSort };
+              writeCache(cacheKey, cachedData);
+              items = fetchedItems;
             } catch (err) {
               console.error("Error fetching GitHub data:", err);
               placeholder.type = "paragraph";
@@ -312,6 +323,12 @@ const githubIssueTableTransform = {
             }
           } else {
             console.log(`Using cached data for query: ${query} (limit: ${limit}, sort: ${sort || "none"})`);
+            items = cachedData.items || cachedData; // Handle both old and new cache formats
+
+            // Use view's sort as default if no explicit sort was provided
+            if (!sort && cachedData.viewSort) {
+              effectiveSort = cachedData.viewSort;
+            }
           }
 
           if (items.length === 0) {
@@ -330,8 +347,8 @@ const githubIssueTableTransform = {
             return;
           }
 
-          // Sort items
-          let sorted = sortItems(items, sort);
+          // Sort items using effectiveSort (explicit :sort: or view's default)
+          let sorted = sortItems(items, effectiveSort);
 
           // Apply limit after sorting (fetch may have retrieved more items for accurate sorting)
           if (limit && limit > 0 && sorted.length > limit) {
