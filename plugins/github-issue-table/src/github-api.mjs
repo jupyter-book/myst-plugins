@@ -184,14 +184,14 @@ const PR_FIELDS_FRAGMENT = `
 // ============================================================================
 
 /**
- * Fetch project view filter using GraphQL
+ * Fetch project view filter and sort configuration using GraphQL
  * @param {Object} projectInfo - Parsed project info
  * @param {string} token - GitHub API token
- * @returns {Promise<Object>} { found: boolean, filter: string|null }
+ * @returns {Promise<Object>} { found: boolean, filter: string|null, sort: Array|null }
  */
 async function fetchProjectViewFilter(projectInfo, token) {
   const { type, owner, number, viewNumber } = projectInfo;
-  if (!viewNumber) return { found: false, filter: null };
+  if (!viewNumber) return { found: false, filter: null, sort: null };
 
   const graphqlQuery = `
     query($owner: String!, $number: Int!) {
@@ -201,6 +201,22 @@ async function fetchProjectViewFilter(projectInfo, token) {
             nodes {
               number
               filter
+              sortByFields(first: 5) {
+                nodes {
+                  field {
+                    ... on ProjectV2Field {
+                      name
+                    }
+                    ... on ProjectV2SingleSelectField {
+                      name
+                    }
+                    ... on ProjectV2IterationField {
+                      name
+                    }
+                  }
+                  direction
+                }
+              }
             }
           }
         }
@@ -237,12 +253,24 @@ async function fetchProjectViewFilter(projectInfo, token) {
     const views = ownerData?.projectV2?.views?.nodes || [];
     const view = views.find(v => v?.number === viewNumber);
     if (!view) {
-      return { found: false, filter: null };
+      return { found: false, filter: null, sort: null };
     }
-    return { found: true, filter: view.filter ?? "" };
+
+    // Extract sort configuration from sortByFields
+    const sortByFields = view.sortByFields?.nodes || [];
+    const sort = sortByFields
+      .map(sortField => {
+        const fieldName = sortField.field?.name;
+        const direction = sortField.direction?.toLowerCase(); // ASC or DESC
+        if (!fieldName || !direction) return null;
+        return { field: fieldName, direction };
+      })
+      .filter(Boolean);
+
+    return { found: true, filter: view.filter ?? "", sort: sort.length > 0 ? sort : null };
   } catch (error) {
     console.error("Failed to fetch project view filter:", error.message);
-    return { found: false, filter: null };
+    return { found: false, filter: null, sort: null };
   }
 }
 
@@ -251,7 +279,7 @@ async function fetchProjectViewFilter(projectInfo, token) {
  * @param {Object} projectInfo - Parsed project info
  * @param {string} token - GitHub API token
  * @param {number} limit - Maximum number of results to fetch (default: 100)
- * @returns {Promise<Array>} Array of normalized issue/PR objects
+ * @returns {Promise<Object>} { items: Array, viewSort: Array|null } - items and view's sort config
  */
 async function fetchProjectIssues(projectInfo, token, limit = 100) {
   const { type, owner, number, viewNumber, viewQuery } = projectInfo;
@@ -260,13 +288,15 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
   // Resolve the query used by the project view (if provided)
   let itemQuery = viewQuery ? viewQuery.trim() : null;
   let viewFound = !viewNumber;
+  let viewSort = null;
   if (viewNumber && itemQuery) {
     viewFound = true;
   }
 
   if (!itemQuery && viewNumber) {
-    const { filter, found } = await fetchProjectViewFilter(projectInfo, token);
+    const { filter, found, sort } = await fetchProjectViewFilter(projectInfo, token);
     viewFound = found;
+    viewSort = sort;
     if (filter !== null && filter !== undefined) {
       itemQuery = String(filter).trim() || null;
     }
@@ -274,7 +304,7 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
 
   if (viewNumber && !viewFound) {
     console.error(`Project view ${viewNumber} not found for ${type} ${owner}`);
-    return [];
+    return { items: [], viewSort: null };
   }
 
   // Use the view's filter as-is
@@ -397,7 +427,8 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
       .map(node => normalizeIssueData(node.content, node));
 
     // Ensure we don't return more than requested
-    return filtered.slice(0, maxLimit);
+    const items = filtered.slice(0, maxLimit);
+    return { items, viewSort };
   } catch (error) {
     console.error("Failed to fetch from GitHub project:", error.message);
     throw error;
@@ -626,14 +657,24 @@ function normalizeIssueData(item, projectNode = null) {
  * @param {string} token - GitHub API token
  * @param {number} limit - Maximum number of results to fetch (default: 100)
  * @param {string} sortSpec - Sort specification (e.g., "reactions-desc,updated-desc")
- * @returns {Promise<Array>} Array of normalized issue/PR objects
+ * @returns {Promise<Object>} { items: Array, viewSort: string|null } - items and optional view sort
  */
 export async function fetchIssues(input, token, limit = 100, sortSpec = null) {
   // Check if input is a project URL
   const projectInfo = parseProjectUrl(input);
   if (projectInfo) {
     // Note: Project queries don't support server-side sorting via GraphQL
-    return await fetchProjectIssues(projectInfo, token, limit);
+    const { items, viewSort } = await fetchProjectIssues(projectInfo, token, limit);
+
+    // Convert viewSort array to plugin sort spec format
+    let viewSortSpec = null;
+    if (viewSort && viewSort.length > 0) {
+      viewSortSpec = viewSort
+        .map(s => `${s.field}-${s.direction}`)
+        .join(',');
+    }
+
+    return { items, viewSort: viewSortSpec };
   }
 
   // Otherwise treat as search query
@@ -655,5 +696,6 @@ export async function fetchIssues(input, token, limit = 100, sortSpec = null) {
     fetchLimit = limit;
   }
 
-  return await fetchIssuesFromSearch(query, token, fetchLimit);
+  const items = await fetchIssuesFromSearch(query, token, fetchLimit);
+  return { items, viewSort: null };
 }
