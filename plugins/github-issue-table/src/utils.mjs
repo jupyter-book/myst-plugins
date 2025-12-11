@@ -108,17 +108,30 @@ export function parseTemplates(templateString) {
 
 /**
  * Fill template with item data
+ * Returns empty string if all template fields are empty/missing
  * @param {string} template - Template string with {{field}} placeholders
  * @param {Object} item - Data object
- * @returns {string} Filled template
+ * @returns {string} Filled template or empty string if all fields are empty
  */
 export function fillTemplate(template, item) {
   if (!template) return "";
-  return template.replace(/{{\s*([^}]+)\s*}}/g, (_match, fieldName) => {
+
+  let hasAnyValue = false;
+  const filled = template.replace(/{{\s*([^}]+)\s*}}/g, (_match, fieldName) => {
     const field = fieldName.trim();
     const value = item[field];
-    return String(value ?? "");
+    const stringValue = String(value ?? "");
+
+    // Track if any field has a non-empty value
+    if (stringValue !== "" && stringValue !== "undefined" && stringValue !== "null") {
+      hasAnyValue = true;
+    }
+
+    return stringValue;
   });
+
+  // Return empty string if all fields were empty
+  return hasAnyValue ? filled : "";
 }
 
 /**
