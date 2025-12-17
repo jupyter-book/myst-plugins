@@ -9,10 +9,13 @@ project:
     - file: example/picsum.md
     - file: example/markup.md
     - file: example/update-date.md   
-    - file: example/github-issue-table.md
-    - file: example/github-issue-link.md
-    - file: example/github-handle-links.md
     - file: example/emoji-shortcodes.md
+
+    - title: GitHub
+      children:
+      - file: example/github-issue-table.md
+      - file: example/github-issue-link.md
+      - file: example/github-handle-links.md
 
     - title: pdf export plugins
       children:
@@ -20,6 +23,7 @@ project:
       - file: example/iframe-to-qr.md
       - file: example/pdf_exercise.md
       - file: example/typst-conversion-support.md
+
     - title: admonitons
       children:
       - file: example/experiment.md    

@@ -6,6 +6,7 @@ exports:
       id: pdf_exercise
 downloads:
     - id: pdf_exercise
+name: Luuk Fröling
 ---
 
 # exercise admonition pdf

@@ -7,6 +7,7 @@ exports:
 downloads:
     - id: iframe-to-thumbnail
 updated: October 9, 2025
+name: Luuk Fröling
 ---
 
 # iframe-to-thumbnail pdf

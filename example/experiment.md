@@ -6,6 +6,7 @@ exports:
       id: pdf_experiment
 downloads:
     - id: pdf_experiment
+name: Luuk Fröling
 ---
 
 # Custom admonition called Experiment

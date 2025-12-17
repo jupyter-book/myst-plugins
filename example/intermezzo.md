@@ -6,6 +6,7 @@ exports:
       id: pdf_intermezzo
 downloads:
     - id: pdf_intermezzo
+name: Luuk Fröling
 ---
 
 # Intermezzo

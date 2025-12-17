@@ -6,6 +6,7 @@ exports:
       id: pdf_example
 downloads:
     - id: pdf_example
+name: Luuk Fröling
 ---
 
 # Example

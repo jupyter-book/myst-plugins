@@ -6,7 +6,7 @@ exports:
       id: iframe-to-qr
 downloads:
     - id: iframe-to-qr
-
+name: Luuk Fröling
 updated: October 9, 2025
 ---
 

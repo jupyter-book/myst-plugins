@@ -1,6 +1,7 @@
 ---
 updated: October 7, 2025
 abstract: page about updated date
+name: Luuk Fröling
 ---
 
 # Updated-date
