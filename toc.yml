@@ -16,13 +16,13 @@ project:
 
     - title: pdf export plugins
       children:
-        - file: example/iframe-to-thumbnail.md
-        - file: example/iframe-to-qr.md
-        - file: example/pdf_exercise.md
-        - file: example/typst-conversion-support.md
+      - file: example/iframe-to-thumbnail.md
+      - file: example/iframe-to-qr.md
+      - file: example/pdf_exercise.md
+      - file: example/typst-conversion-support.md
     - title: admonitons
       children:
-        - file: example/experiment.md    
-        - file: example/intermezzo.md
-        - file: example/example.md
+      - file: example/experiment.md    
+      - file: example/intermezzo.md
+      - file: example/example.md
 
