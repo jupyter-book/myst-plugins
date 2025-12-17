@@ -6,6 +6,7 @@ exports:
       id: iframe-to-thumbnail
 downloads:
     - id: iframe-to-thumbnail
+updated: October 9, 2025
 ---
 
 # iframe-to-thumbnail pdf

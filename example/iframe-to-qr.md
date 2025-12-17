@@ -6,6 +6,8 @@ exports:
       id: iframe-to-qr
 downloads:
     - id: iframe-to-qr
+
+updated: October 9, 2025
 ---
 
 # iframe-to-qr pdf

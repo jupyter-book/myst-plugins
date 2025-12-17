@@ -1,3 +1,6 @@
+---
+updated: November 28, 2025
+---
 # GitHub Issue Link
 
 Automatically decorates GitHub issue links with titles and state badges.

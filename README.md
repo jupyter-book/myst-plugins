@@ -3,7 +3,7 @@
 This is (as yet) a non-official repository for MyST plugins.
 
 ## Contribute
-We welcome new plugins! To share your plugin, please fork this repository, add your plugin, update the gallery table below and include an example page to demonstrate its output, then submit a pull request. Edits and improvements to existing plugins are also encouraged.
+We welcome new plugins! To share your plugin, please fork this repository, add your plugin, update the gallery table below and include an example page to demonstrate its output (note that the toc is in the toc.yml file), then submit a pull request. Edits and improvements to existing plugins are also encouraged.
 
 We distinguish three levels of plugin maturity:  
 * in development: the plugin is still being developed and may have bugs or incomplete features. It may not be fully documented or tested. Use at your own risk.

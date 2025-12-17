@@ -1,3 +1,7 @@
+---
+updated: November 28, 2025
+---
+
 # GitHub Handle Links
 
 Automatically converts `@username` mentions into links to GitHub profiles.

@@ -1,3 +1,6 @@
+---
+updated: November 28, 2025
+---
 # GitHub Issue Table
 
 Renders GitHub issues and PRs as tables from search queries or GitHub URLs.

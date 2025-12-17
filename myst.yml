@@ -3,49 +3,16 @@ version: 1
 project:
   id: f1082c4e-082a-4655-a225-d9dde40f31b9
   title: myst-plugins
-  date: 2024-09-01
+  date: 2025-08-28 # created
   # description:
   # keywords: []
   # authors:
-
   
   github: https://github.com/jupyter-book/myst-plugins
 
-  plugins:
-    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/experiment-admonition.mjs
-    - https://github.com/jupyter-book/myst-plugins/releases/download/exercise-and-solution-pdf/exercise-admonition-pdf.mjs
-    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/intermezzo-admonition.mjs
-    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/example-admonition.mjs
-    - plugins/picsum/picsum.mjs
-    - plugins/markup/markup.mjs
-    # - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
-    - https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs
-    - https://github.com/jupyter-book/myst-plugins/releases/download/updated-date-frontmatter/update-date-frontmatter.mjs
-    - plugins/github-issue-table/src/index.mjs
-    - plugins/github-issue-link/src/index.mjs
-    - plugins/github-handle-links/src/index.mjs
-    - plugins/demo/src/index.mjs
-    - plugins/emoji-shortcodes/emoji-shortcodes.mjs
-
-  # To autogenerate a Table of Contents, run "myst init --write-toc"
-  toc:
-    - file: example/index.md
-    - file: README.md
-    - file: example/myst-demo.md
-    - file: example/experiment.md
-    - file: example/pdf_exercise.md
-    - file: example/picsum.md
-    - file: example/markup.md
-    - file: example/intermezzo.md
-    - file: example/example.md
-    - file: example/iframe-to-thumbnail.md
-    - file: example/iframe-to-qr.md
-    - file: example/update-date.md
-    - file: example/typst-conversion-support.md
-    - file: example/github-issue-table.md
-    - file: example/github-issue-link.md
-    - file: example/github-handle-links.md
-    - file: example/emoji-shortcodes.md
+extends:
+  - plugins.yml
+  - toc.yml
 
 
 site:

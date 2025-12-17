@@ -1,0 +1,28 @@
+version: 1
+project:
+  id: f1082c4e-082a-4655-a225-d9dde40f31b9
+
+  toc:
+    - file: example/index.md
+    - file: README.md
+    - file: example/myst-demo.md
+    - file: example/picsum.md
+    - file: example/markup.md
+    - file: example/update-date.md   
+    - file: example/github-issue-table.md
+    - file: example/github-issue-link.md
+    - file: example/github-handle-links.md
+    - file: example/emoji-shortcodes.md
+
+    - title: pdf export plugins
+      children:
+        - file: example/iframe-to-thumbnail.md
+        - file: example/iframe-to-qr.md
+        - file: example/pdf_exercise.md
+        - file: example/typst-conversion-support.md
+    - title: admonitons
+      children:
+        - file: example/experiment.md    
+        - file: example/intermezzo.md
+        - file: example/example.md
+

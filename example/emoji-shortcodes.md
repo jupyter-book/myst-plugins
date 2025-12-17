@@ -1,3 +1,6 @@
+---
+updated: October 9, 2025
+---
 # Emoji shortcodes 
 
 The following emoji is expressed in the raw markdown as `:smile:`:

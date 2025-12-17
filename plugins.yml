@@ -1,0 +1,19 @@
+version: 1
+project:
+  id: f1082c4e-082a-4655-a225-d9dde40f31b9
+
+  plugins:
+    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/experiment-admonition.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/exercise-and-solution-pdf/exercise-admonition-pdf.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/intermezzo-admonition.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/example-admonition.mjs
+    - plugins/picsum/picsum.mjs
+    - plugins/markup/markup.mjs
+    # - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs
+    - https://github.com/jupyter-book/myst-plugins/releases/download/updated-date-frontmatter/update-date-frontmatter.mjs
+    - plugins/github-issue-table/src/index.mjs
+    - plugins/github-issue-link/src/index.mjs
+    - plugins/github-handle-links/src/index.mjs
+    - plugins/demo/src/index.mjs
+    - plugins/emoji-shortcodes/emoji-shortcodes.mjs
