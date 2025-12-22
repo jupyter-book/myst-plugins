@@ -25,6 +25,7 @@ See the docstring of that script for usage information.
 ## Gallery of plugins
 |name|functionalities|type|requirements|status|maintainer(s)|Embed link|
 |---|---|---|---|---|---|---|
+| auto updater | A plugin that automatically slots in the latest update date per page | transform | incl single line of code in deploy.yml | tested | Freek Pols | | 
 | experiment-admonition | A custom admonition with its transform for converting to pdf | directive & transform | requires custom css | stable | Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/experiment-admonition.mjs) |
 | intermezzo-admonition | A custom admonition with its transform for converting to pdf | directive & transform | requires custom css | stable | Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/intermezzo-admonition.mjs) |
 | example-admonition | A custom admonition with its transform for converting to pdf | directive & transform | requires custom css | stable | Luuk Fröling & Freek Pols | [Link](https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/example-admonition.mjs) |
