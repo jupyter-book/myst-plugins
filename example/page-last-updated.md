@@ -1,5 +1,5 @@
 ---
-title: page last updated
+title: Page last updated
 name: Freek Pols
 ---
 
