@@ -17,4 +17,4 @@ project:
     - plugins/github-handle-links/src/index.mjs
     - plugins/demo/src/index.mjs
     - plugins/emoji-shortcodes/emoji-shortcodes.mjs
-    - plugins/autoupdater/autoupdater.mjs
+    - plugins/page-last-updated/page-last-updated.mjs
