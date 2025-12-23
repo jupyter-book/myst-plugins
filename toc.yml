@@ -9,7 +9,7 @@ project:
     - file: example/picsum.md
     - file: example/markup.md
     - file: example/update-date.md   
-    - file: example/autoupdater.md
+    - file: example/page-last-updated.md
     - file: example/emoji-shortcodes.md
 
     - title: GitHub
