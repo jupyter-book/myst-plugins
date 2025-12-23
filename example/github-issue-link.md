@@ -1,5 +1,4 @@
 ---
-updated: November 28, 2025
 name: Chris Holdgraf
 ---
 # GitHub Issue Link

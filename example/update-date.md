@@ -25,3 +25,5 @@ To correctly position the update date below the title, add the following CSS to 
 }
 ```
 ⚠️ Important: Without this CSS rule, there may be extra space between the title and the update date.
+
+Note, this plugin allows to manually set the updated date per page. If you want to automatically set the updated date based on the git history, check out the [page-last-updated plugin](page-last-updated.md) instead.
