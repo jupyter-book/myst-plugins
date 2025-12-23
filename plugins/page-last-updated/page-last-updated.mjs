@@ -1,3 +1,5 @@
+// JB plugin checking the latest update per page, slotting in that date in the frontmatter
+
 import { execSync } from 'child_process';
 import path from 'path';
 
@@ -14,10 +16,10 @@ function getGitUpdatedISOForFile(filePathAbs) {
   try {
     const repoRoot = getRepoRoot();
 
-    // BELANGRIJK: relative pad vanaf repo root
+    // checks relative path
     const rel = path.relative(repoRoot, filePathAbs).replace(/\\/g, '/'); // windows-safe
 
-    // --follow = volg ook renames/moves (optioneel, maar vaak gewenst)
+    // --follow = checks renamed files
     // %cI = strict ISO 8601
     const iso = execSync(`git log -1 --follow --format=%cI -- "${rel}"`, {
       cwd: repoRoot,
@@ -34,11 +36,13 @@ function getGitUpdatedISOForFile(filePathAbs) {
   }
 }
 
+// returns date in given format
 function formatDateNL(iso) {
   const d = new Date(iso);
   return new Intl.DateTimeFormat('nl-NL', { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
 }
 
+// slots in the date per page
 const updateDateTransform = {
   name: 'update-date',
   stage: 'document',
