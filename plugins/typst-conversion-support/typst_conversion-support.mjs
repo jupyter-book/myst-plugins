@@ -60,7 +60,7 @@ function loadMapping(mappingPath, inlineMap) {
   return inlineMap ?? DEFAULTS;
 }
 
-// generieke helper voor gebalanceerde LaTeX-commando's
+// generic helper for balancing LaTeX-commands
 function replaceBalancedCommand(src, cmd, mapper) {
   const needle = `\\${cmd}`;
   let i = 0;
@@ -96,9 +96,9 @@ function replaceAllTextBalanced(src) {
   });
 }
 
-// \hline → horizontale regel (in Typst kun je dit vervangen door "---" of iets soortgelijks)
+// \hline → horizontal line (in Typst replaced by "---" )
 function replaceAllHline(src) {
-  // Alleen vervangen als het op zichzelf staat, niet binnen woorden
+  // onyly replace when it is stand alone, not with text
   return src.replace(/\\hline\b/g, "---");
 }
 
@@ -127,7 +127,7 @@ function replaceAllTfracBalanced(src) {
     const start = src.indexOf(needle, i);
     if (start === -1) break;
 
-    // eerste {
+    // first {
     const open1 = src.indexOf('{', start + needle.length);
     if (open1 === -1) break;
     let depth = 1, j = open1 + 1;
@@ -139,7 +139,7 @@ function replaceAllTfracBalanced(src) {
     if (depth !== 0) break;
     const inner1 = src.slice(open1 + 1, j - 1);
 
-    // tweede {
+    // second {
     const open2 = src.indexOf('{', j);
     if (open2 === -1) break;
     depth = 1;
@@ -163,7 +163,7 @@ function replaceAllTfracBalanced(src) {
 function makeRewriter({ mappingPath, mapping } = {}) {
   const mapObj = loadMapping(mappingPath, mapping);
 
-  // 1) letterlijke mapping (\oint → ∮, …) – geen partial matches
+  // 1) literal mapping (\oint → ∮, …) – no partial matches
   const entries = Object.entries(mapObj).sort((a, b) => b[0].length - a[0].length);
   const literalRewrite = (src) => {
     let out = src;
@@ -173,7 +173,7 @@ function makeRewriter({ mappingPath, mapping } = {}) {
     return out;
   };
 
-  // 2) structurele vervangingen
+  // 2) structural replacement
   const structuralRewrite = (src) => {
     let s = src;
     s = replaceAllTextBalanced(s);
