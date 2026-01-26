@@ -26,11 +26,9 @@ for it in items:
     maintainers = it.get("maintainers","")
     url = it.get("embed_link", "")
 
-    
-    # Create the card
-    lines.append(f"|{name}|{functionalities}|{type}|{requirements}|{status}|{maintainers}|{url}|")
+    lines.append(f"|{name}|{functionalities}|{type}|{requirements}|{status}|{maintainers}|[{url}](link)|")
     
 DST.parent.mkdir(parents=True, exist_ok=True)
 DST.write_text("\n".join(lines), encoding="utf-8")
 
-print(f"✅ gallery.txt generated at {DST}")
+print(f"✅ plugin_overview.txt generated at {DST}")
