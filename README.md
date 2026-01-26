@@ -39,3 +39,5 @@ See the docstring of that script for usage information.
 | github-handle-links | Converts `@username` mentions to GitHub profile links | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |
 | emoji-shortcodes | Converts emoji shortcodes (`:smile:`) to unicode emojis (😊) at build time | transform | | in development | Matt Fisher | - |
 
+```{include} _build/temp/gallery.txt
+```
