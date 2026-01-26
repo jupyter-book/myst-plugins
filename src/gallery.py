@@ -3,7 +3,7 @@ import yaml
 import html
 
 
-SRC = Path("../plugin_overview.yml")
+SRC = Path("plugin_overview.yml")
 DST = Path("_build/temp/plugin_overview.txt")
 
 def esc(t: str) -> str:
