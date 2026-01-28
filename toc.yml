@@ -4,7 +4,6 @@ project:
 
   toc:
     - file: index.md
-    - file: plugin_overview.md
     
     - file: example/myst-demo.md
     - file: example/picsum.md
