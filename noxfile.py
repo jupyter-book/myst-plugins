@@ -31,3 +31,8 @@ def release(session):
     See src/release.py for details. This just passes args and kwargs to that script.
     """
     session.run("python", "-m", "src.release", *session.posargs)
+
+@nox.session(name="generate-plugin-overview")
+def generate_plugin_overview(session):
+    session.install("pyyaml")
+    session.run("python", "src/generate_plugin_overview.py")
