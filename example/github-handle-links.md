@@ -27,16 +27,11 @@ export GITHUB_TOKEN=your_token_here
 
 ::::::{myst:demo}
 Thanks to @kirstiejane and @mfisher87 for their work on MyST!
-Note that @thisincorrectusername won't resolve and throw a warning (as it should!), and `@usernamesinbackticks` won't be touched.
+
+- Incorrect usernames won't be touched: `@usernamesinbackticks`.
+- Already-linked usernames won't be touched: [@kirstiejane](https://mystmd.org)
 ::::::
 
-## Already linked handles
-
-If a handle is already wrapped in a link, the plugin won't change the link (or add an unnecessary one):
-
-::::::{myst:demo}
-Check out [@choldgraf](https://github.com/choldgraf) on GitHub.
-::::::
 
 ## How it works
 
