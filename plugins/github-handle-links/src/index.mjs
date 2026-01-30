@@ -63,6 +63,8 @@ function collectCiteMentions(root) {
   visit(root, null, (node, parent) => {
     if (!node || node.type !== "cite") return;
     if (!parent || !Array.isArray(parent.children)) return;
+    // Skip if the parent is already a link (avoid nested links)
+    if (parent.type === "link") return;
     const label = node.label || node.identifier || "";
     const handle = (node.identifier || label || "").replace(/^@/, "");
     const lower = handle.toLowerCase();

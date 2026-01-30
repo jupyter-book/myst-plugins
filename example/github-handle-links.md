@@ -30,6 +30,14 @@ Thanks to @kirstiejane and @mfisher87 for their work on MyST!
 Note that @thisincorrectusername won't resolve and throw a warning (as it should!), and `@usernamesinbackticks` won't be touched.
 ::::::
 
+## Already linked handles
+
+If a handle is already wrapped in a link, the plugin won't change the link (or add an unnecessary one):
+
+::::::{myst:demo}
+Check out [@choldgraf](https://github.com/choldgraf) on GitHub.
+::::::
+
 ## How it works
 
 The plugin:
@@ -37,4 +45,5 @@ The plugin:
 - Validates handles via GitHub API
 - Creates profile links automatically
 - Skips mentions in code blocks
+- Skips handles already wrapped in links
 - Filters citation warnings for handled mentions
