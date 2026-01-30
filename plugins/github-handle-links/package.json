@@ -1,0 +1,24 @@
+{
+  "name": "@jupyter-book/myst-plugin-github-handle-links",
+  "version": "0.1.0",
+  "description": "MyST plugin to convert @username mentions into GitHub profile links",
+  "type": "module",
+  "main": "src/index.mjs",
+  "scripts": {
+    "lint": "node --check src/*.mjs",
+    "test": "npm run lint && vitest run",
+    "test:watch": "vitest watch"
+  },
+  "keywords": [
+    "myst",
+    "plugin",
+    "github",
+    "handles",
+    "markdown"
+  ],
+  "author": "Jupyter Book Team",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^3.2.4"
+  }
+}

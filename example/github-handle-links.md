@@ -27,8 +27,11 @@ export GITHUB_TOKEN=your_token_here
 
 ::::::{myst:demo}
 Thanks to @kirstiejane and @mfisher87 for their work on MyST!
-Note that @thisincorrectusername won't resolve and throw a warning (as it should!), and `@usernamesinbackticks` won't be touched.
+
+- Incorrect usernames won't be touched: `@usernamesinbackticks`.
+- Already-linked usernames won't be touched: [@kirstiejane](https://mystmd.org)
 ::::::
+
 
 ## How it works
 
@@ -37,4 +40,5 @@ The plugin:
 - Validates handles via GitHub API
 - Creates profile links automatically
 - Skips mentions in code blocks
+- Skips handles already wrapped in links
 - Filters citation warnings for handled mentions
