@@ -3,8 +3,8 @@ project:
   id: f1082c4e-082a-4655-a225-d9dde40f31b9
 
   toc:
-    - file: example/index.md
-    - file: README.md
+    - file: index.md
+    
     - file: example/myst-demo.md
     - file: example/picsum.md
     - file: example/markup.md

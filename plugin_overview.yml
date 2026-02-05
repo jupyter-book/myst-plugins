@@ -1,0 +1,140 @@
+# ==========================
+# TO ADD YOUR PLUGIN TO THIS GALLERY
+# Anybody is welcome to contribute.
+# Copy-paste an entry to the end of this file.
+# Add in the metadata for your book.
+# Keep the description brief, limited to 500 characters (including spaces).
+# Add a page in the example folder to demonstrate your plugin.
+# ==========================
+
+# - name: <name>
+#   functionalities: <description>
+#   type: <directive / transform>
+#   requirements: <requirements>
+#   status: <development / tested / stable>
+#   maintainers:
+#     - <NAME>
+#   embed_link: <URL> 
+
+- name: page-last-updated
+  functionalities: A plugin that automatically slots in the latest update date per page
+  type: transform
+  requirements: "requires to set fetch depth in deploy.yml `fetch-depth: 0`"
+  status: tested
+  maintainers:
+    - Freek Pols
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/page-last-updated/page-last-updated.mjs
+
+- name: experiment-admonition
+  functionalities: A custom admonition with its transform for converting to pdf
+  type: directive & transform
+  requirements: requires custom css
+  status: stable
+  maintainers:
+    - Luuk Fröling
+    - Freek Pols
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/experiment-admonition.mjs
+
+- name: intermezzo-admonition
+  functionalities: A custom admonition with its transform for converting to pdf
+  type: directive & transform
+  requirements: requires custom css
+  status: stable
+  maintainers:
+    - Luuk Fröling
+    - Freek Pols
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/intermezzo-admonition.mjs
+
+- name: example-admonition
+  functionalities: A custom admonition with its transform for converting to pdf
+  type: directive & transform
+  requirements: requires custom css
+  status: stable
+  maintainers:
+    - Luuk Fröling
+    - Freek Pols
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/Admonitions/example-admonition.mjs
+
+- name: ex-and-sol-pdf
+  functionalities: A plugin that converts exercises and solutions to numbered exercises and solutions in both LaTeX and Typst pdf
+  type: transform
+  requirements: null
+  status: stable
+  maintainers:
+    - Luuk Fröling
+    - Freek Pols
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/exercise-and-solution-pdf/exercise-admonition-pdf.mjs
+
+- name: updated-date-frontmatter
+  functionalities: A plugin which adds the date of the last update to the top of the page
+  type: null
+  requirements: null
+  status: stable
+  maintainers:
+    - Luuk Fröling
+    - Freek Pols
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/updated-date-frontmatter/update-date-frontmatter.mjs
+
+- name: iframe
+  functionalities: A plugin that replaces iframe elements with a qr code as figure and a caption with the link so that it is accessible in pdf format
+  type: transform
+  requirements: null
+  status: in development
+  maintainers:
+    - Luuk Fröling
+    - Freek Pols
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs
+
+- name: picsum
+  functionalities: A plugin that adds a directive to include random images from picsum.photos
+  type: directive
+  requirements: null
+  status: stable
+  maintainers:
+    - Angus Hollands
+  embed_link: null
+
+- name: typst-conversion-support
+  functionalities: A plugin that converts missing conversions from Latex to Typst
+  type: transform
+  requirements: null
+  status: in development
+  maintainers:
+    - Freek Pols
+  embed_link: null
+
+- name: github-issue-table
+  functionalities: Renders GitHub issues/PRs as tables from search queries or project URLs. Supports custom columns, multi-column sorting, styled labels, and project fields
+  type: directive
+  requirements: GITHUB_TOKEN
+  status: in development
+  maintainers:
+    - "@choldgraf"
+  embed_link: null
+
+- name: github-issue-link
+  functionalities: Automatically decorates GitHub issue/PR links with titles and state badges
+  type: transform
+  requirements: GITHUB_TOKEN (optional)
+  status: in development
+  maintainers:
+    - "@choldgraf"
+  embed_link: null
+
+- name: github-handle-links
+  functionalities: Converts `@username` mentions to GitHub profile links
+  type: transform
+  requirements: GITHUB_TOKEN (optional)
+  status: in development
+  maintainers:
+    - "@choldgraf"
+  embed_link: null
+
+- name: emoji-shortcodes
+  functionalities: Converts emoji shortcodes (`:smile:`) to unicode emojis (😊) at build time
+  type: transform
+  requirements: null
+  status: in development
+  maintainers:
+    - Matt Fisher
+  embed_link: null
