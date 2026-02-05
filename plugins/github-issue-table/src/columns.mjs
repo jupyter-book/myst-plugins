@@ -330,6 +330,7 @@ export const COLUMN_DEFINITIONS = {
           style: {
             display: "inline-block",
             fontSize: "0.875rem",
+            fontFamily: "monospace",
             whiteSpace: "nowrap",
             padding: "0.125rem 0.5rem",
             margin: "0.125rem 0",
