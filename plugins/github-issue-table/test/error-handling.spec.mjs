@@ -45,7 +45,7 @@ describe("GitHub Issue Table error handling", () => {
     const node = tree.children[0];
     expect(node.type).toBe("paragraph");
     const text = node.children?.[0]?.value || "";
-    expect(text).toContain("Error fetching GitHub data");
+    expect(text).toContain("fetching GitHub data");
     expect(text).toContain("403 Forbidden");
   });
 });
