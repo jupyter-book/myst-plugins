@@ -5,7 +5,7 @@ name: Chris Holdgraf
 
 Renders GitHub issues and PRs as tables from search queries or GitHub URLs.
 
-## Usage
+## Setup
 
 Add to your `myst.yml`:
 
@@ -21,69 +21,43 @@ Set the `GITHUB_TOKEN` environment variable for authentication:
 export GITHUB_TOKEN=your_token_here
 ```
 
-**Token scopes**
+:::{dropdown} Token scopes
+- **Fine-grained PATs**: `Issues (read-only)`, `Pull requests (read-only)`, and `Projects (read-only)` if you query project boards; `Metadata` is implied.
+- **Classic PATs**: `repo` (or `public_repo` for public data only), `read:org` (for org project views), and `project` (for project boards).
+- **GitHub Actions**: usually works for public data but may need `permissions: contents: read, issues: read, pull-requests: read, projects: read` if you query projects.
+- Fine-grained PATs must also be installed on every repository you query. A 401 with correct scopes usually means the token isn't granted to one of the repos in your query.
+:::
 
-- For fine-grained PATs: `Issues (read-only)`, `Pull requests (read-only)`, and `Projects (read-only)` if you query project boards; `Metadata` is implied.
-- For classic PATs: `repo` (or `public_repo` for public data only), `read:org` (for org project views), and `project` (for project boards).
-- GitHub Actions `GITHUB_TOKEN` usually works for public data but may need `permissions: contents: read, issues: read, pull-requests: read, projects: read` in the workflow if you query projects.
-- Fine-grained PATs must also be installed on every repository you query (and on repos referenced by org projects). A 401 with correct scopes usually means the token isn’t granted to one of the repos in your query.
+Results are cached locally, so reusing the same query across tables only fetches data once.
 
-**Available columns**:
+## Quick Start
 
-- `number`
-- `title`
-- `author`
-- `author_affiliation`
-- `state`
-- `labels`
-- `linked_prs`
-- `closing_prs` (PRs that will close the issue)
-- `sub_issues` (tracked sub-issues)
-- `comments`
-- `created`
-- `updated`
-- `closed`
-- `repo`
-- `body`
-- `description`
-- `summary`
-- `reactions` (shows all reaction types with counts)
-- individual reaction types:
-  - `reactions_thumbsup` (👍)
-  - `reactions_thumbsdown` (👎)
-  - `reactions_laugh` (😄)
-  - `reactions_hooray` (🎉)
-  - `reactions_confused` (😕)
-  - `reactions_heart` (❤️)
-  - `reactions_rocket` (🚀)
-  - `reactions_eyes` (👀)
-- Any project fields (e.g. `Team Priority`, `Status`) when using a project view.
+The directive takes a GitHub search query and renders matching issues as a table. Use `:columns:` to pick which columns to show and `:limit:` to control how many rows (default 25).
 
+::::::{myst:demo}
+:::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 sort:reactions-desc
+:columns: title, author, reactions, updated
+:limit: 5
+:::
+::::::
 
-**Sorting**: Two approaches available:
-- **Recommended:** Use GitHub's native `sort:` in your query (e.g. `org:jupyter-book is:issue sort:reactions-desc`). Supported fields: `reactions`, `interactions`, `comments`, `created`, `updated`. See [GitHub's sorting docs](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results).
-- **Advanced:** Use `:sort:` option for multi-column sorting (e.g., `:sort: reactions-desc,updated-desc`) or project fields (e.g., `:sort: Team Priority-asc`).
+## Available Columns
 
-**Limit**: By default, tables fetch and show 25 items from the GitHub API. Use `:limit:` to fetch more (e.g., `:limit: 50`) or fewer results. This reduces API calls and helps avoid rate limits.
+- `number`, `title`, `author`, `author_affiliation`, `state`
+- `labels`, `linked_prs`, `closing_prs`, `sub_issues`, `comments`
+- `created`, `updated`, `closed`, `repo`
+- `body` — full issue body (headers stripped)
+- `description` — project board Description field
+- `summary` — extracted section from the issue body (see [Summary Column](#summary-column))
+- `reactions` — all reaction types with counts
+- Individual reactions: `reactions_thumbsup`, `reactions_thumbsdown`, `reactions_laugh`, `reactions_hooray`, `reactions_confused`, `reactions_heart`, `reactions_rocket`, `reactions_eyes`
+- Any project field name (e.g., `Team Priority`, `Status`) when querying a project view
 
-**Date format**: Use `:date-format:` to control how dates in `created`, `updated`, and `closed` columns are displayed. Options: `relative` (e.g., "2d ago"), `absolute` (default, YYYY-MM-DD), or a custom strftime pattern.
+## Sorting
 
-**Truncation**: Use `:body-truncate: N` to limit `body`, `description`, and `summary` columns to approximately N visible text characters. Truncated content appends a "More" link to the full issue. The `summary` column can be capped independently with `:summary-truncate:` (falls back to `:body-truncate:` when not set). Truncation is applied after Markdown parsing, so it never produces broken links or formatting.
+Use GitHub's native `sort:` in your search query for single-column sorting (recommended). See [GitHub's sorting docs](https://docs.github.com/en/search-github/getting-started-with-searching-on-github/sorting-search-results) for supported fields. For multi-column or project-field sorting, use the `:sort:` option.
 
-**Summary column**: Extracts a section from the issue body by searching for headers matching keywords like "summary", "context", "overview", "description", "background", or "user story" (case-insensitive), and returns that section's content up to the next header. Falls back to everything before the first header or horizontal rule. Customize keywords with `:summary-header:` (e.g., `:summary-header: tldr,abstract`).
-
-**Long-form columns**: `body` shows the full issue body (with headers stripped). `description` shows a project board's Description field. `summary` extracts a relevant section from the body (see above).
-
-**Templates**: Use `:templates:` to add custom columns with `{{field}}` placeholders, and include the template name in `:columns:`. Most core columns (title, number, author, author_affiliation, repo) auto-link.
-
-**Note**: Set `GITHUB_TOKEN` environment variable to use this plugin.
-
-The same query is reused across tables, so data is only fetched once and cached locally.
-
-
-## Open PRs in the Jupyter Book organization
-
-Using GitHub's native sort (recommended for single-column sorting):
+**Options**: `:sort:` (string) — comma-separated `column-direction` pairs, e.g., `reactions-desc,updated-asc`
 
 ::::::{myst:demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 sort:reactions-desc
@@ -91,16 +65,7 @@ Using GitHub's native sort (recommended for single-column sorting):
 :::
 ::::::
 
-Show individual reaction types:
-
-::::::{myst:demo}
-:::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 sort:reactions-desc
-:columns: title, reactions_thumbsup, reactions_heart, reactions_rocket
-:limit: 10
-:::
-::::::
-
-Or use `:sort:` option for multi-column sorting:
+Multi-column sorting with `:sort:`:
 
 ::::::{myst:demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
@@ -111,7 +76,9 @@ Or use `:sort:` option for multi-column sorting:
 
 ## Date Formatting
 
-Use `:date-format:` to show relative dates (e.g., "2d ago") instead of absolute dates:
+Use `:date-format:` to control how `created`, `updated`, and `closed` columns display.
+
+**Options**: `:date-format:` (string) — `relative` (e.g., "2d ago") or `absolute` (default, YYYY-MM-DD)
 
 ::::::{myst:demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 updated:2025-11-01..2025-11-20
@@ -121,71 +88,27 @@ Use `:date-format:` to show relative dates (e.g., "2d ago") instead of absolute 
 :::
 ::::::
 
-## Jupyter Book Issues (Closed + Closing PRs)
+## Truncation
 
-Shows recently updated issues (open or closed) so you can see closed items alongside any closing PRs:
+Limit `body`, `description`, and `summary` columns to approximately N characters of visible text. Truncated content appends a "More" link to the full issue. Truncation is applied after Markdown is parsed, so it never produces broken links or formatting.
 
-::::::{myst:demo}
-:::{issue-table} repo:jupyter-book/jupyter-book is:issue updated:2025-11-25..2025-12-05 sort:updated-desc
-:columns: title, linked_prs, closing_prs, labels, reactions
-:limit: 10
-:::
-::::::
-
-## Sub-Issues
-
-Show issues with their tracked sub-tasks using GitHub's native sub-issue feature.
-Use `:append-sub-issues: [column]` to inline sub-issues at the bottom of a specific column:
-
-::::::{myst:demo}
-:::{issue-table} repo:jupyter-book/mystmd is:issue 1921
-:columns: number, title, updated
-:append-sub-issues: title
-:limit: 5
-:::
-::::::
-
-You can also use a separate `sub_issues` column if you prefer a dedicated column, or display sub-issues in any other column like `updated` or `author`.
-
-## GitHub Project Board
-
-Show issues from a specific GitHub project view (Team Priorities).
-In this case, the board's own filter acts as our filter, there is no extra "search query" for project boards.
+**Options**: `:body-truncate:` (number), `:summary-truncate:` (number) — summary falls back to body-truncate when not set
 
 ::::::{myst:demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
-:columns: title, Team Priority, linked_prs, closing_prs, reactions
-:sort: Team Priority-asc, reactions_thumbsup-desc
-:::
-::::::
-
-You can include custom project columns by using the field name (e.g., `Status`, `Team Priority`, etc.) and sort by them.
-
-## Template columns
-
-Add bespoke columns that pull from other fields using `{{field}}` placeholders:
-
-::::::{myst:demo}
-:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
-:columns: title, repo, author, issue_link, repo_link, issue_cta
-:templates: issue_link=[View issue]({{url}}); repo_link=[Repo home](https://github.com/{{repo}}); issue_cta={button}`Open issue <{{url}}>`
-:::
-::::::
-
-## Summary, Body, and Truncation
-
-Comparing `body` (full issue body, headers stripped) and `summary` (extracted section), both truncated:
-
-::::::{myst:demo}
-:::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
-:columns: title, author, body, summary
+:columns: title, body, summary
 :limit: 5
-:summary-truncate: 150
 :body-truncate: 200
+:summary-truncate: 150
 :::
 ::::::
 
-Customize which headers the `summary` column searches for with `:summary-header:`:
+(summary-column)=
+## Summary Column
+
+The `summary` column extracts a section from the issue body by searching for headers matching keywords (case-insensitive). It returns that section's content up to the next header. If no matching header is found, it falls back to everything before the first header or horizontal rule.
+
+**Options**: `:summary-header:` (string) — comma-separated keywords to match, default: `summary,context,overview,description,background,user story`
 
 ::::::{myst:demo}
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
@@ -195,10 +118,49 @@ Customize which headers the `summary` column searches for with `:summary-header:
 :::
 ::::::
 
+## Sub-Issues
+
+Show tracked sub-tasks using GitHub's sub-issue feature. Inline them at the bottom of a specific column, or use a dedicated `sub_issues` column.
+
+**Options**: `:append-sub-issues:` (string) — column name to inline sub-issues into
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/mystmd is:issue 1921
+:columns: number, title, updated
+:append-sub-issues: title
+:limit: 5
+:::
+::::::
+
+## Project Boards
+
+Pass a GitHub project view URL instead of a search query. The board's own filter acts as the query, and you can use project field names (e.g., `Team Priority`, `Status`) as columns and sort by them.
+
+::::::{myst:demo}
+:::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
+:columns: title, Team Priority, linked_prs, closing_prs, reactions
+:sort: Team Priority-asc, reactions_thumbsup-desc
+:::
+::::::
+
+## Templates
+
+Add custom columns using `{{field}}` placeholders and include the template name in `:columns:`.
+
+**Options**: `:templates:` (string) — semicolon-separated definitions, e.g., `name=Text with {{field}}; other=More {{data}}`
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
+:columns: title, repo, author, issue_link, repo_link, issue_cta
+:templates: issue_link=[View issue]({{url}}); repo_link=[Repo home](https://github.com/{{repo}}); issue_cta={button}`Open issue <{{url}}>`
+:::
+::::::
+
 ## Column Widths
 
-Use `:widths:` to control column width percentages. Provide one value per column, comma-separated.
-If the values sum to more than 100%, they are normalized proportionally.
+Set column width percentages (one per column). Values are normalized proportionally if they sum to more than 100%.
+
+**Options**: `:widths:` (string) — comma-separated percentages, e.g., `60,20,20`
 
 ::::::{myst:demo}
 :::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 sort:reactions-desc
@@ -208,9 +170,9 @@ If the values sum to more than 100%, they are normalized proportionally.
 :::
 ::::::
 
-## All Available Columns
+## All Columns
 
-This example shows all possible columns for recently updated issues:
+All available columns for reference:
 
 %not using myst:demo because we can't horizontally scroll
 ```
