@@ -68,9 +68,11 @@ export GITHUB_TOKEN=your_token_here
 
 **Date format**: Use `:date-format:` to control how dates in `created`, `updated`, and `closed` columns are displayed. Options: `relative` (e.g., "2d ago"), `absolute` (default, YYYY-MM-DD), or a custom strftime pattern.
 
-**Body truncation**: Use `:body-truncate:` to limit the character length of the `body` and `description` columns (e.g., `:body-truncate: 200`). Truncated values append a “Read more” link to the issue on GitHub. The `summary` column can be capped separately with `:summary-truncate:` (falls back to `:body-truncate:` when not set) and will also add a “Read more” link when truncated.
+**Truncation**: Use `:body-truncate: N` to limit `body`, `description`, and `summary` columns to approximately N visible text characters. Truncated content appends a "More" link to the full issue. The `summary` column can be capped independently with `:summary-truncate:` (falls back to `:body-truncate:` when not set). Truncation is applied after Markdown parsing, so it never produces broken links or formatting.
 
-**Summary column**: Use the `summary` column to extract intelligent summaries from issue bodies. By default, it searches for headers containing "summary", "context", "overview", "description", "background", or "user story" (case-insensitive) and extracts that section's content up to the next header. If no matching header is found, it extracts everything before the first header or horizontal rule. Use `:summary-header:` to customize the keywords (e.g., `:summary-header: tldr,abstract`) and `:summary-truncate:` to cap the rendered length (it will fall back to `:body-truncate:` when not provided).
+**Summary column**: Extracts a section from the issue body by searching for headers matching keywords like "summary", "context", "overview", "description", "background", or "user story" (case-insensitive), and returns that section's content up to the next header. Falls back to everything before the first header or horizontal rule. Customize keywords with `:summary-header:` (e.g., `:summary-header: tldr,abstract`).
+
+**Long-form columns**: `body` shows the full issue body (with headers stripped). `description` shows a project board's Description field. `summary` extracts a relevant section from the body (see above).
 
 **Templates**: Use `:templates:` to add custom columns with `{{field}}` placeholders, and include the template name in `:columns:`. Most core columns (title, number, author, author_affiliation, repo) auto-link.
 
@@ -170,9 +172,9 @@ Add bespoke columns that pull from other fields using `{{field}}` placeholders:
 :::
 ::::::
 
-## Issue Summary Column
+## Summary, Body, and Truncation
 
-The `summary` column intelligently extracts summaries from issue bodies:
+Comparing `body` (full issue body, headers stripped) and `summary` (extracted section), both truncated:
 
 ::::::{myst:demo}
 :::{issue-table} https://github.com/orgs/jupyter-book/projects/1/views/7
@@ -183,13 +185,7 @@ The `summary` column intelligently extracts summaries from issue bodies:
 :::
 ::::::
 
-The summary column will:
-- Search for headers containing "summary", "context", "overview", "description", "background", or "user story" (case-insensitive)
-- Extract the content under that header up to the next header
-- If no matching header is found, extract everything before the first header or horizontal rule
-- Parse the extracted content as MyST markdown
-
-You can customize the keywords to search for:
+Customize which headers the `summary` column searches for with `:summary-header:`:
 
 ::::::{myst:demo}
 :::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15

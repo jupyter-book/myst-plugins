@@ -1,62 +1,47 @@
 // Column Definitions for GitHub Issue Table Plugin
 
-import { stripBrackets, stripHeaders, formatDate, truncateTextWithFlag, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
+import { stripBrackets, stripHeaders, formatDate, truncateTree, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
 
-// Parse text through MyST (when available) and return inline children
-function renderInlineContent(text, parseMyst) {
-  if (!text) {
-    return [{ type: "text", value: "" }];
-  }
-
-  try {
-    const parsed = parseMyst(text);
-    const children = Array.isArray(parsed?.children) ? parsed.children : [];
-
-    // If single paragraph, return its inline children
-    if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
-      return children[0].children;
-    }
-
-    // If multiple paragraphs or block elements, extract inline content from all paragraphs
-    // and concatenate with line breaks to keep everything inline
-    const inlineNodes = [];
-    children.forEach((child, idx) => {
-      if (child?.type === "paragraph" && Array.isArray(child.children)) {
-        if (idx > 0) {
-          inlineNodes.push({ type: "break" });
-        }
-        inlineNodes.push(...child.children);
-      }
-    });
-
-    return inlineNodes.length > 0 ? inlineNodes : [{ type: "text", value: text }];
-  } catch (err) {
-    console.error("Failed to parse content with MyST parser:", err?.message || err);
-    return [{ type: "text", value: text }];
-  }
-}
-
-// Wrap inline nodes in a paragraph
-function renderParagraphFromInline(inlineNodes) {
-  return { type: "paragraph", children: inlineNodes };
-}
-
-// Shared renderer for long-form fields (body, description, summary) with truncation + link out
+// Render long-form text (body, description, summary) with optional truncation
 function renderLongFormText(text, { parseMyst, truncateLength, stripHeaderLines = false, issueUrl = "" }) {
-  const cleanedText = stripHeaderLines ? stripHeaders(text || "") : (text || "");
-  const { text: truncatedText, truncated } = truncateTextWithFlag(cleanedText, truncateLength);
+  const content = stripHeaderLines ? stripHeaders(text || "") : (text || "");
+  if (!content) return { type: "text", value: "" };
 
-  const inlineNodes = renderInlineContent(truncatedText, parseMyst);
-  if (truncated && issueUrl) {
-    inlineNodes.push({ type: "text", value: " " });
-    inlineNodes.push({
-      type: "link",
-      url: issueUrl,
-      children: [{ type: "text", value: "More" }],
-    });
+  if (typeof parseMyst !== "function") {
+    return { type: "text", value: content };
   }
 
-  return renderParagraphFromInline(inlineNodes);
+  let parsed;
+  try {
+    parsed = parseMyst(content);
+  } catch {
+    return { type: "text", value: content };
+  }
+
+  let children = parsed?.children || [];
+  let truncated = false;
+
+  if (truncateLength && truncateLength > 0) {
+    const result = truncateTree(children, truncateLength);
+    truncated = result.remaining <= 0;
+    children = result.nodes;
+  }
+
+  // Append "More" link as an AST node if truncated
+  if (truncated && issueUrl) {
+    const moreLink = { type: "link", url: issueUrl, children: [{ type: "text", value: "More" }] };
+    // Find the last paragraph-like node and append inline, or add a new paragraph
+    const last = children[children.length - 1];
+    if (last?.children && (last.type === "paragraph" || last.type === "text")) {
+      last.children.push({ type: "text", value: " " }, moreLink);
+    } else {
+      children.push({ type: "paragraph", children: [moreLink] });
+    }
+  }
+
+  return children.length > 0
+    ? { type: "div", children }
+    : { type: "text", value: content };
 }
 
 function renderPRList(prs) {

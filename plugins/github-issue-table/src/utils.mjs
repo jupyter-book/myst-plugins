@@ -240,6 +240,43 @@ export function extractSummary(body, summaryHeader = "summary,context,overview,d
 }
 
 /**
+ * Truncate an AST node array by character budget.
+ * Walks depth-first counting text node characters; once the budget is
+ * exhausted the current text node is cut at a word boundary and all
+ * remaining siblings are dropped. Structure nodes (links, emphasis, etc.)
+ * stay properly nested.
+ * @param {Array} nodes - Array of AST nodes
+ * @param {number} remaining - Character budget
+ * @returns {{ nodes: Array, remaining: number }}
+ */
+export function truncateTree(nodes, remaining) {
+  const result = [];
+  for (const node of nodes) {
+    if (remaining <= 0) break;
+
+    if (node.type === "text") {
+      if (node.value.length <= remaining) {
+        result.push(node);
+        remaining -= node.value.length;
+      } else {
+        const slice = node.value.substring(0, remaining);
+        const lastSpace = slice.lastIndexOf(" ");
+        const cutoff = lastSpace > 0 ? lastSpace : remaining;
+        result.push({ type: "text", value: node.value.substring(0, cutoff).trimEnd() + "..." });
+        remaining = 0;
+      }
+    } else if (node.children) {
+      const inner = truncateTree(node.children, remaining);
+      result.push({ ...node, children: inner.nodes });
+      remaining = inner.remaining;
+    } else {
+      result.push(node);
+    }
+  }
+  return { nodes: result, remaining };
+}
+
+/**
  * Parse comma-separated width values and normalize if sum exceeds 100%
  * @param {string} widthsStr - Comma-separated width percentages (e.g., "30,50,20")
  * @returns {number[]} Array of width percentages
