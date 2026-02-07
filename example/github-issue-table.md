@@ -199,6 +199,19 @@ You can customize the keywords to search for:
 :::
 ::::::
 
+## Column Widths
+
+Use `:widths:` to control column width percentages. Provide one value per column, comma-separated.
+If the values sum to more than 100%, they are normalized proportionally.
+
+::::::{myst:demo}
+:::{issue-table} org:jupyter-book is:pr is:open updated:>=2025-11-01 sort:reactions-desc
+:columns: title, author, reactions
+:widths: 60,20,20
+:limit: 5
+:::
+::::::
+
 ## All Available Columns
 
 This example shows all possible columns for recently updated issues:

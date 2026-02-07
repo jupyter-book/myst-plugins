@@ -238,3 +238,14 @@ export function extractSummary(body, summaryHeader = "summary,context,overview,d
 
   return contentLines.join("\n").trim();
 }
+
+/**
+ * Parse comma-separated width values and normalize if sum exceeds 100%
+ * @param {string} widthsStr - Comma-separated width percentages (e.g., "30,50,20")
+ * @returns {number[]} Array of width percentages
+ */
+export function parseWidths(widthsStr) {
+  const widths = widthsStr.split(",").map(w => parseFloat(w.trim()));
+  const sum = widths.reduce((a, b) => a + b, 0);
+  return sum > 100 ? widths.map(w => (w / sum) * 100) : widths;
+}
