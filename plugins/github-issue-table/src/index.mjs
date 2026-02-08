@@ -198,6 +198,10 @@ const directive = {
     widths: {
       type: String,
       doc: "Comma-separated column width percentages (e.g., '30,50,20'). Normalized if sum exceeds 100%."
+    },
+    "label-columns": {
+      type: String,
+      doc: "Define label subset columns: name=pattern,pattern; separate multiple with semicolons (e.g., 'type=type:*; priority=priority:*')"
     }
   },
   run(data, _vfile, ctx) {
@@ -219,6 +223,7 @@ const directive = {
     const subIssuesIn = data.options?.["append-sub-issues"];
     const templates = data.options?.templates;
     const widths = data.options?.widths;
+    const labelColumnsStr = data.options?.["label-columns"];
 
     // Capture parseMyst for later use in transform
     if (!sharedParseMyst && ctx?.parseMyst) {
@@ -238,7 +243,8 @@ const directive = {
       summaryTruncate,
       subIssuesIn,
       templates,
-      widths
+      widths,
+      labelColumnsStr
     }];
   }
 };
@@ -284,7 +290,7 @@ const githubIssueTableTransform = {
       // Process each placeholder
       await Promise.all(
         placeholders.map(async (placeholder) => {
-          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, widths: widthsStr, templates: templateString } = placeholder;
+          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, widths: widthsStr, templates: templateString, labelColumnsStr } = placeholder;
 
           // Validate directive options
           const validationError = validateOptions({ columns, subIssuesIn, widths: widthsStr });
@@ -295,6 +301,7 @@ const githubIssueTableTransform = {
 
           const parseMyst = sharedParseMyst;
           const templates = parseTemplates(templateString);
+          const labelColumns = parseTemplates(labelColumnsStr);
           const widths = widthsStr ? parseWidths(widthsStr) : undefined;
 
           // Include limit and sort in cache key (different sorts return different "top N" items)
@@ -349,7 +356,7 @@ const githubIssueTableTransform = {
           }
 
           // Build table with options
-          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, templates, parseMyst, widths });
+          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, templates, labelColumns, parseMyst, widths });
 
           // Replace placeholder with table
           Object.keys(placeholder).forEach(k => { if (k !== "type") delete placeholder[k]; });

@@ -9,6 +9,22 @@ const TEMPLATE_FILTERS = {
 };
 
 /**
+ * Check if a label name matches a comma-separated list of glob patterns.
+ * Patterns support `*` as a wildcard; without a wildcard the match is exact.
+ * @param {string} label - Label to test
+ * @param {string} patternString - Comma-separated glob patterns
+ * @returns {boolean}
+ */
+export function matchesLabelPattern(label, patternString) {
+  return patternString.split(",").some(p => {
+    const pattern = p.trim();
+    if (!pattern.includes("*")) return label === pattern;
+    const regex = new RegExp("^" + pattern.replace(/[-[\]{}()+?.\\^$|]/g, "\\$&").replace(/\*/g, ".*") + "$");
+    return regex.test(label);
+  });
+}
+
+/**
  * Remove [...] and (...) content from the beginning of titles
  * @param {string} title - Title to clean
  * @returns {string} Cleaned title

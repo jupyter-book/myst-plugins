@@ -170,6 +170,56 @@ Use `{{ field | filter }}` to transform a value before insertion. This is useful
 :::
 ::::::
 
+## Label Subset Columns
+
+By default the `labels` column shows all labels on an issue. Use `:label-columns:` to show only a subset of labels, or to split labels into separate named columns.
+Definitions use `[column name]=[patterns]` syntax, separated by semicolons. 
+
+For example the following defines one column called `fooandbar` that will show only the labels `foo` or `bar` (if matched) and another column called `type` that matches any label beginning with `type:`:
+
+```
+:label-columns: fooandbar=foo,bar;type=type:*
+```
+
+You can then include any `[column name]` listed in this argument in your `:columns:` option.
+
+Values are comma-separated glob patterns where `*` matches any characters. A label is included if it matches **any** pattern in the list for a column.
+
+### Filter the labels column
+
+Use `labels` as the column name to filter the built-in labels column. Only matching labels are shown:
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open sort:updated-desc
+:columns: title, labels
+:label-columns: labels=enhancement,bug
+:limit: 5
+:::
+::::::
+
+### Named label columns
+
+Use any name to create a new column. Include the name in `:columns:` and it renders as styled label badges:
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open sort:updated-desc
+:columns: title, type, labels
+:label-columns: type=type:*; labels=enhancement,bug
+:limit: 5
+:::
+::::::
+
+### Pattern matching
+
+Patterns support `*` as a wildcard. Without a wildcard, the pattern must match the label name exactly.
+
+| Pattern | Matches | Doesn't match |
+|---------|---------|---------------|
+| `bug` | `bug` | `type:bug` |
+| `type:*` | `type:bug`, `type:feature` | `priority:high` |
+| `*-request` | `feature-request` | `bug` |
+| `type:*,bug` | `type:feature`, `bug` | `priority:high` |
+
 ## Column Widths
 
 Set column width percentages (one per column). Values are normalized proportionally if they sum to more than 100%.
