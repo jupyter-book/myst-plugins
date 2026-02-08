@@ -13,11 +13,8 @@ export function matchesLabelPattern(label, patternString) {
   });
 }
 
-/** Remove [...] and (...) prefixes from titles. */
-export function stripBrackets(title) {
-  if (!title) return "";
-  return title.replace(/^(\[.*?\]|\(.*?\))\s*/g, "").trim();
-}
+// Re-export stripBrackets from shared utilities
+export { stripBrackets } from "../../github-shared/utils.mjs";
 
 export function stripHeaders(text) {
   if (!text) return "";

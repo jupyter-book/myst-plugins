@@ -1,7 +1,9 @@
 import { fetchIssues } from "./github-api.mjs";
-import { readCache, writeCache } from "./cache.mjs";
+import { createCache, walk } from "../../github-shared/utils.mjs";
 import { parseTemplates, parseWidths } from "./utils.mjs";
 import { renderCell, renderSubIssuesBlock } from "./columns.mjs";
+
+const { readCache, writeCache } = createCache("github-search");
 
 let sharedParseMyst = null; // captured from directive ctx; reused in transform
 
@@ -238,16 +240,6 @@ const directive = {
 };
 
 
-function walk(node, callback) {
-  if (!node) return;
-  callback(node);
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      walk(child, callback);
-    }
-  }
-}
-
 const githubIssueTableTransform = {
   name: "github-issue-table-transform",
   stage: "document",
@@ -257,7 +249,7 @@ const githubIssueTableTransform = {
       const placeholders = [];
 
       // Find all placeholder nodes
-      walk(tree, (node) => {
+      walk(tree, null, (node) => {
         if (node?.type === "githubIssueTablePlaceholder") {
           placeholders.push(node);
         }
