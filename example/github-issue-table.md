@@ -156,6 +156,20 @@ Add custom columns using `{{field}}` placeholders and include the template name 
 :::
 ::::::
 
+### Filters
+
+Use `{{ field | filter }}` to transform a value before insertion. This is useful when embedding values in URLs where special characters must be encoded.
+
+**Available filters**: `urlencode` — percent-encodes the value for safe use in URLs
+
+::::::{myst:demo}
+:::{issue-table} repo:jupyter-book/jupyter-book is:issue is:open updated:>2025-11-15
+:columns: title, author, search_link
+:templates: search_link=[Search title](https://github.com/search?q={{ title | urlencode }})
+:limit: 5
+:::
+::::::
+
 ## Column Widths
 
 Set column width percentages (one per column). Values are normalized proportionally if they sum to more than 100%.

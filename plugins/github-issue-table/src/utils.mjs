@@ -1,5 +1,13 @@
 // Utility Functions for GitHub Issue Table Plugin
 
+/** Filters available inside {{field | filter}} template expressions.
+ * We are hand-rolling these for now but if we ever need a lot more of them we
+ * should just use nunjucks.
+*/
+const TEMPLATE_FILTERS = {
+  urlencode: (v) => encodeURIComponent(v),
+};
+
 /**
  * Remove [...] and (...) content from the beginning of titles
  * @param {string} title - Title to clean
@@ -117,14 +125,20 @@ export function fillTemplate(template, item) {
   if (!template) return "";
 
   let hasAnyValue = false;
-  const filled = template.replace(/{{\s*([^}]+)\s*}}/g, (_match, fieldName) => {
-    const field = fieldName.trim();
+  const filled = template.replace(/{{\s*([^}]+)\s*}}/g, (_match, expr) => {
+    const parts = expr.split("|").map(s => s.trim());
+    const field = parts[0];
+    const filterName = parts[1]; // undefined when no filter is specified
     const value = item[field];
-    const stringValue = String(value ?? "");
+    let stringValue = String(value ?? "");
 
     // Track if any field has a non-empty value
     if (stringValue !== "" && stringValue !== "undefined" && stringValue !== "null") {
       hasAnyValue = true;
+    }
+
+    if (filterName && TEMPLATE_FILTERS[filterName]) {
+      stringValue = TEMPLATE_FILTERS[filterName](stringValue);
     }
 
     return stringValue;
