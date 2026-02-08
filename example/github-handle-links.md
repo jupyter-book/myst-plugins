@@ -32,13 +32,7 @@ Thanks to @kirstiejane and @mfisher87 for their work on MyST!
 - Already-linked usernames won't be touched: [@kirstiejane](https://mystmd.org)
 ::::::
 
-
-## How it works
-
-The plugin:
-- Finds `@handle` mentions in text
-- Validates handles via GitHub API
-- Creates profile links automatically
-- Skips mentions in code blocks
-- Skips handles already wrapped in links
-- Filters citation warnings for handled mentions
+:::{note} This does some wacky stuff with CSS
+MyST doesn't allow you to inject custom CSS via a plugin, so this plugin uses a workaround documented in `plugins/github-handle-links/src/index.mjs` (look for `HACK:`).
+This might create unpredictable behavior so use at your own risk and report weird behavior!
+:::
