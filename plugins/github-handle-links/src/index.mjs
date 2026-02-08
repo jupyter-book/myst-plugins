@@ -2,6 +2,7 @@
 // Automatically converts @username mentions into links to GitHub profiles
 
 import { readCache, writeCache } from "./cache.mjs";
+import { HANDLE_STYLES } from "./styles.mjs";
 
 const SIMPLE_HANDLE =
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/;
@@ -42,6 +43,7 @@ async function fetchProfile(handle) {
   const profile = {
     login: data.login || handle,
     url: data.html_url || `https://github.com/${handle}`,
+    avatarUrl: data.avatar_url || null,
   };
 
   writeCache(cacheKey, profile);
@@ -89,11 +91,23 @@ function collectCiteMentions(root) {
 // ============================================================================
 
 function createLinkNode(profile, text) {
+  const children = [];
+  if (profile.avatarUrl) {
+    // Only background-image is inline since it's per-user; the rest is in HANDLE_STYLES
+    children.push({
+      type: "span",
+      class: "github-handle-avatar",
+      style: { backgroundImage: `url('${profile.avatarUrl}&s=40')` },
+      children: [],
+    });
+  }
+  children.push({ type: "text", value: text });
   return {
     type: "link",
     url: profile.url,
     title: `GitHub profile for ${profile.login}`,
-    children: [{ type: "text", value: text }],
+    class: "github-handle-link",
+    children,
     data: {
       hProperties: {
         class: "github-handle-link",
@@ -136,6 +150,19 @@ const plugin = {
 
           const profiles = await fetchProfiles(handles);
           replaceCiteMentions(citeMentions, profiles);
+
+          // Inject plugin styles into the page.
+          // HACK: the myst-theme math renderer uses dangerouslySetInnerHTML
+          // when a math node has an `html` property, which lets us inject a
+          // <style> block. This is the only self-contained way for a plugin
+          // to ship its own CSS without requiring an external stylesheet.
+          if (Array.isArray(tree.children)) {
+            tree.children.unshift({
+              type: "math",
+              value: "",
+              html: `<style>${HANDLE_STYLES}</style>`,
+            });
+          }
         };
       },
     },
