@@ -1,6 +1,8 @@
 // GitHub Issue Link Decorator Plugin
 // Automatically decorates GitHub issue links with titles, state, and CSS classes
 
+import { readCache, writeCache } from "./cache.mjs";
+
 const ISSUE_LINK_REGEX =
   /^https:\/\/github\.com\/([^/]+\/[^/]+)\/issues\/(\d+)(?:[/?#].*)?$/;
 
@@ -14,13 +16,14 @@ function stripBrackets(title) {
 }
 
 // ============================================================================
-// Cache Management
-// ============================================================================
-// ============================================================================
-// GitHub API
+// GitHub API (with file-based cache)
 // ============================================================================
 
 async function getIssueDetails(repoSlug, issueNumber) {
+  const cacheKey = `${repoSlug}/issues/${issueNumber}`;
+  const cached = readCache(cacheKey);
+  if (cached) return cached;
+
   const apiUrl = `https://api.github.com/repos/${repoSlug}/issues/${issueNumber}`;
   const headers = { Accept: "application/vnd.github+json" };
   const token = process?.env?.GITHUB_TOKEN;
@@ -44,6 +47,7 @@ async function getIssueDetails(repoSlug, issueNumber) {
     url: data.html_url,
   };
 
+  writeCache(cacheKey, issueDetails);
   return issueDetails;
 }
 
