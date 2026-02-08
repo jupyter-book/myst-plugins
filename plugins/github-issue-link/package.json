@@ -1,7 +1,7 @@
 {
-  "name": "@jupyter-book/myst-plugin-github-handle-links",
+  "name": "@jupyter-book/myst-plugin-github-issue-link",
   "version": "0.1.0",
-  "description": "MyST plugin to convert @username mentions into GitHub profile links",
+  "description": "MyST plugin to decorate GitHub issue links with titles and state",
   "type": "module",
   "main": "dist/index.mjs",
   "scripts": {
@@ -14,7 +14,7 @@
     "myst",
     "plugin",
     "github",
-    "handles",
+    "issues",
     "markdown"
   ],
   "author": "Jupyter Book Team",

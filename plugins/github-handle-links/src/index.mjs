@@ -1,23 +1,13 @@
 // GitHub Handle Links Plugin
 // Automatically converts @username mentions into links to GitHub profiles
 
-import { readCache, writeCache } from "./cache.mjs";
+import { createCache, walk, githubApiHeaders } from "../../github-shared/utils.mjs";
 import { HANDLE_STYLES } from "./styles.mjs";
+
+const { readCache, writeCache } = createCache("github-handle");
 
 const SIMPLE_HANDLE =
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/;
-
-// ============================================================================
-// Tree Traversal
-// ============================================================================
-
-function visit(node, parent, callback) {
-  if (!node) return;
-  callback(node, parent);
-  if (Array.isArray(node.children)) {
-    node.children.forEach((child) => visit(child, node, callback));
-  }
-}
 
 // ============================================================================
 // GitHub API
@@ -28,13 +18,8 @@ async function fetchProfile(handle) {
   const cached = readCache(cacheKey);
   if (cached) return cached;
 
-  const headers = { Accept: "application/vnd.github+json" };
-  const token = process?.env?.GITHUB_TOKEN;
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
   const response = await fetch(`https://api.github.com/users/${handle}`, {
-    headers,
+    headers: githubApiHeaders(),
   });
   if (!response.ok) {
     return null;
@@ -70,7 +55,7 @@ async function fetchProfiles(handles) {
 
 function collectCiteMentions(root) {
   const mentions = [];
-  visit(root, null, (node, parent) => {
+  walk(root, null, (node, parent) => {
     if (!node || node.type !== "cite") return;
     if (!parent || !Array.isArray(parent.children)) return;
     // Skip if the parent is already a link (avoid nested links)
