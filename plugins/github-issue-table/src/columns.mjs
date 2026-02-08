@@ -1,6 +1,6 @@
 // Column Definitions for GitHub Issue Table Plugin
 
-import { stripBrackets, stripHeaders, formatDate, truncateTree, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
+import { stripBrackets, stripHeaders, formatDate, truncateTree, linkifyHandle, fillTemplate, templateToNodes, extractSummary, matchesLabelPattern } from "./utils.mjs";
 
 // Render long-form text (body, description, summary) with optional truncation
 function renderLongFormText(text, { parseMyst, truncateLength, stripHeaderLines = false, issueUrl = "" }) {
@@ -42,6 +42,32 @@ function renderLongFormText(text, { parseMyst, truncateLength, stripHeaderLines 
   return children.length > 0
     ? { type: "div", children }
     : { type: "text", value: content };
+}
+
+function renderLabelList(labels) {
+  const valid = (labels || []).filter(l => l && l.name);
+  if (valid.length === 0) return { type: "text", value: "" };
+
+  const nodes = [];
+  valid.forEach((label, idx) => {
+    if (idx > 0) nodes.push({ type: "break" });
+    nodes.push({
+      type: "span",
+      style: {
+        display: "inline-block",
+        fontSize: "0.875rem",
+        fontFamily: "monospace",
+        whiteSpace: "nowrap",
+        padding: "0.125rem 0.5rem",
+        margin: "0.125rem 0",
+        borderRadius: "0.25rem",
+        backgroundColor: "#dbeafe",
+        color: "#000000ff"
+      },
+      children: [{ type: "text", value: label.name }]
+    });
+  });
+  return { type: "paragraph", children: nodes };
 }
 
 function renderPRList(prs) {
@@ -293,51 +319,7 @@ export const COLUMN_DEFINITIONS = {
     value: String(item.comments)
   }),
 
-  labels: (item, options) => {
-    if (!item.labels || item.labels.length === 0) {
-      return { type: "text", value: "" };
-    }
-
-    const labelNodes = [];
-
-    item.labels
-      .filter(label => label && label.name)
-      .forEach((label, idx) => {
-        if (idx > 0) {
-          // Add line break between labels
-          labelNodes.push({ type: "break" });
-        }
-
-        // Create span with styling for labels
-        // Using inline styles only (no Tailwind classes needed)
-        labelNodes.push({
-          type: "span",
-          style: {
-            display: "inline-block",
-            fontSize: "0.875rem",
-            fontFamily: "monospace",
-            whiteSpace: "nowrap",
-            padding: "0.125rem 0.5rem",
-            margin: "0.125rem 0",
-            borderRadius: "0.25rem",
-            backgroundColor: "#dbeafe",
-            color: "#000000ff"
-          },
-          children: [
-            { type: "text", value: label.name }
-          ]
-        });
-      });
-
-    if (labelNodes.length === 0) {
-      return { type: "text", value: "" };
-    }
-
-    return {
-      type: "paragraph",
-      children: labelNodes
-    };
-  },
+  labels: (item, options) => renderLabelList(item.labels),
 
   linked_prs: (item, options) => {
     return renderPRList(item.linkedPRs);
@@ -449,6 +431,13 @@ export { renderSubIssuesBlock };
  */
 export function renderCell(item, column, options = {}) {
   const normalizedColumn = typeof column === "string" ? column.toLowerCase() : column;
+
+  // Check label-column definitions (before built-ins so "labels=..." can override)
+  const { labelColumns = {} } = options;
+  if (labelColumns[column]) {
+    const filtered = (item.labels || []).filter(l => l?.name && matchesLabelPattern(l.name, labelColumns[column]));
+    return renderLabelList(filtered);
+  }
 
   // Try column definition first
   const columnDef = COLUMN_DEFINITIONS[column] || COLUMN_DEFINITIONS[normalizedColumn];
