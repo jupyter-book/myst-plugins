@@ -1,8 +1,5 @@
-// Column Definitions for GitHub Issue Table Plugin
-
 import { stripBrackets, stripHeaders, formatDate, truncateTree, linkifyHandle, fillTemplate, templateToNodes, extractSummary, matchesLabelPattern } from "./utils.mjs";
 
-// Render long-form text (body, description, summary) with optional truncation
 function renderLongFormText(text, { parseMyst, truncateLength, stripHeaderLines = false, issueUrl = "" }) {
   const content = stripHeaderLines ? stripHeaders(text || "") : (text || "");
   if (!content) return { type: "text", value: "" };
@@ -117,7 +114,6 @@ function renderPRList(prs) {
   };
 }
 
-// Render sub-issues as a details/summary block
 function renderSubIssuesBlock(item, options) {
   const subIssues = item.subIssues || [];
 
@@ -177,41 +173,31 @@ function renderTitleLink(item) {
   };
 }
 
-/**
- * Column definition registry mapping column names to render functions
- * Each function receives (item, options) and returns an AST node
- */
+// Column definition registry. Each function receives (item, options) and returns an AST node.
 export const COLUMN_DEFINITIONS = {
-  number: (item, options) => ({
+  number: (item) => ({
     type: "link",
     url: item.url,
     children: [{ type: "text", value: `#${item.number}` }]
   }),
 
-  title: (item, options) => renderTitleLink(item),
+  title: (item) => renderTitleLink(item),
 
-  state: (item, options) => {
+  state: (item) => {
     const icon = item.state === "OPEN" ? "🟢" : "🟣";
     return { type: "text", value: `${icon} ${item.state}` };
   },
 
-  author: (item, options) =>
+  author: (item) =>
     linkifyHandle(item.author) || { type: "text", value: item.author || "" },
 
-  author_affiliation: (item, options) => {
-    if (!item.author_affiliation) {
-      return { type: "text", value: "" };
-    }
-    return linkifyHandle(item.author_affiliation) || {
-      type: "text",
-      value: item.author_affiliation
-    };
+  author_affiliation: (item) => {
+    if (!item.author_affiliation) return { type: "text", value: "" };
+    return linkifyHandle(item.author_affiliation) || { type: "text", value: item.author_affiliation };
   },
 
-  repo: (item, options) => {
-    if (!item.repo) {
-      return { type: "text", value: "" };
-    }
+  repo: (item) => {
+    if (!item.repo) return { type: "text", value: "" };
     return {
       type: "link",
       url: `https://github.com/${item.repo}`,
@@ -234,10 +220,8 @@ export const COLUMN_DEFINITIONS = {
     value: formatDate(item.closed, options.dateFormat || "absolute")
   }),
 
-  reactions: (item, options) => {
-    // Show all reaction types with counts
+  reactions: (item) => {
     const reactionNodes = [];
-
     const reactions = [
       { emoji: "👍", count: item.reactions_thumbsup },
       { emoji: "❤️", count: item.reactions_heart },
@@ -248,87 +232,34 @@ export const COLUMN_DEFINITIONS = {
       { emoji: "😕", count: item.reactions_confused },
       { emoji: "👎", count: item.reactions_thumbsdown }
     ];
-
     reactions.forEach(({ emoji, count }) => {
       if (count > 0) {
-        if (reactionNodes.length > 0) {
-          reactionNodes.push({ type: "text", value: " · " });
-        }
-        // Wrap emoji and count in span to prevent line breaking
+        if (reactionNodes.length > 0) reactionNodes.push({ type: "text", value: " · " });
         reactionNodes.push({
           type: "span",
-          children: [
-            { type: "text", value: `${emoji}\u00A0${count}` }
-          ]
+          children: [{ type: "text", value: `${emoji}\u00A0${count}` }]
         });
       }
     });
-
-    if (reactionNodes.length === 0) {
-      return { type: "text", value: " " };
-    }
-
-    return {
-      type: "paragraph",
-      children: reactionNodes
-    };
+    return reactionNodes.length > 0
+      ? { type: "paragraph", children: reactionNodes }
+      : { type: "text", value: " " };
   },
 
-  reactions_thumbsup: (item, options) => ({
-    type: "text",
-    value: `👍 ${item.reactions_thumbsup}`
-  }),
+  reactions_thumbsup: (item) => ({ type: "text", value: `👍 ${item.reactions_thumbsup}` }),
+  reactions_thumbsdown: (item) => ({ type: "text", value: `👎 ${item.reactions_thumbsdown}` }),
+  reactions_laugh: (item) => ({ type: "text", value: `😄 ${item.reactions_laugh}` }),
+  reactions_hooray: (item) => ({ type: "text", value: `🎉 ${item.reactions_hooray}` }),
+  reactions_confused: (item) => ({ type: "text", value: `😕 ${item.reactions_confused}` }),
+  reactions_heart: (item) => ({ type: "text", value: `❤️ ${item.reactions_heart}` }),
+  reactions_rocket: (item) => ({ type: "text", value: `🚀 ${item.reactions_rocket}` }),
+  reactions_eyes: (item) => ({ type: "text", value: `👀 ${item.reactions_eyes}` }),
 
-  reactions_thumbsdown: (item, options) => ({
-    type: "text",
-    value: `👎 ${item.reactions_thumbsdown}`
-  }),
+  comments: (item) => ({ type: "text", value: String(item.comments) }),
 
-  reactions_laugh: (item, options) => ({
-    type: "text",
-    value: `😄 ${item.reactions_laugh}`
-  }),
-
-  reactions_hooray: (item, options) => ({
-    type: "text",
-    value: `🎉 ${item.reactions_hooray}`
-  }),
-
-  reactions_confused: (item, options) => ({
-    type: "text",
-    value: `😕 ${item.reactions_confused}`
-  }),
-
-  reactions_heart: (item, options) => ({
-    type: "text",
-    value: `❤️ ${item.reactions_heart}`
-  }),
-
-  reactions_rocket: (item, options) => ({
-    type: "text",
-    value: `🚀 ${item.reactions_rocket}`
-  }),
-
-  reactions_eyes: (item, options) => ({
-    type: "text",
-    value: `👀 ${item.reactions_eyes}`
-  }),
-
-  comments: (item, options) => ({
-    type: "text",
-    value: String(item.comments)
-  }),
-
-  labels: (item, options) => renderLabelList(item.labels),
-
-  linked_prs: (item, options) => {
-    return renderPRList(item.linkedPRs);
-  },
-
-  closing_prs: (item, options) => {
-    const closing = item?.closingPRs ?? (item.linkedPRs || []).filter(pr => pr?.willClose);
-    return renderPRList(closing);
-  },
+  labels: (item) => renderLabelList(item.labels),
+  linked_prs: (item) => renderPRList(item.linkedPRs),
+  closing_prs: (item) => renderPRList(item.closingPRs),
 
   body: (item, options) =>
     renderLongFormText(item.body, {
@@ -344,91 +275,27 @@ export const COLUMN_DEFINITIONS = {
       truncateLength: options.bodyTruncate,
       issueUrl: item.url
     }),
-  
+
   summary: (item, options) => {
-    const summaryLimit = options.summaryTruncate ?? options.bodyTruncate;
-    // Extract summary using header keywords or fallback logic
     const summaryText = extractSummary(
       item.body || "",
       options.summaryHeader || "summary,context,overview,description,background,user story"
     );
-
-    if (!summaryText) {
-      return { type: "text", value: "" };
-    }
-
+    if (!summaryText) return { type: "text", value: "" };
     return renderLongFormText(summaryText, {
       parseMyst: options.parseMyst,
-      truncateLength: summaryLimit,
+      truncateLength: options.summaryTruncate ?? options.bodyTruncate,
       issueUrl: item.url
     });
   },
 
-  sub_issues: (item, options) => {
-    const subIssues = item.subIssues || [];
-
-    if (subIssues.length === 0) {
-      return { type: "text", value: "" };
-    }
-
-    // Sort by last updated (most recent first)
-    const sorted = [...subIssues].sort((a, b) => {
-      const aTime = a.updated ? new Date(a.updated).getTime() : 0;
-      const bTime = b.updated ? new Date(b.updated).getTime() : 0;
-      return bTime - aTime;
-    });
-
-    const contentNodes = [];
-    sorted.forEach((sub, idx) => {
-      if (idx > 0) {
-        contentNodes.push({ type: "break" });
-      }
-
-      const icon = sub.state === "OPEN" ? "🟢" : "🟣";
-
-      contentNodes.push({ type: "text", value: `${icon} ` });
-      contentNodes.push({
-        type: "link",
-        url: sub.url,
-        children: [{ type: "text", value: sub.title || `#${sub.number}` }]
-      });
-      contentNodes.push({
-        type: "text",
-        value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
-      });
-    });
-
-    return {
-      type: "details",
-      children: [
-        {
-          type: "summary",
-          children: [{
-            type: "text",
-            value: `${subIssues.length} sub-issue${subIssues.length === 1 ? '' : 's'}`
-          }]
-        },
-        {
-          type: "paragraph",
-          children: contentNodes
-        }
-      ]
-    };
-  },
+  sub_issues: (item, options) =>
+    renderSubIssuesBlock(item, options) || { type: "text", value: "" },
 };
 
-/**
- * Export sub-issues block renderer for use in buildTable
- */
 export { renderSubIssuesBlock };
 
-/**
- * Render a table cell for given column
- * @param {Object} item - Issue/PR data
- * @param {string} column - Column name
- * @param {Object} options - Rendering options
- * @returns {Object} AST node for cell content
- */
+/** Render a table cell, checking label-columns, built-in columns, item fields, then templates. */
 export function renderCell(item, column, options = {}) {
   const normalizedColumn = typeof column === "string" ? column.toLowerCase() : column;
 

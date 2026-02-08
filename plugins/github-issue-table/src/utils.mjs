@@ -1,20 +1,9 @@
-// Utility Functions for GitHub Issue Table Plugin
-
-/** Filters available inside {{field | filter}} template expressions.
- * We are hand-rolling these for now but if we ever need a lot more of them we
- * should just use nunjucks.
-*/
+// Filters available inside {{field | filter}} template expressions.
 const TEMPLATE_FILTERS = {
   urlencode: (v) => encodeURIComponent(v),
 };
 
-/**
- * Check if a label name matches a comma-separated list of glob patterns.
- * Patterns support `*` as a wildcard; without a wildcard the match is exact.
- * @param {string} label - Label to test
- * @param {string} patternString - Comma-separated glob patterns
- * @returns {boolean}
- */
+/** Check if a label matches a comma-separated list of glob patterns (e.g. "type:*,bug"). */
 export function matchesLabelPattern(label, patternString) {
   return patternString.split(",").some(p => {
     const pattern = p.trim();
@@ -24,21 +13,12 @@ export function matchesLabelPattern(label, patternString) {
   });
 }
 
-/**
- * Remove [...] and (...) content from the beginning of titles
- * @param {string} title - Title to clean
- * @returns {string} Cleaned title
- */
+/** Remove [...] and (...) prefixes from titles. */
 export function stripBrackets(title) {
   if (!title) return "";
   return title.replace(/^(\[.*?\]|\(.*?\))\s*/g, "").trim();
 }
 
-/**
- * Strip header lines (lines starting with #) from text
- * @param {string} text - Text to clean
- * @returns {string} Text with header lines removed
- */
 export function stripHeaders(text) {
   if (!text) return "";
   return text
@@ -48,12 +28,7 @@ export function stripHeaders(text) {
     .trim();
 }
 
-/**
- * Format date as relative or absolute
- * @param {string} dateString - ISO date string
- * @param {string} format - "relative" or "absolute"
- * @returns {string} Formatted date
- */
+/** Format date as "relative" (e.g. "2d ago") or "absolute" (YYYY-MM-DD). */
 export function formatDate(dateString, format = "absolute") {
   if (!dateString) return "";
   const date = new Date(dateString);
@@ -76,45 +51,10 @@ export function formatDate(dateString, format = "absolute") {
     return `${seconds}s ago`;
   }
 
-  // Default to ISO date format (YYYY-MM-DD)
   return date.toISOString().split("T")[0];
 }
 
-/**
- * Truncate text to maximum length
- * @param {string} text - Text to truncate
- * @param {number} maxLength - Maximum length
- * @returns {string} Truncated text
- */
-export function truncateText(text, maxLength) {
-  return truncateTextWithFlag(text, maxLength).text;
-}
-
-/**
- * Truncate text and return metadata about whether truncation occurred
- * @param {string} text - Text to truncate
- * @param {number} maxLength - Maximum length
- * @returns {Object} Object with truncated text and flag
- */
-export function truncateTextWithFlag(text, maxLength) {
-  if (!text || !maxLength || text.length <= maxLength) {
-    return { text, truncated: false };
-  }
-
-  // Prefer breaking at a whitespace boundary so words are not split
-  const slice = text.substring(0, maxLength);
-  const lastSpace = Math.max(slice.lastIndexOf(" "), slice.lastIndexOf("\n"), slice.lastIndexOf("\t"));
-  const cutoff = lastSpace > 0 ? lastSpace : maxLength;
-  const trimmed = text.substring(0, cutoff).trimEnd();
-
-  return { text: `${trimmed}...`, truncated: true };
-}
-
-/**
- * Parse template definitions from semicolon-separated string
- * @param {string} templateString - Template definitions
- * @returns {Object} Map of template name to template string
- */
+/** Parse "name=value; name=value" definitions (used by :templates: and :label-columns:). */
 export function parseTemplates(templateString) {
   if (!templateString) return {};
   const templates = {};
@@ -130,13 +70,7 @@ export function parseTemplates(templateString) {
   return templates;
 }
 
-/**
- * Fill template with item data
- * Returns empty string if all template fields are empty/missing
- * @param {string} template - Template string with {{field}} placeholders
- * @param {Object} item - Data object
- * @returns {string} Filled template or empty string if all fields are empty
- */
+/** Substitute {{field}} and {{field | filter}} placeholders. Returns "" if all fields are empty. */
 export function fillTemplate(template, item) {
   if (!template) return "";
 
@@ -148,7 +82,6 @@ export function fillTemplate(template, item) {
     const value = item[field];
     let stringValue = String(value ?? "");
 
-    // Track if any field has a non-empty value
     if (stringValue !== "" && stringValue !== "undefined" && stringValue !== "null") {
       hasAnyValue = true;
     }
@@ -160,45 +93,29 @@ export function fillTemplate(template, item) {
     return stringValue;
   });
 
-  // Return empty string if all fields were empty
   return hasAnyValue ? filled : "";
 }
 
-/**
- * Convert filled template to AST nodes
- * @param {string} filled - Filled template string
- * @param {Function} parseMyst - MyST parser function
- * @returns {Array} Array of AST nodes
- */
+/** Convert a filled template string to AST nodes via parseMyst. */
 export function templateToNodes(filled, parseMyst) {
   if (!filled) return [{ type: "text", value: "" }];
+  if (typeof parseMyst !== "function") return [{ type: "text", value: filled }];
 
-  // Use MyST parser for template rendering
-  if (typeof parseMyst === "function") {
-    try {
-      const parsed = parseMyst(filled);
-      const children = Array.isArray(parsed?.children) ? parsed.children : [];
+  try {
+    const parsed = parseMyst(filled);
+    const children = parsed?.children || [];
 
-      // If we got a single paragraph, unwrap it to inline content
-      if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
-        return children[0].children;
-      }
-
-      return children.length > 0 ? children : [{ type: "text", value: filled }];
-    } catch (err) {
-      console.error("Failed to parse template with MyST parser:", err?.message || err);
-      return [{ type: "text", value: filled }];
+    // Unwrap a single paragraph to inline content
+    if (children.length === 1 && children[0]?.type === "paragraph" && children[0].children) {
+      return children[0].children;
     }
-  }
 
-  return [{ type: "text", value: filled }];
+    return children.length > 0 ? children : [{ type: "text", value: filled }];
+  } catch {
+    return [{ type: "text", value: filled }];
+  }
 }
 
-/**
- * Create link node for GitHub handle
- * @param {string} handle - GitHub handle (with or without @)
- * @returns {Object|null} Link node or null if invalid
- */
 export function linkifyHandle(handle) {
   if (!handle) return null;
   const cleaned = handle.startsWith("@") ? handle.slice(1) : handle;
@@ -213,10 +130,9 @@ export function linkifyHandle(handle) {
 }
 
 /**
- * Extract summary from issue body
- * @param {string} body - Issue body text
- * @param {string} summaryHeader - Comma-separated keywords to search for (default: "summary,context,overview,description,background,user story")
- * @returns {string} Extracted summary text
+ * Extract summary from issue body by finding a header matching one of the
+ * comma-separated keywords and returning content until the next header.
+ * Falls back to everything before the first header or horizontal rule.
  */
 export function extractSummary(body, summaryHeader = "summary,context,overview,description,background,user story") {
   if (!body) return "";
@@ -270,14 +186,8 @@ export function extractSummary(body, summaryHeader = "summary,context,overview,d
 }
 
 /**
- * Truncate an AST node array by character budget.
- * Walks depth-first counting text node characters; once the budget is
- * exhausted the current text node is cut at a word boundary and all
- * remaining siblings are dropped. Structure nodes (links, emphasis, etc.)
- * stay properly nested.
- * @param {Array} nodes - Array of AST nodes
- * @param {number} remaining - Character budget
- * @returns {{ nodes: Array, remaining: number }}
+ * Truncate an AST node array by character budget. Walks depth-first; once
+ * exhausted, cuts at a word boundary. Structure nodes stay properly nested.
  */
 export function truncateTree(nodes, remaining) {
   const result = [];
@@ -306,11 +216,7 @@ export function truncateTree(nodes, remaining) {
   return { nodes: result, remaining };
 }
 
-/**
- * Parse comma-separated width values and normalize if sum exceeds 100%
- * @param {string} widthsStr - Comma-separated width percentages (e.g., "30,50,20")
- * @returns {number[]} Array of width percentages
- */
+/** Parse comma-separated widths, normalizing if sum > 100%. */
 export function parseWidths(widthsStr) {
   const widths = widthsStr.split(",").map(w => parseFloat(w.trim()));
   const sum = widths.reduce((a, b) => a + b, 0);

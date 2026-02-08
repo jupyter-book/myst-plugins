@@ -1,26 +1,11 @@
-// GitHub API Integration for Issue Table Plugin
-// Handles GraphQL queries for issues, PRs, and project boards
-
-// ============================================================================
-// Constants
-// ============================================================================
-
 const PAGINATION_SIZE = 100;
 const MAX_FIELD_VALUES = 20;
 const MAX_ORGANIZATIONS = 3;
 const MAX_LABELS = 10;
 const MAX_TIMELINE_ITEMS = 20;
 
-// ============================================================================
-// URL Parsing
-// ============================================================================
 
-/**
- * Parse GitHub project URLs
- * Supports: https://github.com/orgs/ORG/projects/NUMBER/views/VIEW
- * @param {string} input - URL or query string
- * @returns {Object|null} Parsed project info or null
- */
+/** Parse GitHub project URLs (e.g. https://github.com/orgs/ORG/projects/N/views/V). */
 export function parseProjectUrl(input) {
   if (input.includes('github.com') && input.includes('/projects/')) {
     try {
@@ -50,12 +35,7 @@ export function parseProjectUrl(input) {
   return null;
 }
 
-/**
- * Normalize GitHub issue list URLs to search queries
- * Converts: https://github.com/owner/repo/issues?q=... to repo:owner/repo ...
- * @param {string} input - URL or query string
- * @returns {string} Normalized search query
- */
+/** Convert issue list URLs (github.com/owner/repo/issues?q=...) to search queries. */
 export function normalizeQuery(input) {
   // Handle GitHub issue/PR list URLs
   // https://github.com/jupyter-book/jupyter-book/issues?q=is%3Aissue+is%3Aopen
@@ -73,13 +53,9 @@ export function normalizeQuery(input) {
     }
   }
 
-  // Otherwise assume it's a direct search query
   return input;
 }
 
-// ============================================================================
-// GraphQL Fragments
-// ============================================================================
 
 const ISSUE_FIELDS_FRAGMENT = `
   fragment IssueFields on Issue {
@@ -179,16 +155,8 @@ const PR_FIELDS_FRAGMENT = `
   }
 `;
 
-// ============================================================================
-// GraphQL Queries - Project Boards
-// ============================================================================
 
-/**
- * Fetch project view filter and sort configuration using GraphQL
- * @param {Object} projectInfo - Parsed project info
- * @param {string} token - GitHub API token
- * @returns {Promise<Object>} { found: boolean, filter: string|null, sort: Array|null }
- */
+/** Fetch a project view's filter and sort configuration. */
 async function fetchProjectViewFilter(projectInfo, token) {
   const { type, owner, number, viewNumber } = projectInfo;
   if (!viewNumber) return { found: false, filter: null, sort: null };
@@ -274,13 +242,7 @@ async function fetchProjectViewFilter(projectInfo, token) {
   }
 }
 
-/**
- * Fetch issues/PRs from a GitHub project board
- * @param {Object} projectInfo - Parsed project info
- * @param {string} token - GitHub API token
- * @param {number} limit - Maximum number of results to fetch (default: 100)
- * @returns {Promise<Object>} { items: Array, viewSort: Array|null } - items and view's sort config
- */
+/** Fetch issues/PRs from a GitHub project board. */
 async function fetchProjectIssues(projectInfo, token, limit = 100) {
   const { type, owner, number, viewNumber, viewQuery } = projectInfo;
   const maxLimit = limit || PAGINATION_SIZE;
@@ -435,15 +397,8 @@ async function fetchProjectIssues(projectInfo, token, limit = 100) {
   }
 }
 
-// ============================================================================
-// GraphQL Queries - Issue Search
-// ============================================================================
 
-/**
- * Check if sort can be handled by GitHub search API
- * @param {string} sortSpec - Sort specification (e.g., "reactions-desc")
- * @returns {Object} { supported: boolean, sortQuery: string|null }
- */
+/** Check if sort can be delegated to GitHub's search API. */
 function getGitHubSort(sortSpec) {
   if (!sortSpec) return { supported: false, sortQuery: null };
 
@@ -472,16 +427,8 @@ function getGitHubSort(sortSpec) {
   return { supported: true, sortQuery: `sort:${col}-${dir}` };
 }
 
-/**
- * Fetch issues/PRs using GitHub search API
- * @param {string} query - Search query (may already include sort:)
- * @param {string} token - GitHub API token
- * @param {number} limit - Maximum number of results to fetch (default: 100)
- * @returns {Promise<Array>} Array of normalized issue/PR objects
- */
+/** Fetch issues/PRs using GitHub search API. */
 async function fetchIssuesFromSearch(query, token, limit = 100) {
-  // Query may already include sort: parameter from getGitHubSort()
-  const searchQuery = query;
   const graphqlQuery = `
     ${ISSUE_FIELDS_FRAGMENT}
     ${PR_FIELDS_FRAGMENT}
@@ -514,7 +461,7 @@ async function fetchIssuesFromSearch(query, token, limit = 100) {
       const remainingNeeded = maxLimit - allNodes.length;
       const first = Math.min(remainingNeeded, PAGINATION_SIZE);
 
-      const variables = { query: searchQuery, first, cursor };
+      const variables = { query, first, cursor };
       const body = JSON.stringify({ query: graphqlQuery, variables });
 
       const response = await fetch('https://api.github.com/graphql', {
@@ -555,16 +502,8 @@ async function fetchIssuesFromSearch(query, token, limit = 100) {
   }
 }
 
-// ============================================================================
-// Data Normalization
-// ============================================================================
 
-/**
- * Normalize issue/PR data from GraphQL response
- * @param {Object} item - Raw GraphQL issue/PR object
- * @param {Object} projectNode - Optional project node (for project fields)
- * @returns {Object} Normalized issue/PR object
- */
+/** Normalize raw GraphQL issue/PR data into the flat shape used by column renderers. */
 function normalizeIssueData(item, projectNode = null) {
   // Extract author affiliation (company or first org)
   const author = item.author?.login || "unknown";
@@ -647,18 +586,8 @@ function normalizeIssueData(item, projectNode = null) {
   };
 }
 
-// ============================================================================
-// Public API
-// ============================================================================
 
-/**
- * Fetch issues/PRs from GitHub (handles both search queries and project URLs)
- * @param {string} input - Search query or project URL
- * @param {string} token - GitHub API token
- * @param {number} limit - Maximum number of results to fetch (default: 100)
- * @param {string} sortSpec - Sort specification (e.g., "reactions-desc,updated-desc")
- * @returns {Promise<Object>} { items: Array, viewSort: string|null } - items and optional view sort
- */
+/** Main entry point — accepts a search query or project URL. */
 export async function fetchIssues(input, token, limit = 100, sortSpec = null) {
   // Check if input is a project URL
   const projectInfo = parseProjectUrl(input);
