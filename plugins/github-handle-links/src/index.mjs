@@ -1,6 +1,8 @@
 // GitHub Handle Links Plugin
 // Automatically converts @username mentions into links to GitHub profiles
 
+import { readCache, writeCache } from "./cache.mjs";
+
 const SIMPLE_HANDLE =
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/;
 
@@ -21,6 +23,10 @@ function visit(node, parent, callback) {
 // ============================================================================
 
 async function fetchProfile(handle) {
+  const cacheKey = handle.toLowerCase();
+  const cached = readCache(cacheKey);
+  if (cached) return cached;
+
   const headers = { Accept: "application/vnd.github+json" };
   const token = process?.env?.GITHUB_TOKEN;
   if (token) {
@@ -37,6 +43,8 @@ async function fetchProfile(handle) {
     login: data.login || handle,
     url: data.html_url || `https://github.com/${handle}`,
   };
+
+  writeCache(cacheKey, profile);
   return profile;
 }
 
