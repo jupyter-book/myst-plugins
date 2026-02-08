@@ -1,6 +1,3 @@
-// GitHub Issue Table Plugin
-// Renders GitHub issues/PRs as tables from search queries
-
 import { fetchIssues } from "./github-api.mjs";
 import { readCache, writeCache } from "./cache.mjs";
 import { parseTemplates, parseWidths } from "./utils.mjs";
@@ -8,9 +5,6 @@ import { renderCell, renderSubIssuesBlock } from "./columns.mjs";
 
 let sharedParseMyst = null; // captured from directive ctx; reused in transform
 
-// ============================================================================
-// Table Sorting and Building
-// ============================================================================
 
 function sortItems(items, sortSpec) {
   if (!sortSpec) return items;
@@ -98,7 +92,6 @@ function buildTable(items, columns, options = {}) {
     children: columns.map((col, i) => {
       const cellContent = renderCell(item, col, options);
 
-      // Defensive check
       if (!cellContent) {
         return applyWidth({
           type: "tableCell",
@@ -106,8 +99,7 @@ function buildTable(items, columns, options = {}) {
         }, i);
       }
 
-      // Table cells should contain phrasing content, not paragraphs
-      // If renderCell returns a paragraph, extract its children
+      // Unwrap paragraphs — table cells need phrasing content
       let children;
       if (cellContent.type === "paragraph") {
         children = Array.isArray(cellContent.children) ? cellContent.children : [{ type: "text", value: "" }];
@@ -146,9 +138,6 @@ function buildTable(items, columns, options = {}) {
   };
 }
 
-// ============================================================================
-// Directive (Synchronous - creates placeholder)
-// ============================================================================
 
 const directive = {
   name: "issue-table",
@@ -177,7 +166,7 @@ const directive = {
     },
     "date-format": {
       type: String,
-      doc: "Date format: 'relative', 'absolute', or strftime pattern"
+      doc: "Date format: 'relative' or 'absolute' (default)"
     },
     "summary-header": {
       type: String,
@@ -210,7 +199,6 @@ const directive = {
       return ctx.parseMyst("*Please provide a search query*").children;
     }
 
-    // Get options
     const columns = (data.options?.columns || "title,author,state,reactions")
       .split(",")
       .map(c => c.trim());
@@ -249,9 +237,6 @@ const directive = {
   }
 };
 
-// ============================================================================
-// Transform (Asynchronous - fetches data and builds table)
-// ============================================================================
 
 function walk(node, callback) {
   if (!node) return;
@@ -368,9 +353,6 @@ const githubIssueTableTransform = {
   }
 };
 
-// ============================================================================
-// Plugin Export
-// ============================================================================
 
 const plugin = {
   name: "GitHub Issue Table",
