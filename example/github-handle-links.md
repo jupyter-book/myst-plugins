@@ -26,10 +26,16 @@ export GITHUB_TOKEN=your_token_here
 ## Example
 
 ::::::{myst:demo}
-Thanks to @kirstiejane and @mfisher87 for their work on MyST!
+Where handles will be added:
 
-- Incorrect usernames won't be touched: `@usernamesinbackticks`.
-- Already-linked usernames won't be touched: [@kirstiejane](https://mystmd.org)
+- Thanks to @kirstiejane and @mfisher87 for their work on MyST!
+- Already-linked handles get an avatar and styling: [@kirstiejane](https://github.com/kirstiejane)
+
+Where they won't:
+
+- Incorrect usernames: @thisuserwontbelinked
+- Literal spans: `@usernamesinbackticks`
+- Linked handles to non-github urls: [@kirstiejane](https://mystmd.org).
 ::::::
 
 :::{note} This does some wacky stuff with CSS

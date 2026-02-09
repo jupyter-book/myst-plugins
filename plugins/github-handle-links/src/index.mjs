@@ -57,16 +57,16 @@ function collectCiteMentions(root) {
   const mentions = [];
   walk(root, null, (node, parent) => {
     if (!node || node.type !== "cite") return;
-    if (!parent || !Array.isArray(parent.children)) return;
-    // Skip if the parent is already a link (avoid nested links)
-    if (parent.type === "link") return;
+    if (!parent) return;
+    // If the parent is already a link, flag it so we enhance instead of wrap
+    const parentLink = parent.type === "link" ? parent : null;
     const label = node.label || node.identifier || "";
     const handle = (node.identifier || label || "").replace(/^@/, "");
     const lower = handle.toLowerCase();
     if (!handle) return;
     // Quick check to make sure it's a valid GitHub handle syntax
     if (!SIMPLE_HANDLE.test(handle)) return;
-    mentions.push({ node, parent, handle, lower, label: label || handle });
+    mentions.push({ node, parent, parentLink, handle, lower, label: label || handle });
   });
   return mentions;
 }
@@ -75,24 +75,20 @@ function collectCiteMentions(root) {
 // Mention Replacement
 // ============================================================================
 
-function createLinkNode(profile, text) {
-  const children = [];
-  if (profile.avatarUrl) {
-    // Only background-image is inline since it's per-user; the rest is in HANDLE_STYLES
-    children.push({
-      type: "span",
-      class: "github-handle-avatar",
-      style: { backgroundImage: `url('${profile.avatarUrl}&s=40')` },
-      children: [],
-    });
-  }
-  children.push({ type: "text", value: text });
+function avatarSpan(profile) {
   return {
-    type: "link",
-    url: profile.url,
+    type: "span",
+    class: "github-handle-avatar",
+    // Only background-image is inline since it's per-user; the rest is in HANDLE_STYLES
+    style: { backgroundImage: `url('${profile.avatarUrl}&s=40')` },
+    children: [],
+  };
+}
+
+function handleLinkProps(profile) {
+  return {
     title: `GitHub profile for ${profile.login}`,
     class: "github-handle-link",
-    children,
     data: {
       hProperties: {
         class: "github-handle-link",
@@ -102,13 +98,27 @@ function createLinkNode(profile, text) {
   };
 }
 
-function replaceCiteNode({ node, parent, lower, label }, profiles) {
-  if (!parent || !Array.isArray(parent.children)) return;
+function replaceCiteNode({ node, parent, parentLink, lower, label }, profiles) {
   const profile = profiles.get(lower);
   if (!profile) return;
   const index = parent.children.indexOf(node);
-  if (index === -1) return;
-  parent.children.splice(index, 1, createLinkNode(profile, `@${label}`));
+
+  const text = { type: "text", value: `@${label}` };
+
+  if (parentLink) {
+    if (!parentLink.url.includes("github.com")) return;
+    Object.assign(parentLink, handleLinkProps(profile));
+    parent.children.splice(index, 1, text);
+    parent.children.unshift(avatarSpan(profile));
+    return;
+  }
+
+  parent.children.splice(index, 1, {
+    type: "link",
+    url: profile.url,
+    children: [avatarSpan(profile), text],
+    ...handleLinkProps(profile),
+  });
 }
 
 const replaceCiteMentions = (mentions, profiles) =>
@@ -141,13 +151,11 @@ const plugin = {
           // when a math node has an `html` property, which lets us inject a
           // <style> block. This is the only self-contained way for a plugin
           // to ship its own CSS without requiring an external stylesheet.
-          if (Array.isArray(tree.children)) {
-            tree.children.unshift({
-              type: "math",
-              value: "",
-              html: `<style>${HANDLE_STYLES}</style>`,
-            });
-          }
+          tree.children.unshift({
+            type: "math",
+            value: "",
+            html: `<style>${HANDLE_STYLES}</style>`,
+          });
         };
       },
     },

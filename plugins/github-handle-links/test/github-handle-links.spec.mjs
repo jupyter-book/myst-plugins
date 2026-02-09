@@ -55,18 +55,67 @@ describe('GitHub Handle Links Plugin', () => {
     expect(nestedLinks.length).toBe(0);
   });
 
+  test('handle already linked to GitHub gets avatar and styling', () => {
+    const content = fs.readFileSync(AST_FILE, 'utf-8');
+    const ast = JSON.parse(content);
+
+    // The example doc has [@kirstiejane](https://github.com/kirstiejane)
+    // which SHOULD get the github-handle-link treatment.
+    // Match via the user-provided lowercase URL to distinguish from the
+    // plugin-generated link (which uses GitHub's canonical casing).
+    const handleLinks = findNodes(ast, (node) =>
+      node.type === 'link' &&
+      node.url === 'https://github.com/kirstiejane' &&
+      node.data?.hProperties?.class === 'github-handle-link'
+    );
+    expect(handleLinks.length).toBeGreaterThanOrEqual(1);
+
+    // It should have an avatar span
+    const avatarSpan = findNodes(handleLinks[0], (node) =>
+      node.type === 'span' && node.class === 'github-handle-avatar'
+    );
+    expect(avatarSpan.length).toBe(1);
+  });
+
   test('invalid handle is not converted to a github-handle-link', () => {
     const content = fs.readFileSync(AST_FILE, 'utf-8');
     const ast = JSON.parse(content);
 
-    // The invalid handle (@thisincorrectusername) should not have a github-handle-link
     const invalidLinks = findNodes(ast, (node) =>
       node.type === 'link' &&
       node.data?.hProperties?.class === 'github-handle-link' &&
-      node.data?.hProperties?.['data-github-user'] === 'thisincorrectusername'
+      node.data?.hProperties?.['data-github-user'] === 'thisuserwontbelinked'
     );
 
     expect(invalidLinks.length).toBe(0);
+  });
+
+  test('handle in backticks is not converted', () => {
+    const content = fs.readFileSync(AST_FILE, 'utf-8');
+    const ast = JSON.parse(content);
+
+    const invalidLinks = findNodes(ast, (node) =>
+      node.type === 'link' &&
+      node.data?.hProperties?.class === 'github-handle-link' &&
+      node.data?.hProperties?.['data-github-user'] === 'usernamesinbackticks'
+    );
+
+    expect(invalidLinks.length).toBe(0);
+  });
+
+  test('handle linked to non-GitHub URL is not styled', () => {
+    const content = fs.readFileSync(AST_FILE, 'utf-8');
+    const ast = JSON.parse(content);
+
+    // The example doc has [@kirstiejane](https://mystmd.org)
+    // which should NOT get the github-handle-link treatment
+    const nonGithubLinks = findNodes(ast, (node) =>
+      node.type === 'link' &&
+      node.url === 'https://mystmd.org' &&
+      node.data?.hProperties?.class === 'github-handle-link'
+    );
+
+    expect(nonGithubLinks.length).toBe(0);
   });
 });
 

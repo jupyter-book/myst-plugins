@@ -36,6 +36,8 @@ The plugin automatically:
 - Skips mentions that resolve to existing references/citations
 - Validates the remaining handles exist on GitHub
 - Creates profile links and leaves non-existent handles unchanged
+- If a `@handle` is already inside a link to GitHub, the link URL is preserved but the avatar and styling are still applied
+- Handles linked to non-GitHub URLs are left unchanged
 
 ## Authentication
 
