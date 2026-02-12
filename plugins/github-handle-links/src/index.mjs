@@ -2,7 +2,6 @@
 // Automatically converts @username mentions into links to GitHub profiles
 
 import { createCache, walk, githubApiHeaders } from "../../github-shared/utils.mjs";
-import { HANDLE_STYLES } from "./styles.mjs";
 
 const { readCache, writeCache } = createCache("github-handle");
 
@@ -78,9 +77,16 @@ function collectCiteMentions(root) {
 function avatarSpan(profile) {
   return {
     type: "span",
-    class: "github-handle-avatar",
-    // Only background-image is inline since it's per-user; the rest is in HANDLE_STYLES
-    style: { backgroundImage: `url('${profile.avatarUrl}&s=40')` },
+    style: {
+      display: "inline-block",
+      width: "16px",
+      height: "16px",
+      borderRadius: "50%",
+      backgroundSize: "cover",
+      verticalAlign: "text-bottom",
+      marginRight: "2px",
+      backgroundImage: `url('${profile.avatarUrl}&s=40')`,
+    },
     children: [],
   };
 }
@@ -98,25 +104,30 @@ function handleLinkProps(profile) {
   };
 }
 
+function handleContent(profile, label) {
+  return {
+    type: "span",
+    style: { whiteSpace: "nowrap" },
+    children: [avatarSpan(profile), { type: "text", value: `@${label}` }],
+  };
+}
+
 function replaceCiteNode({ node, parent, parentLink, lower, label }, profiles) {
   const profile = profiles.get(lower);
   if (!profile) return;
   const index = parent.children.indexOf(node);
 
-  const text = { type: "text", value: `@${label}` };
-
   if (parentLink) {
     if (!parentLink.url.includes("github.com")) return;
     Object.assign(parentLink, handleLinkProps(profile));
-    parent.children.splice(index, 1, text);
-    parent.children.unshift(avatarSpan(profile));
+    parent.children.splice(index, 1, handleContent(profile, label));
     return;
   }
 
   parent.children.splice(index, 1, {
     type: "link",
     url: profile.url,
-    children: [avatarSpan(profile), text],
+    children: [handleContent(profile, label)],
     ...handleLinkProps(profile),
   });
 }
@@ -145,17 +156,6 @@ const plugin = {
 
           const profiles = await fetchProfiles(handles);
           replaceCiteMentions(citeMentions, profiles);
-
-          // Inject plugin styles into the page.
-          // HACK: the myst-theme math renderer uses dangerouslySetInnerHTML
-          // when a math node has an `html` property, which lets us inject a
-          // <style> block. This is the only self-contained way for a plugin
-          // to ship its own CSS without requiring an external stylesheet.
-          tree.children.unshift({
-            type: "math",
-            value: "",
-            html: `<style>${HANDLE_STYLES}</style>`,
-          });
         };
       },
     },

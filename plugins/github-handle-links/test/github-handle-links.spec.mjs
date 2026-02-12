@@ -70,9 +70,14 @@ describe('GitHub Handle Links Plugin', () => {
     );
     expect(handleLinks.length).toBeGreaterThanOrEqual(1);
 
-    // It should have an avatar span
-    const avatarSpan = findNodes(handleLinks[0], (node) =>
-      node.type === 'span' && node.class === 'github-handle-avatar'
+    // It should have styles properly applied
+    const wrapperSpan = findNodes(handleLinks[0], (node) =>
+      node.type === 'span' && node.style?.whiteSpace === 'nowrap'
+    );
+    expect(wrapperSpan.length).toBe(1);
+
+    const avatarSpan = findNodes(wrapperSpan[0], (node) =>
+      node.type === 'span' && node.style?.borderRadius === '50%'
     );
     expect(avatarSpan.length).toBe(1);
   });
