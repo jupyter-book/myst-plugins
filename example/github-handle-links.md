@@ -37,8 +37,3 @@ Where they won't:
 - Literal spans: `@usernamesinbackticks`
 - Linked handles to non-github urls: [@kirstiejane](https://mystmd.org).
 ::::::
-
-:::{note} This does some wacky stuff with CSS
-MyST doesn't allow you to inject custom CSS via a plugin, so this plugin uses a workaround documented in `plugins/github-handle-links/src/index.mjs` (look for `HACK:`).
-This might create unpredictable behavior so use at your own risk and report weird behavior!
-:::
