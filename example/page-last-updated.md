@@ -14,4 +14,6 @@ It requires to make a small change to your GH action workflow to ensure the git 
           fetch-depth: 0
 ```
 
-Note that you can't turn the plugin off for specific pages, it will always update the `updated` field in the frontmatter of all pages. If you want to only set specific dates and you don't mind doing it manually, check [this plugin](update-date.md) instead.
+Note that you can't turn the plugin off for specific pages, it will always update the `updated` field in the frontmatter of all pages. You can specify in your frontmatter `no-update-date: true`. That specific page won't get a date.
+
+If you want to only set specific dates and you don't mind doing it manually, check [this plugin](update-date.md) instead.
