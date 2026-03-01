@@ -49,6 +49,10 @@ const updateDateTransform = {
   plugin: () => {
     return (node, file) => {
       if (!file?.path) return node;
+      
+      const isPDF = process.argv.some(arg => arg.includes("pdf") || arg.includes("typst"));
+      if (isPDF) return node; 
+
 
       const iso = getGitUpdatedISOForFile(file.path);
 
