@@ -37,9 +37,9 @@ function getGitUpdatedISOForFile(filePathAbs) {
 }
 
 // returns date in given format
-function formatDateNL(iso) {
+function formatDate(iso) {
   const d = new Date(iso);
-  return new Intl.DateTimeFormat('nl-NL', { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
+  return new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
 }
 
 // slots in the date per page
@@ -60,7 +60,7 @@ const updateDateTransform = {
         node.children.unshift({
           type: 'div',
           class: 'font-light text-sm mb-4 updated-date-container',
-          children: [{ type: 'text', value: `Updated: ${formatDateNL(iso)}` }],
+          children: [{ type: 'text', value: `Updated: ${formatDate(iso)}` }],
         });
       } else {
         node.children.unshift({
