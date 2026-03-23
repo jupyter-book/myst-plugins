@@ -11,6 +11,7 @@ project:
     - file: example/update-date.md   
     - file: example/page-last-updated.md
     - file: example/emoji-shortcodes.md
+    - file: example/wizard.md
 
     - title: GitHub Plugins
       file: example/github-plugins.md
