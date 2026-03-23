@@ -1,0 +1,42 @@
+image: node:22.15.1
+stages:
+  - lint
+  - test
+
+before_script:
+  - cd app
+  - npm install --global corepack@latest
+  - corepack enable
+  - corepack install
+  - pnpm config set store-dir .pnpm-store
+  - pnpm install
+
+cache:
+  key:
+    files:
+      - app/pnpm-lock.yaml
+  paths:
+    - app/node_modules/
+    - app/.pnpm-store
+
+lint:
+  stage: lint
+  script:
+    - pnpm prettier
+    - pnpm lint
+
+test:
+  stage: test
+  script:
+    - pnpm test:ci
+  coverage: '/^Statements\s*:\s*([^%]+)/'
+  artifacts:
+    paths:
+      - app/test-report.xml
+      - app/coverage/cobertura-coverage.xml
+    reports:
+      junit:
+        - app/test-report.xml
+      coverage_report:
+        coverage_format: cobertura
+        path: app/coverage/cobertura-coverage.xml

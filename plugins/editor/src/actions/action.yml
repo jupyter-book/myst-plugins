@@ -1,0 +1,28 @@
+name: 'Add wizard to Jupyter Book'
+description: 'Adds js code for the wizard to each page of the jb'
+inputs:
+  script_url:
+    description: 'The full URL of the JS file to include'
+    required: true
+  html_dir:
+    description: 'The directory containing built HTML files'
+    default: '_build/html'
+runs:
+  using: "composite"
+  steps:
+    - name: Add script tag
+      shell: bash
+      run: |
+        SCRIPT_URL="${{ inputs.script_url }}?v=${{ github.sha }}"
+        echo "adding script: $SCRIPT_URL"
+        
+        # Find all HTML files
+        html_files=$(find "${{ inputs.html_dir }}" -type f -name "*.html")
+        
+        # Construct the script tag with cache busting
+        TAG="<script src=\"${SCRIPT_URL}\"></script>"
+        
+        # Use sed to insert the tag before the closing </head> tag
+        for file in $html_files; do
+          sed -i "s|</head>|${TAG}\n</head>|g" "$file"
+        done

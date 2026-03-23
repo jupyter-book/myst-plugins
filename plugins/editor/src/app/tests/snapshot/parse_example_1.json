@@ -1,0 +1,789 @@
+{
+  "content": [
+    {
+      "attrs": {
+        "align": "left",
+        "level": 1,
+      },
+      "content": [
+        {
+          "text": "Setting up global equations directly",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "Now that you’ve seen the final matrix formulation, let’s set up a procedure to find it directly!",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "class": null,
+        "kind": "topic",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "text": "Learning objective",
+              "type": "text",
+            },
+          ],
+          "type": "admonitionTitle",
+        },
+        {
+          "attrs": {
+            "align": "left",
+          },
+          "content": [
+            {
+              "text": "You’ll look into how to setup the global formulation directly",
+              "type": "text",
+            },
+          ],
+          "type": "paragraph",
+        },
+      ],
+      "type": "aside",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "We’ll do that for the same structure as before:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "kind": "figure",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "center",
+                "alt": "Extension bar with nodal load",
+                "class": "",
+                "reference": null,
+                "title": "",
+                "url": "extension2fields.svg",
+                "width": undefined,
+              },
+              "type": "image",
+            },
+          ],
+          "type": "imageWrapper",
+        },
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "left",
+              },
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "Figure 1:",
+                      "type": "text",
+                    },
+                  ],
+                  "type": "captionNumber",
+                },
+                {
+                  "text": "Extension bar with nodal load",
+                  "type": "text",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "caption",
+        },
+      ],
+      "type": "container",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "1. Identify degrees of freedom",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "The nodal displacement are the degrees of freedom. Let’s define all of them, even though some seem to be fixed:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "kind": "figure",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "center",
+                "alt": "",
+                "class": "",
+                "reference": null,
+                "title": "",
+                "url": "assembly1.svg",
+                "width": undefined,
+              },
+              "type": "image",
+            },
+          ],
+          "type": "imageWrapper",
+        },
+      ],
+      "type": "container",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "2. Initialize the system with zeros",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "As the amount of degrees of freedom is known, the size of our global matrices and vectors are defined and they can be initialized with zeros:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "enumerated": false,
+        "enumerator": null,
+        "label": null,
+      },
+      "content": [
+        {
+          "text": "\begin{bmatrix}
+	0 & 0 & 0\\[12pt]
+	0 & 0 & 0\\[12pt]
+	0 & 0 & 0\\
+      \end{bmatrix}
+      \begin{bmatrix}
+	u_1\\[12pt]u_2\\[12pt]u_3
+      \end{bmatrix}
+      =
+      \begin{bmatrix}
+	0\\[12pt]0\\[12pt]0
+      \end{bmatrix}",
+          "type": "text",
+        },
+      ],
+      "type": "math",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "3. Assemble stiffness, element by element",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "Now let’s add the local stiffness matrices element by element. We can use the default stiffness matrix ",
+          "type": "text",
+        },
+        {
+          "content": [
+            {
+              "text": "\cfrac{EA}{\ell}\begin{bmatrix} 1&-1\\-1&1 \end{bmatrix}",
+              "type": "text",
+            },
+          ],
+          "type": "inlineMath",
+        },
+        {
+          "text": " and places its parts in the global stiffness matrix where the index of the displacement (columns) and forces (rows) match.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 3,
+      },
+      "content": [
+        {
+          "text": "Element ",
+          "type": "text",
+        },
+        {
+          "content": [
+            {
+              "text": "(1)",
+              "type": "text",
+            },
+          ],
+          "type": "inlineMath",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "The first element links the first and second nodal displacement with the first and second nodal forces:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "kind": "figure",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "center",
+                "alt": "",
+                "class": "",
+                "reference": null,
+                "title": "",
+                "url": "assembly2.svg",
+                "width": undefined,
+              },
+              "type": "image",
+            },
+          ],
+          "type": "imageWrapper",
+        },
+      ],
+      "type": "container",
+    },
+    {
+      "attrs": {
+        "enumerated": false,
+        "enumerator": null,
+        "label": null,
+      },
+      "content": [
+        {
+          "text": "\begin{bmatrix}
+	\cA{\cfrac{EA_1}{\ell_1}} & \cA{-\cfrac{EA_1}{\ell_1}} & 0\\[12pt]
+	\cA{-\cfrac{EA_1}{\ell_1}} & \cA{\cfrac{EA_1}{\ell_1}} & 0\\[12pt]
+	0 & 0 & 0\\
+      \end{bmatrix}
+      \begin{bmatrix}
+	u_1\\[12pt]u_2\\[12pt]u_3
+      \end{bmatrix}
+      =
+      \begin{bmatrix}
+	0\\[12pt]0\\[12pt]0\\
+      \end{bmatrix}",
+          "type": "text",
+        },
+      ],
+      "type": "math",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 3,
+      },
+      "content": [
+        {
+          "text": "Element ",
+          "type": "text",
+        },
+        {
+          "content": [
+            {
+              "text": "(2)",
+              "type": "text",
+            },
+          ],
+          "type": "inlineMath",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "Now let’s add the second element, linking the second and third nodal displacements with the second and third nodal forces:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "kind": "figure",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "center",
+                "alt": "",
+                "class": "",
+                "reference": null,
+                "title": "",
+                "url": "assembly3.svg",
+                "width": undefined,
+              },
+              "type": "image",
+            },
+          ],
+          "type": "imageWrapper",
+        },
+      ],
+      "type": "container",
+    },
+    {
+      "attrs": {
+        "enumerated": false,
+        "enumerator": null,
+        "label": null,
+      },
+      "content": [
+        {
+          "text": "\begin{bmatrix}
+	\cA{\cfrac{EA_1}{\ell_1}} & \cA{-\cfrac{EA_1}{\ell_1}} & 0\\
+	\cA{-\cfrac{EA_1}{\ell_1}} & \cA{\cfrac{EA_1}{\ell_1}} + \cB{\cfrac{EA_2}{\ell_2}} & \cB{-\cfrac{EA_2}{\ell_2}}\\
+	0 & \cB{-\cfrac{EA_2}{\ell_2}} & \cB{\cfrac{EA_2}{\ell_2}}\\
+      \end{bmatrix}
+      \begin{bmatrix}
+	u_1\\[12pt]u_2\\[12pt]u_3
+      \end{bmatrix}
+      =
+      \begin{bmatrix}
+	0\\[12pt]0\\[12pt]0
+      \end{bmatrix}",
+          "type": "text",
+        },
+      ],
+      "type": "math",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "4. Apply external loads",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "Now, the external loads can be applied. These external loads are called Neumann boundary conditions. These act directly on our nodes, so can be directly added to the global force vector. The sign of the forces to be added aligns with the positive direction of the nodal displacements.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "kind": "figure",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "center",
+                "alt": "",
+                "class": "",
+                "reference": null,
+                "title": "",
+                "url": "assembly4.svg",
+                "width": undefined,
+              },
+              "type": "image",
+            },
+          ],
+          "type": "imageWrapper",
+        },
+      ],
+      "type": "container",
+    },
+    {
+      "attrs": {
+        "enumerated": false,
+        "enumerator": null,
+        "label": null,
+      },
+      "content": [
+        {
+          "text": "\begin{bmatrix}
+	\cA{\cfrac{EA_1}{\ell_1}} & \cA{-\cfrac{EA_1}{\ell_1}} & 0\\
+	\cA{-\cfrac{EA_1}{\ell_1}} & \cA{\cfrac{EA_1}{\ell_1}} + \cB{\cfrac{EA_2}{\ell_2}} & \cB{-\cfrac{EA_2}{\ell_2}}\\
+	0 & \cB{-\cfrac{EA_2}{\ell_2}} & \cB{\cfrac{EA_2}{\ell_2}}\\
+      \end{bmatrix}
+      \begin{bmatrix}
+	u_1\\[12pt]u_2\\[12pt]u_3
+      \end{bmatrix}
+      =
+      \begin{bmatrix}
+	0\\[12pt]0\\[12pt]F
+      \end{bmatrix}",
+          "type": "text",
+        },
+      ],
+      "type": "math",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "5. Apply prescribed displacements",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "Now, the external loads can be applied. These external loads are called Neumann boundary conditions. These act directly on our nodes, so can be directly added to the global force vector. The sign of the forces to be added aligns with the positive direction of the nodal displacements.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "The Neumann boundary condition causes a prescribed displacement ",
+          "type": "text",
+        },
+        {
+          "content": [
+            {
+              "text": "u_1 = 0",
+              "type": "text",
+            },
+          ],
+          "type": "inlineMath",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "kind": "figure",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "center",
+                "alt": "",
+                "class": "",
+                "reference": null,
+                "title": "",
+                "url": "assembly5.svg",
+                "width": undefined,
+              },
+              "type": "image",
+            },
+          ],
+          "type": "imageWrapper",
+        },
+      ],
+      "type": "container",
+    },
+    {
+      "attrs": {
+        "enumerated": false,
+        "enumerator": null,
+        "label": null,
+      },
+      "content": [
+        {
+          "text": "\begin{bmatrix}
+	\cA{\cfrac{EA_1}{\ell_1}} & \cA{-\cfrac{EA_1}{\ell_1}} & 0\\
+	\cA{-\cfrac{EA_1}{\ell_1}} & \cA{\cfrac{EA_1}{\ell_1}} + \cB{\cfrac{EA_2}{\ell_2}} & \cB{-\cfrac{EA_2}{\ell_2}}\\
+	0 & \cB{-\cfrac{EA_2}{\ell_2}} & \cB{\cfrac{EA_2}{\ell_2}}\\
+      \end{bmatrix}
+      \begin{bmatrix}
+	0\\[12pt]u_2\\[12pt]u_3
+      \end{bmatrix}
+      =
+      \begin{bmatrix}
+	0\\[12pt]0\\[12pt]F
+      \end{bmatrix}",
+          "type": "text",
+        },
+      ],
+      "type": "math",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "However, it also adds a force:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "kind": "figure",
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "center",
+                "alt": "",
+                "class": "",
+                "reference": null,
+                "title": "",
+                "url": "assembly5_2.svg",
+                "width": undefined,
+              },
+              "type": "image",
+            },
+          ],
+          "type": "imageWrapper",
+        },
+      ],
+      "type": "container",
+    },
+    {
+      "attrs": {
+        "enumerated": false,
+        "enumerator": null,
+        "label": null,
+      },
+      "content": [
+        {
+          "text": "\begin{bmatrix}
+	\cA{\cfrac{EA_1}{\ell_1}} & \cA{-\cfrac{EA_1}{\ell_1}} & 0\\
+	\cA{-\cfrac{EA_1}{\ell_1}} & \cA{\cfrac{EA_1}{\ell_1}} + \cB{\cfrac{EA_2}{\ell_2}} & \cB{-\cfrac{EA_2}{\ell_2}}\\
+	0 & \cB{-\cfrac{EA_2}{\ell_2}} & \cB{\cfrac{EA_2}{\ell_2}}\\
+      \end{bmatrix}
+      \begin{bmatrix}
+	0\\[12pt]u_2\\[12pt]u_3
+      \end{bmatrix}
+      =
+      \begin{bmatrix}
+	H\\[12pt]0\\[12pt]F
+      \end{bmatrix}",
+          "type": "text",
+        },
+      ],
+      "type": "math",
+    },
+    {
+      "attrs": {
+        "align": "left",
+        "level": 2,
+      },
+      "content": [
+        {
+          "text": "6. Solve for the unknown nodal displacements",
+          "type": "text",
+        },
+      ],
+      "type": "heading",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "Finally, we can solve for the unknown nodal displacements. For now, we can solve this system by only taking into account the second and third row:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "enumerated": false,
+        "enumerator": null,
+        "label": null,
+      },
+      "content": [
+        {
+          "text": "\begin{bmatrix}
+	    \cA{\displaystyle\cfrac{EA_1}{\ell_1}} + \cB{\displaystyle\cfrac{EA_2}{\ell_2}} & \cB{-\displaystyle\cfrac{EA_2}{\ell_2}}\\
+	    \cB{-\displaystyle\cfrac{EA_2}{\ell_2}} & \cB{\displaystyle\cfrac{EA_2}{\ell_2}}\\
+	  \end{bmatrix}
+	  \begin{bmatrix}
+	    u_2\\[14pt]u_3
+	  \end{bmatrix}
+	  =
+	  \begin{bmatrix}
+	    0\\[14pt]F
+	  \end{bmatrix}",
+          "type": "text",
+        },
+      ],
+      "type": "math",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "This results in:",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+    {
+      "attrs": {
+        "ordered": false,
+        "spread": false,
+        "start": undefined,
+      },
+      "content": [
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "left",
+              },
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": " u_2 = \displaystyle\cfrac{F\ell_1}{EA_1}",
+                      "type": "text",
+                    },
+                  ],
+                  "type": "inlineMath",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+        {
+          "content": [
+            {
+              "attrs": {
+                "align": "left",
+              },
+              "content": [
+                {
+                  "content": [
+                    {
+                      "text": "u_3 = \displaystyle\cfrac{F\left(EA_1\ell_2 + EA_2\ell_1\right)}{EA_1\,EA_2}",
+                      "type": "text",
+                    },
+                  ],
+                  "type": "inlineMath",
+                },
+              ],
+              "type": "paragraph",
+            },
+          ],
+          "type": "listItem",
+        },
+      ],
+      "type": "list",
+    },
+    {
+      "attrs": {
+        "align": "left",
+      },
+      "content": [
+        {
+          "text": "Later on, we’ll introduce another way of solving the system of equations which allows for nonzero Dirichlet boundary conditions.",
+          "type": "text",
+        },
+      ],
+      "type": "paragraph",
+    },
+  ],
+  "type": "block",
+}

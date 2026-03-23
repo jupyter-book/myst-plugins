@@ -1,0 +1,15 @@
+{
+  "parser": "@typescript-eslint/parser",
+  "plugins": ["@typescript-eslint", "solid"],
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:solid/recommended",
+    "plugin:prettier/recommended"
+  ],
+  "parserOptions": { "project": ["./tsconfig.json"] },
+  "rules": {
+    "import/extensions": ["error", "ignorePackages", { "": "never" }],
+    "prettier/prettier": ["error", { "endOfLine": "auto" }]
+  }
+}
