@@ -1,9 +1,10 @@
 // GitHub Handle Links Plugin
 // Automatically converts @username mentions into links to GitHub profiles
 
-import { createCache, walk, githubApiHeaders } from "../../github-shared/utils.mjs";
+import { createCache, walk, githubApiHeaders, MS_PER_DAY } from "../../github-shared/utils.mjs";
 
-const { readCache, writeCache } = createCache("github-handle");
+// 30 day cache because these probably very rarely update
+const { readCache, writeCache } = createCache("github-handle", 30 * MS_PER_DAY);
 
 const SIMPLE_HANDLE =
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/;

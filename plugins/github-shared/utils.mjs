@@ -6,13 +6,16 @@ import { existsSync, readFileSync, writeFileSync, mkdirSync } from "fs";
 import { join } from "path";
 
 const CACHE_DIR = "_build/cache";
-const CACHE_TTL = 24 * 3600000; // 24 hours
+export const MS_PER_DAY = 24 * 60 * 60 * 1000; // milliseconds in one day
+const DEFAULT_CACHE_TTL = MS_PER_DAY;
 
 /**
  * Create a scoped file-based cache. Returns { readCache, writeCache }.
- * Stores JSON in _build/cache/ keyed by MD5 hash with a 24h TTL.
+ * Stores JSON in _build/cache/ keyed by MD5 hash.
+ * @param {string} prefix - Cache key prefix
+ * @param {number} [ttl] - TTL in milliseconds (default: 24 hours)
  */
-export function createCache(prefix) {
+export function createCache(prefix, ttl = DEFAULT_CACHE_TTL) {
   function getCachePath(key) {
     const hash = createHash("md5").update(key).digest("hex");
     return join(CACHE_DIR, `${prefix}-${hash}.json`);
@@ -22,7 +25,7 @@ export function createCache(prefix) {
     const cachePath = getCachePath(key);
     if (!existsSync(cachePath)) return null;
     const data = JSON.parse(readFileSync(cachePath, "utf8"));
-    if (Date.now() - data.timestamp > CACHE_TTL) return null;
+    if (Date.now() - data.timestamp > ttl) return null;
     return data.value;
   }
 
