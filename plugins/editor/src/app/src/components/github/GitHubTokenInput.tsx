@@ -48,14 +48,14 @@ export const GitHubTokenInput = (props: Props) => {
             to open the token creation menu.
           </li>
           <li>
-            <b>Name</b> your token and set an <b>expiration</b> if desired.
+            <b>Name</b> your token and set an <b>expiration</b>.
           </li>
           <li>
             Under <b>Resource owner</b>, select <b>Your account</b>, if it was
             not already preselected.
           </li>
           <li>
-            Under <b>Repository access</b>, choose <b>All repositories</b>.
+            Under <b>Repository access</b>, choose <b>your specific repository</b>.
           </li>
           <li>
             Under <b>Repository permissions</b>, set <b>Contents</b> to{" "}

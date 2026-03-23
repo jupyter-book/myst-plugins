@@ -3,7 +3,7 @@ import { describe, expect, test, vi, beforeEach, afterEach } from "vitest";
 // Mock API to force an error response
 vi.mock("../src/github-api.mjs", () => ({
   fetchIssues: vi.fn(async () => {
-    throw new Error("403 Forbidden");
+    throw new Error("403 Forbidden - check myst github url");
   })
 }));
 
