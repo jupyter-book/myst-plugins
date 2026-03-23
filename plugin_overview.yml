@@ -23,7 +23,7 @@
   status: tested
   maintainers:
     - Freek Pols
-  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/page-last-updated/page-last-updated.mjs
+  embed_link: https://github.com/jupyter-book/myst-plugins/releases/download/page-last-updatedv1.1/page-last-updated.mjs
 
 - name: experiment-admonition
   functionalities: A custom admonition with its transform for converting to pdf
