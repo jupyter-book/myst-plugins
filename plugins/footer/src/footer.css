@@ -1,0 +1,100 @@
+/* Footer styles — self-contained in the anywidget shadow DOM. */
+
+:host {
+  display: block;
+  color: inherit;
+  font-family: inherit;
+}
+
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; }
+a:hover { text-decoration: underline; }
+ul { list-style: none; margin: 0; padding: 0; }
+
+/* ----- Layout ----- */
+
+.footer {
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  padding: 2rem 1rem;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.footer-columns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2.5rem;
+}
+
+/* ----- Branding column ----- */
+
+.footer-branding {
+  flex: 1 1 220px;
+}
+
+.footer-logo {
+  height: 40px;
+  margin-bottom: 0.5rem;
+}
+
+.footer-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
+}
+
+.footer-description {
+  opacity: 0.7;
+  margin-bottom: 0.75rem;
+}
+
+.footer-icons {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.footer-icons a {
+  opacity: 0.6;
+  display: inline-flex;
+}
+
+/* ----- Link columns ----- */
+
+.footer-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  flex: 2 1 300px;
+}
+
+.footer-link-group {
+  min-width: 120px;
+  flex: 1;
+}
+
+.footer-link-group li {
+  margin-bottom: 0.3rem;
+}
+
+.footer-link-group a {
+  opacity: 0.8;
+}
+
+.footer-link-group-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  opacity: 0.5;
+  margin-bottom: 0.5rem;
+}
+
+/* ----- Copyright ----- */
+
+.footer-copyright {
+  margin-top: 1.5rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  opacity: 0.4;
+  font-size: 0.8rem;
+}

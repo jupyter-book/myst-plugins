@@ -2,7 +2,8 @@
 version: 1
 project:
   id: f1082c4e-082a-4655-a225-d9dde40f31b9
-  title: myst-plugins
+  name: MyST Community Plugins
+  title: MyST Community Plugins
   date: 2025-08-28 # created
   # description:
   # keywords: []
@@ -19,5 +20,6 @@ site:
   template: book-theme
   options:
     style: example/style/custom.css
-  #   favicon: favicon.ico
-  #   logo: site_logo.png
+    logo_text: MyST Community Plugins
+  parts:
+    footer: footer-site.md
