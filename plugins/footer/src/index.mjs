@@ -82,8 +82,9 @@ const plugin = {
           Object.keys(node).forEach((k) => delete node[k]);
           Object.assign(node, {
             type: 'anywidget',
-            // Replaced with a release URL at build time (see build.mjs)
+            // Replaced with release URLs at build time (see build.mjs)
             esm: __WIDGET_URL__,
+            css: __CSS_URL__,
             model: { ...fields, iconSvgs },
           });
         }

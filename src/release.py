@@ -174,9 +174,9 @@ def collect_release_assets(plugin_dir, built=False):
         # Use dist/ directory
         dist_dir = plugin_dir / "dist"
         if dist_dir.exists():
-            assets = list(dist_dir.glob("*.mjs"))
+            assets = list(dist_dir.glob("*.mjs")) + list(dist_dir.glob("*.css"))
             if not assets:
-                log("No .mjs files found in dist/", "error")
+                log("No .mjs or .css files found in dist/", "error")
                 return []
             return assets
         else:
