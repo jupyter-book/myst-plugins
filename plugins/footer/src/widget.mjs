@@ -1,11 +1,17 @@
 // Footer widget — renders in Shadow DOM via anywidget.
-// Styles are loaded from footer.css via the anywidget `css` property.
-//
-// Uses insertAdjacentHTML (not innerHTML) to append content — the anywidget
-// renderer adds a <link> to the stylesheet as a child of `el` before calling
-// render(), and innerHTML would remove it.
+// CSS is injected via a <style> tag so the widget is fully self-contained
+// I haven't figured out how to get this working with remove CSS thus far...
+// __FOOTER_CSS__ is replaced with the contents of footer.css at build time (see build.mjs).
 
 function render({ model, el }) {
+  // Inject CSS into the shadow DOM (idempotent — skips if already present)
+  if (!el.querySelector('style[data-footer]')) {
+    const style = document.createElement('style');
+    style.setAttribute('data-footer', '');
+    style.textContent = __FOOTER_CSS__;
+    el.prepend(style);
+  }
+
   const title = model.get('title');
   const description = model.get('description');
   const logo = model.get('logo');

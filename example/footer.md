@@ -2,6 +2,24 @@
 
 The `{footer}` directive renders a site footer from structured YAML data. It uses the [anywidget](https://mystmd.org/guide/widgets) interface to do so in a self-contained way.
 
+## Installation
+
+Add the plugin to your `myst.yml`:
+
+```yaml
+project:
+  plugins:
+  - https://github.com/jupyter-book/myst-plugins/releases/download/footer-latest/index.mjs
+```
+
+Then create a markdown file (e.g. `footer.md`) with a `{footer}` directive (see below for example), and wire it into your site config:
+
+```yaml
+site:
+  parts:
+    footer: footer.md
+```
+
 ## Usage
 
 Use this plugin with a `{footer}` directive with a YAML body. There are multiple fields (see below) that will change the layout based on which are present. Here's an example:
@@ -33,16 +51,6 @@ icons:
   discord: https://discord.mystmd.org
 ```
 :::::
-
-To add this to a site footer, use it in `site.parts.footer` in `myst.yml`. For example:
-
-First put the text above in a file called `footer.md`, then refer to it like so:
-
-```yaml
-site:
-  parts:
-    footer: footer.md
-```
 
 ### Available Fields
 
