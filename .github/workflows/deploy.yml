@@ -44,6 +44,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.READ_ONLY_TOKEN }}
         run: myst build --html
+      - name: Download Vite Build
+        uses: actions/download-artifact@v4
+        with:
+          name: vite-dist
+          path: ./_build/html/editor 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
