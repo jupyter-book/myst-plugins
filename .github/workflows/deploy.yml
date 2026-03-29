@@ -24,10 +24,6 @@ concurrency:
   group: 'pages'
   cancel-in-progress: false
 jobs:
-
-  build-editor:
-      uses: ./.github/workflows/build-editor.yml
-
   deploy:
     environment:
       name: github-pages
@@ -48,16 +44,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.READ_ONLY_TOKEN }}
         run: myst build --html
-      - name: Download editor artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: vite-dist
-          path: ./_tmp/editor-dist
-
-      - name: Copy editor into site at /editor/
-        run: |
-          mkdir -p ./_build/html/editor
-          cp -R ./_tmp/editor-dist/. ./_build/html/editor/
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
