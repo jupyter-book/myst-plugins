@@ -1,0 +1,38 @@
+name: Build SolidJS Editor (Vite)
+
+on:
+  workflow_call:
+    outputs:
+      artifact-name:
+        description: "Name of the uploaded artifact containing the editor dist"
+        value: vite-dist
+
+jobs:
+  build-vite:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./plugins/editor/src/app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v2
+        with:
+          version: 8
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+          cache-dependency-path: ./plugins/editor/src/app/pnpm-lock.yaml
+
+      - run: pnpm install --no-frozen-lockfile
+      - run: pnpm build
+
+      - name: Upload editor dist as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vite-dist
+          path: ./plugins/editor/src/app/dist
+          if-no-files-found: error
