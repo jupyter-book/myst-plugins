@@ -25,43 +25,30 @@ function createDemoDirective(name) {
       const parsed = ctx.parseMyst(rawContent) || { children: [] };
 
       const titleChildren = title
-        ? [
-            {
-              type: "cardTitle",
-              children: [{ type: "text", value: title }],
-            },
-          ]
+        ? [{ type: "heading", depth: 6, children: [{ type: "text", value: title }] }]
         : [];
 
-      const cardNode = {
-        type: "card",
-        class: "myst-demo-container",
-        children: [
-          ...titleChildren,
-          {
-            type: "cardBody",
-            children: [
-              {
-                type: "code",
-                lang: "markdown",
-                meta: { caption: "Source MyST" },
-                value: rawContent,
-              },
-          {
-            type: "paragraph",
-            children: [
-              {
-                type: "thematicBreak",
-              },
-            ],
+      return [
+        {
+          type: "div",
+          class: "myst-demo-container",
+          style: {
+            border: "1px solid #e0e0e0",
+            borderRadius: "4px",
+            padding: "1rem",
           },
-          ...parsed.children,
-        ],
-          },
-        ],
-      };
-
-      return [cardNode];
+          children: [
+            ...titleChildren,
+            {
+              type: "code",
+              lang: "markdown",
+              value: rawContent,
+            },
+            { type: "thematicBreak" },
+            ...parsed.children,
+          ],
+        },
+      ];
     },
   };
 }
