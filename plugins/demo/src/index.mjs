@@ -4,7 +4,7 @@
 function createDemoDirective(name) {
   return {
     name,
-    argument: {
+    arg: {
       type: String,
       required: false,
       doc: "Optional title for the demo card",
@@ -16,7 +16,7 @@ function createDemoDirective(name) {
     },
     run(data, _vfile, ctx) {
       const rawContent = data.body?.trim() || "";
-      const title = data.argument?.trim() || "MyST Demo";
+      const title = data.arg?.trim() || "";
 
       if (!rawContent) {
         return [];
@@ -24,18 +24,20 @@ function createDemoDirective(name) {
 
       const parsed = ctx.parseMyst(rawContent) || { children: [] };
 
+      const titleChildren = title
+        ? [
+            {
+              type: "cardTitle",
+              children: [{ type: "text", value: title }],
+            },
+          ]
+        : [];
+
       const cardNode = {
         type: "card",
-        data: {
-          hProperties: {
-            className: ["card", "myst-demo-card", "myst-demo"],
-          },
-        },
+        class: "myst-demo-container",
         children: [
-          {
-            type: "cardTitle",
-            children: [{ type: "text", value: title }],
-          },
+          ...titleChildren,
           {
             type: "cardBody",
             children: [
