@@ -12,13 +12,12 @@ project:
     # - plugins/iframe-to-thumbnail-pdf/iframe-to-thumbnail-pdf.mjs
     - https://github.com/jupyter-book/myst-plugins/releases/download/iframe-to-qr-pdf/iframe-to-qr-pdf.mjs
     - https://github.com/jupyter-book/myst-plugins/releases/download/updated-date-frontmatter/update-date-frontmatter.mjs
-    # GitHub plugins: src/ for local dev, dist/ (via esbuild) for distribution
-    - plugins/github-issue-table/src/index.mjs
-    - plugins/github-issue-link/src/index.mjs
-    - plugins/github-handle-links/src/index.mjs
+    # Plugins with build steps (run `nox -s build` first)
+    - plugins/github-issue-table/dist/index.mjs
+    - plugins/github-issue-link/dist/index.mjs
+    - plugins/github-handle-links/dist/index.mjs
+    - plugins/footer/dist/index.mjs
+    # Plugins without build steps
     - plugins/demo/src/index.mjs
     - plugins/emoji-shortcodes/emoji-shortcodes.mjs
     - plugins/page-last-updated/page-last-updated.mjs
-    # Run plugins/footer npm run build first to build the dist/ folder
-    # I think this is needed in order to have the CSS included in the bundle
-    - plugins/footer/dist/index.mjs
