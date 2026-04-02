@@ -23,4 +23,5 @@ See the docstring of that script for usage information.
 **Note:** Release tags are named after the plugin (e.g., `github-issue-table`), not semantic versions. Future releases of the same plugin should update the existing release or use dated tags if versioning is needed.
 
 ## Gallery of plugins
+
 See the [plugin overview](https://jupyter-book.github.io/myst-plugins/) for a list of available plugins and their status.

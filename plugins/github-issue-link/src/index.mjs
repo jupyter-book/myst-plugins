@@ -1,34 +1,24 @@
 // GitHub Issue Link Decorator Plugin
 // Automatically decorates GitHub issue links with titles, state, and CSS classes
 
+import { createCache, walk, githubApiHeaders, stripBrackets, MS_PER_DAY } from "../../github-shared/utils.mjs";
+
+const { readCache, writeCache } = createCache("github-issue", 7 * MS_PER_DAY);
+
 const ISSUE_LINK_REGEX =
   /^https:\/\/github\.com\/([^/]+\/[^/]+)\/issues\/(\d+)(?:[/?#].*)?$/;
 
 // ============================================================================
-// Title Cleaning
-// ============================================================================
-
-function stripBrackets(title) {
-  // Remove [...] and (...) content from the beginning of titles
-  return title.replace(/^(\[.*?\]|\(.*?\))\s*/g, "").trim();
-}
-
-// ============================================================================
-// Cache Management
-// ============================================================================
-// ============================================================================
-// GitHub API
+// GitHub API (with file-based cache)
 // ============================================================================
 
 async function getIssueDetails(repoSlug, issueNumber) {
-  const apiUrl = `https://api.github.com/repos/${repoSlug}/issues/${issueNumber}`;
-  const headers = { Accept: "application/vnd.github+json" };
-  const token = process?.env?.GITHUB_TOKEN;
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const cacheKey = `${repoSlug}/issues/${issueNumber}`;
+  const cached = readCache(cacheKey);
+  if (cached) return cached;
 
-  const response = await fetch(apiUrl, { headers });
+  const apiUrl = `https://api.github.com/repos/${repoSlug}/issues/${issueNumber}`;
+  const response = await fetch(apiUrl, { headers: githubApiHeaders() });
   if (!response.ok) {
     console.warn(
       `[github-issue-link] Failed to fetch ${apiUrl}: ${response.status}`,
@@ -44,6 +34,7 @@ async function getIssueDetails(repoSlug, issueNumber) {
     url: data.html_url,
   };
 
+  writeCache(cacheKey, issueDetails);
   return issueDetails;
 }
 
@@ -122,20 +113,6 @@ async function decorateLink(node, parent, repoSlug, issueNumber, options) {
           value: `${stateIcon} `,
         });
       }
-    }
-  }
-}
-
-// ============================================================================
-// Tree Walking
-// ============================================================================
-
-function walk(node, parent, callback) {
-  if (!node) return;
-  callback(node, parent);
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      walk(child, node, callback);
     }
   }
 }

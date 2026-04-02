@@ -1,0 +1,26 @@
+{
+  "name": "@jupyter-book/myst-plugin-github-issue-link",
+  "version": "0.1.0",
+  "description": "MyST plugin to decorate GitHub issue links with titles and state",
+  "type": "module",
+  "main": "dist/index.mjs",
+  "scripts": {
+    "build": "node build.mjs",
+    "lint": "node --check src/*.mjs",
+    "test": "npm run lint && vitest run",
+    "test:watch": "vitest watch"
+  },
+  "keywords": [
+    "myst",
+    "plugin",
+    "github",
+    "issues",
+    "markdown"
+  ],
+  "author": "Jupyter Book Team",
+  "license": "MIT",
+  "devDependencies": {
+    "esbuild": "^0.19.0",
+    "vitest": "^3.2.4"
+  }
+}

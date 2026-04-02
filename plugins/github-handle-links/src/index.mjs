@@ -1,33 +1,25 @@
 // GitHub Handle Links Plugin
 // Automatically converts @username mentions into links to GitHub profiles
 
+import { createCache, walk, githubApiHeaders, MS_PER_DAY } from "../../github-shared/utils.mjs";
+
+// 30 day cache because these probably very rarely update
+const { readCache, writeCache } = createCache("github-handle", 30 * MS_PER_DAY);
+
 const SIMPLE_HANDLE =
   /^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$/;
-
-// ============================================================================
-// Tree Traversal
-// ============================================================================
-
-function visit(node, parent, callback) {
-  if (!node) return;
-  callback(node, parent);
-  if (Array.isArray(node.children)) {
-    node.children.forEach((child) => visit(child, node, callback));
-  }
-}
 
 // ============================================================================
 // GitHub API
 // ============================================================================
 
 async function fetchProfile(handle) {
-  const headers = { Accept: "application/vnd.github+json" };
-  const token = process?.env?.GITHUB_TOKEN;
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
+  const cacheKey = handle.toLowerCase();
+  const cached = readCache(cacheKey);
+  if (cached) return cached;
+
   const response = await fetch(`https://api.github.com/users/${handle}`, {
-    headers,
+    headers: githubApiHeaders(),
   });
   if (!response.ok) {
     return null;
@@ -36,7 +28,10 @@ async function fetchProfile(handle) {
   const profile = {
     login: data.login || handle,
     url: data.html_url || `https://github.com/${handle}`,
+    avatarUrl: data.avatar_url || null,
   };
+
+  writeCache(cacheKey, profile);
   return profile;
 }
 
@@ -60,16 +55,18 @@ async function fetchProfiles(handles) {
 
 function collectCiteMentions(root) {
   const mentions = [];
-  visit(root, null, (node, parent) => {
+  walk(root, null, (node, parent) => {
     if (!node || node.type !== "cite") return;
-    if (!parent || !Array.isArray(parent.children)) return;
+    if (!parent) return;
+    // If the parent is already a link, flag it so we enhance instead of wrap
+    const parentLink = parent.type === "link" ? parent : null;
     const label = node.label || node.identifier || "";
     const handle = (node.identifier || label || "").replace(/^@/, "");
     const lower = handle.toLowerCase();
     if (!handle) return;
     // Quick check to make sure it's a valid GitHub handle syntax
     if (!SIMPLE_HANDLE.test(handle)) return;
-    mentions.push({ node, parent, handle, lower, label: label || handle });
+    mentions.push({ node, parent, parentLink, handle, lower, label: label || handle });
   });
   return mentions;
 }
@@ -78,12 +75,27 @@ function collectCiteMentions(root) {
 // Mention Replacement
 // ============================================================================
 
-function createLinkNode(profile, text) {
+function avatarSpan(profile) {
   return {
-    type: "link",
-    url: profile.url,
+    type: "span",
+    style: {
+      display: "inline-block",
+      width: "16px",
+      height: "16px",
+      borderRadius: "50%",
+      backgroundSize: "cover",
+      verticalAlign: "text-bottom",
+      marginRight: "2px",
+      backgroundImage: `url('${profile.avatarUrl}&s=40')`,
+    },
+    children: [],
+  };
+}
+
+function handleLinkProps(profile) {
+  return {
     title: `GitHub profile for ${profile.login}`,
-    children: [{ type: "text", value: text }],
+    class: "github-handle-link",
     data: {
       hProperties: {
         class: "github-handle-link",
@@ -93,13 +105,32 @@ function createLinkNode(profile, text) {
   };
 }
 
-function replaceCiteNode({ node, parent, lower, label }, profiles) {
-  if (!parent || !Array.isArray(parent.children)) return;
+function handleContent(profile, label) {
+  return {
+    type: "span",
+    style: { whiteSpace: "nowrap" },
+    children: [avatarSpan(profile), { type: "text", value: `@${label}` }],
+  };
+}
+
+function replaceCiteNode({ node, parent, parentLink, lower, label }, profiles) {
   const profile = profiles.get(lower);
   if (!profile) return;
   const index = parent.children.indexOf(node);
-  if (index === -1) return;
-  parent.children.splice(index, 1, createLinkNode(profile, `@${label}`));
+
+  if (parentLink) {
+    if (!parentLink.url.includes("github.com")) return;
+    Object.assign(parentLink, handleLinkProps(profile));
+    parent.children.splice(index, 1, handleContent(profile, label));
+    return;
+  }
+
+  parent.children.splice(index, 1, {
+    type: "link",
+    url: profile.url,
+    children: [handleContent(profile, label)],
+    ...handleLinkProps(profile),
+  });
 }
 
 const replaceCiteMentions = (mentions, profiles) =>

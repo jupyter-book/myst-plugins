@@ -26,15 +26,14 @@ export GITHUB_TOKEN=your_token_here
 ## Example
 
 ::::::{myst:demo}
-Thanks to @kirstiejane and @mfisher87 for their work on MyST!
-Note that @thisincorrectusername won't resolve and throw a warning (as it should!), and `@usernamesinbackticks` won't be touched.
+Where handles will be added:
+
+- Thanks to @kirstiejane and @mfisher87 for their work on MyST!
+- Already-linked handles get an avatar and styling: [@kirstiejane](https://github.com/kirstiejane)
+
+Where they won't:
+
+- Incorrect usernames: @thisuserwontbelinked
+- Literal spans: `@usernamesinbackticks`
+- Linked handles to non-github urls: [@kirstiejane](https://mystmd.org).
 ::::::
-
-## How it works
-
-The plugin:
-- Finds `@handle` mentions in text
-- Validates handles via GitHub API
-- Creates profile links automatically
-- Skips mentions in code blocks
-- Filters citation warnings for handled mentions

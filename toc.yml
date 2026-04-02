@@ -11,12 +11,14 @@ project:
     - file: example/update-date.md   
     - file: example/page-last-updated.md
     - file: example/emoji-shortcodes.md
+    - file: example/footer.md
 
-    - title: GitHub
+    - title: GitHub Plugins
+      file: example/github-plugins.md
       children:
-      - file: example/github-issue-table.md
-      - file: example/github-issue-link.md
-      - file: example/github-handle-links.md
+        - file: example/github-issue-table.md
+        - file: example/github-issue-link.md
+        - file: example/github-handle-links.md
 
     - title: pdf export plugins
       children:

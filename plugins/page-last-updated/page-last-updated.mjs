@@ -2,9 +2,41 @@
 
 import { execSync } from 'child_process';
 import path from 'path';
+import { readFileSync } from 'fs';
 
 // Cache per build-run (key = absolute file path)
 const gitDateCache = new Map();
+
+// Function to read frontmatter - used to check if file is excluded via frontmatter
+function getFrontmatter(srcPath) {
+  try {
+    const text = readFileSync(srcPath, 'utf-8');
+    // Regex to capture everything between the first two sets of ---
+    const match = /^---\r?\n([\s\S]*?)\r?\n---/.exec(text);
+    
+    if (!match) return null;
+
+    const frontmatterBlock = match[1];
+    const data = {};
+
+    // Split by line and parse key-value pairs manually
+    frontmatterBlock.split('\n').forEach(line => {
+      const [key, ...valueParts] = line.split(':');
+      if (key && valueParts.length > 0) {
+        const value = valueParts.join(':').trim();
+        
+        // Basic type conversion
+        if (value.toLowerCase() === 'false') data[key.trim()] = false;
+        else if (value.toLowerCase() === 'true') data[key.trim()] = true;
+        else data[key.trim()] = value;
+      }
+    });
+
+    return data;
+  } catch (err) {
+    return null;
+  }
+}
 
 function getRepoRoot() {
   return execSync('git rev-parse --show-toplevel', { encoding: 'utf8' }).trim();
@@ -37,9 +69,9 @@ function getGitUpdatedISOForFile(filePathAbs) {
 }
 
 // returns date in given format
-function formatDateNL(iso) {
+function formatDate(iso) {
   const d = new Date(iso);
-  return new Intl.DateTimeFormat('nl-NL', { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
+  return new Intl.DateTimeFormat('en-GB', { year: 'numeric', month: 'short', day: '2-digit' }).format(d);
 }
 
 // slots in the date per page
@@ -49,6 +81,16 @@ const updateDateTransform = {
   plugin: () => {
     return (node, file) => {
       if (!file?.path) return node;
+      
+      // Return if PDF export
+      const isPDF = process.argv.some(arg => arg.includes("pdf") || arg.includes("typst"));
+      if (isPDF) return node; 
+
+      // Return if frontmatter has no-update-date: true
+      const frontmatter = getFrontmatter(file.path);
+      if (frontmatter?.['no-update-date'] === true) {
+          return node;
+      }
 
       const iso = getGitUpdatedISOForFile(file.path);
 
@@ -56,7 +98,7 @@ const updateDateTransform = {
         node.children.unshift({
           type: 'div',
           class: 'font-light text-sm mb-4 updated-date-container',
-          children: [{ type: 'text', value: `Updated: ${formatDateNL(iso)}` }],
+          children: [{ type: 'text', value: `Updated: ${formatDate(iso)}` }],
         });
       } else {
         node.children.unshift({

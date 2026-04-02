@@ -8,10 +8,16 @@ vi.mock("../src/github-api.mjs", () => ({
 }));
 
 // Mock cache to avoid disk access
-vi.mock("../src/cache.mjs", () => ({
-  readCache: vi.fn(() => null),
-  writeCache: vi.fn(() => {})
-}));
+vi.mock("../../github-shared/utils.mjs", async () => {
+  const actual = await vi.importActual("../../github-shared/utils.mjs");
+  return {
+    ...actual,
+    createCache: () => ({
+      readCache: vi.fn(() => null),
+      writeCache: vi.fn(() => {}),
+    }),
+  };
+});
 
 import plugin from "../src/index.mjs";
 
@@ -45,7 +51,7 @@ describe("GitHub Issue Table error handling", () => {
     const node = tree.children[0];
     expect(node.type).toBe("paragraph");
     const text = node.children?.[0]?.value || "";
-    expect(text).toContain("Error fetching GitHub data");
+    expect(text).toContain("fetching GitHub data");
     expect(text).toContain("403 Forbidden");
   });
 });

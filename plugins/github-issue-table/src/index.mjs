@@ -1,16 +1,12 @@
-// GitHub Issue Table Plugin
-// Renders GitHub issues/PRs as tables from search queries
-
 import { fetchIssues } from "./github-api.mjs";
-import { readCache, writeCache } from "./cache.mjs";
-import { parseTemplates } from "./utils.mjs";
+import { createCache, walk, MS_PER_DAY } from "../../github-shared/utils.mjs";
+import { parseTemplates, parseWidths } from "./utils.mjs";
 import { renderCell, renderSubIssuesBlock } from "./columns.mjs";
+
+const { readCache, writeCache } = createCache("github-search", 7 * MS_PER_DAY);
 
 let sharedParseMyst = null; // captured from directive ctx; reused in transform
 
-// ============================================================================
-// Table Sorting and Building
-// ============================================================================
 
 function sortItems(items, sortSpec) {
   if (!sortSpec) return items;
@@ -53,30 +49,59 @@ function sortItems(items, sortSpec) {
   });
 }
 
+function replaceWithError(placeholder, message) {
+  Object.keys(placeholder).forEach(k => { if (k !== "type") delete placeholder[k]; });
+  placeholder.type = "paragraph";
+  placeholder.children = [{ type: "text", value: `*Error: ${message}*` }];
+}
+
+export function validateOptions({ columns, subIssuesIn, widths }) {
+  if (subIssuesIn && !columns.includes(subIssuesIn)) {
+    return `append-sub-issues column "${subIssuesIn}" not found in columns list`;
+  }
+  if (widths) {
+    const parts = widths.split(",").map(w => w.trim());
+    if (parts.length !== columns.length) {
+      return `widths: expected ${columns.length} values (one per column) but got ${parts.length}`;
+    }
+    if (parts.some(w => isNaN(parseFloat(w)) || parseFloat(w) <= 0)) {
+      return "widths: all values must be positive numbers";
+    }
+  }
+  return null;
+}
+
 function buildTable(items, columns, options = {}) {
+  const { widths } = options;
+
+  function applyWidth(cell, colIndex) {
+    if (widths && widths[colIndex] != null) {
+      cell.style = { ...cell.style, width: `${widths[colIndex]}%` };
+    }
+    return cell;
+  }
+
   const headerRow = {
     type: "tableRow",
-    children: columns.map(col => ({
+    children: columns.map((col, i) => applyWidth({
       type: "tableCell",
       children: [{ type: "text", value: (col || "").replace(/_/g, " ").toUpperCase() }]
-    }))
+    }, i))
   };
 
   const dataRows = items.map(item => ({
     type: "tableRow",
-    children: columns.map(col => {
+    children: columns.map((col, i) => {
       const cellContent = renderCell(item, col, options);
 
-      // Defensive check
       if (!cellContent) {
-        return {
+        return applyWidth({
           type: "tableCell",
           children: [{ type: "text", value: "" }]
-        };
+        }, i);
       }
 
-      // Table cells should contain phrasing content, not paragraphs
-      // If renderCell returns a paragraph, extract its children
+      // Unwrap paragraphs — table cells need phrasing content
       let children;
       if (cellContent.type === "paragraph") {
         children = Array.isArray(cellContent.children) ? cellContent.children : [{ type: "text", value: "" }];
@@ -84,10 +109,10 @@ function buildTable(items, columns, options = {}) {
         children = [cellContent];
       }
 
-      return {
+      return applyWidth({
         type: "tableCell",
         children
-      };
+      }, i);
     })
   }));
 
@@ -115,9 +140,6 @@ function buildTable(items, columns, options = {}) {
   };
 }
 
-// ============================================================================
-// Directive (Synchronous - creates placeholder)
-// ============================================================================
 
 const directive = {
   name: "issue-table",
@@ -146,7 +168,7 @@ const directive = {
     },
     "date-format": {
       type: String,
-      doc: "Date format: 'relative', 'absolute', or strftime pattern"
+      doc: "Date format: 'relative' or 'absolute' (default)"
     },
     "summary-header": {
       type: String,
@@ -163,6 +185,14 @@ const directive = {
     templates: {
       type: String,
       doc: "Custom column templates: name=My text with {{field}} placeholders; separate multiple with semicolons"
+    },
+    widths: {
+      type: String,
+      doc: "Comma-separated column width percentages (e.g., '30,50,20'). Normalized if sum exceeds 100%."
+    },
+    "label-columns": {
+      type: String,
+      doc: "Define label subset columns: name=pattern,pattern; separate multiple with semicolons (e.g., 'type=type:*; priority=priority:*')"
     }
   },
   run(data, _vfile, ctx) {
@@ -171,7 +201,6 @@ const directive = {
       return ctx.parseMyst("*Please provide a search query*").children;
     }
 
-    // Get options
     const columns = (data.options?.columns || "title,author,state,reactions")
       .split(",")
       .map(c => c.trim());
@@ -183,6 +212,8 @@ const directive = {
     const summaryTruncate = data.options?.["summary-truncate"];
     const subIssuesIn = data.options?.["append-sub-issues"];
     const templates = data.options?.templates;
+    const widths = data.options?.widths;
+    const labelColumnsStr = data.options?.["label-columns"];
 
     // Capture parseMyst for later use in transform
     if (!sharedParseMyst && ctx?.parseMyst) {
@@ -201,24 +232,13 @@ const directive = {
       summaryHeader,
       summaryTruncate,
       subIssuesIn,
-      templates
+      templates,
+      widths,
+      labelColumnsStr
     }];
   }
 };
 
-// ============================================================================
-// Transform (Asynchronous - fetches data and builds table)
-// ============================================================================
-
-function walk(node, callback) {
-  if (!node) return;
-  callback(node);
-  if (Array.isArray(node.children)) {
-    for (const child of node.children) {
-      walk(child, callback);
-    }
-  }
-}
 
 const githubIssueTableTransform = {
   name: "github-issue-table-transform",
@@ -229,7 +249,7 @@ const githubIssueTableTransform = {
       const placeholders = [];
 
       // Find all placeholder nodes
-      walk(tree, (node) => {
+      walk(tree, null, (node) => {
         if (node?.type === "githubIssueTablePlaceholder") {
           placeholders.push(node);
         }
@@ -240,47 +260,26 @@ const githubIssueTableTransform = {
       const token = process.env.GITHUB_TOKEN;
       if (!token) {
         console.error("GITHUB_TOKEN environment variable not set");
-        // Replace placeholders with error messages
-        placeholders.forEach(placeholder => {
-          placeholder.type = "paragraph";
-          placeholder.children = [{ type: "text", value: "*Error: GITHUB_TOKEN environment variable not set*" }];
-          delete placeholder.query;
-          delete placeholder.columns;
-          delete placeholder.sort;
-          delete placeholder.limit;
-          delete placeholder.bodyTruncate;
-          delete placeholder.dateFormat;
-          delete placeholder.summaryHeader;
-          delete placeholder.summaryTruncate;
-          delete placeholder.subIssuesIn;
-          delete placeholder.templates;
-        });
+        placeholders.forEach(p => replaceWithError(p, "GITHUB_TOKEN environment variable not set"));
         return;
       }
 
       // Process each placeholder
       await Promise.all(
         placeholders.map(async (placeholder) => {
-          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, templates: templateString } = placeholder;
+          const { query, columns, sort, limit, bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, widths: widthsStr, templates: templateString, labelColumnsStr } = placeholder;
 
-          // Validate append-sub-issues column if specified
-          if (subIssuesIn && !columns.includes(subIssuesIn)) {
-            placeholder.type = "paragraph";
-            placeholder.children = [{ type: "text", value: `*Error: append-sub-issues column "${subIssuesIn}" not found in columns list*` }];
-            delete placeholder.query;
-            delete placeholder.columns;
-            delete placeholder.sort;
-            delete placeholder.limit;
-            delete placeholder.bodyTruncate;
-            delete placeholder.dateFormat;
-            delete placeholder.summaryHeader;
-            delete placeholder.summaryTruncate;
-            delete placeholder.subIssuesIn;
-            delete placeholder.templates;
+          // Validate directive options
+          const validationError = validateOptions({ columns, subIssuesIn, widths: widthsStr });
+          if (validationError) {
+            replaceWithError(placeholder, validationError);
             return;
           }
+
           const parseMyst = sharedParseMyst;
           const templates = parseTemplates(templateString);
+          const labelColumns = parseTemplates(labelColumnsStr);
+          const widths = widthsStr ? parseWidths(widthsStr) : undefined;
 
           // Include limit and sort in cache key (different sorts return different "top N" items)
           const cacheKey = `${query}|limit:${limit}|sort:${sort || "none"}`;
@@ -307,18 +306,7 @@ const githubIssueTableTransform = {
               items = fetchedItems;
             } catch (err) {
               console.error("Error fetching GitHub data:", err);
-              placeholder.type = "paragraph";
-              placeholder.children = [{ type: "text", value: `*Error fetching GitHub data: ${err?.message || err}*` }];
-              delete placeholder.query;
-              delete placeholder.columns;
-              delete placeholder.sort;
-              delete placeholder.limit;
-              delete placeholder.bodyTruncate;
-              delete placeholder.dateFormat;
-              delete placeholder.summaryHeader;
-              delete placeholder.summaryTruncate;
-              delete placeholder.subIssuesIn;
-              delete placeholder.templates;
+              replaceWithError(placeholder, `fetching GitHub data: ${err?.message || err}`);
               return;
             }
           } else {
@@ -332,18 +320,7 @@ const githubIssueTableTransform = {
           }
 
           if (items.length === 0) {
-            // Replace with "no results" message
-            placeholder.type = "paragraph";
-            placeholder.children = [{ type: "text", value: "*No issues found matching this query*" }];
-            delete placeholder.query;
-            delete placeholder.columns;
-            delete placeholder.sort;
-            delete placeholder.limit;
-            delete placeholder.bodyTruncate;
-            delete placeholder.dateFormat;
-            delete placeholder.summaryHeader;
-            delete placeholder.summaryTruncate;
-            delete placeholder.subIssuesIn;
+            replaceWithError(placeholder, "No issues found matching this query");
             return;
           }
 
@@ -356,30 +333,18 @@ const githubIssueTableTransform = {
           }
 
           // Build table with options
-          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, templates, parseMyst });
+          const table = buildTable(sorted, columns, { bodyTruncate, dateFormat, summaryHeader, summaryTruncate, subIssuesIn, templates, labelColumns, parseMyst, widths });
 
           // Replace placeholder with table
+          Object.keys(placeholder).forEach(k => { if (k !== "type") delete placeholder[k]; });
           placeholder.type = table.type;
           placeholder.children = table.children;
-          delete placeholder.query;
-          delete placeholder.columns;
-          delete placeholder.sort;
-          delete placeholder.limit;
-          delete placeholder.bodyTruncate;
-          delete placeholder.dateFormat;
-          delete placeholder.summaryHeader;
-          delete placeholder.summaryTruncate;
-          delete placeholder.subIssuesIn;
-          delete placeholder.templates;
         })
       );
     };
   }
 };
 
-// ============================================================================
-// Plugin Export
-// ============================================================================
 
 const plugin = {
   name: "GitHub Issue Table",

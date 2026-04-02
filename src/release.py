@@ -174,9 +174,9 @@ def collect_release_assets(plugin_dir, built=False):
         # Use dist/ directory
         dist_dir = plugin_dir / "dist"
         if dist_dir.exists():
-            assets = list(dist_dir.glob("*.mjs"))
+            assets = list(dist_dir.glob("*.mjs")) + list(dist_dir.glob("*.css"))
             if not assets:
-                log("No .mjs files found in dist/", "error")
+                log("No .mjs or .css files found in dist/", "error")
                 return []
             return assets
         else:
@@ -220,16 +220,38 @@ def create_release(plugin_name, release_assets, deploy=False):
     # Show assets
     log(f"  Assets: {', '.join([a.name for a in release_assets])}")
 
+    # Stable "latest" tag in case users don't want to change their URL when new releases happen
+    latest_tag = f"{plugin_name}-latest"
+    latest_cmd = [
+        "gh", "release", "create", latest_tag,
+        "--title", f"{plugin_name.replace('-', ' ').title()} (latest)",
+        "--notes", notes
+    ] + asset_paths
+
     if deploy:
         log("  Creating release...")
         try:
-            result = subprocess.run(
+            subprocess.run(
                 release_cmd,
                 check=True,
                 capture_output=True,
                 text=True
             )
-            log("Release created!", "success")
+            log(f"Release {tag_name} created!", "success")
+
+            # Update the stable "latest" release (delete old one first if it exists)
+            subprocess.run(
+                ["gh", "release", "delete", latest_tag, "--yes", "--cleanup-tag"],
+                capture_output=True
+            )
+            subprocess.run(
+                latest_cmd,
+                check=True,
+                capture_output=True,
+                text=True
+            )
+            log(f"Release {latest_tag} updated!", "success")
+
             return True
         except subprocess.CalledProcessError as e:
             log(f"Release failed: {e.stderr}", "error")
@@ -237,6 +259,7 @@ def create_release(plugin_name, release_assets, deploy=False):
     else:
         title = plugin_name.replace("-", " ").title()
         log(f'  Command: gh release create {tag_name} --title "{title}" --notes "{notes}" {asset_paths[0]}')
+        log(f'  Also updates: {latest_tag} (stable download URL)')
         log("  (dry-run mode, use --deploy to execute)")
         return True
 

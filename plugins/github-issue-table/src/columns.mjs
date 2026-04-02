@@ -1,62 +1,70 @@
-// Column Definitions for GitHub Issue Table Plugin
+import { stripBrackets, stripHeaders, formatDate, truncateTree, linkifyHandle, fillTemplate, templateToNodes, extractSummary, matchesLabelPattern } from "./utils.mjs";
 
-import { stripBrackets, stripHeaders, formatDate, truncateTextWithFlag, linkifyHandle, fillTemplate, templateToNodes, extractSummary } from "./utils.mjs";
-
-// Parse text through MyST (when available) and return inline children
-function renderInlineContent(text, parseMyst) {
-  if (!text) {
-    return [{ type: "text", value: "" }];
-  }
-
-  try {
-    const parsed = parseMyst(text);
-    const children = Array.isArray(parsed?.children) ? parsed.children : [];
-
-    // If single paragraph, return its inline children
-    if (children.length === 1 && children[0]?.type === "paragraph" && Array.isArray(children[0].children)) {
-      return children[0].children;
-    }
-
-    // If multiple paragraphs or block elements, extract inline content from all paragraphs
-    // and concatenate with line breaks to keep everything inline
-    const inlineNodes = [];
-    children.forEach((child, idx) => {
-      if (child?.type === "paragraph" && Array.isArray(child.children)) {
-        if (idx > 0) {
-          inlineNodes.push({ type: "break" });
-        }
-        inlineNodes.push(...child.children);
-      }
-    });
-
-    return inlineNodes.length > 0 ? inlineNodes : [{ type: "text", value: text }];
-  } catch (err) {
-    console.error("Failed to parse content with MyST parser:", err?.message || err);
-    return [{ type: "text", value: text }];
-  }
-}
-
-// Wrap inline nodes in a paragraph
-function renderParagraphFromInline(inlineNodes) {
-  return { type: "paragraph", children: inlineNodes };
-}
-
-// Shared renderer for long-form fields (body, description, summary) with truncation + link out
 function renderLongFormText(text, { parseMyst, truncateLength, stripHeaderLines = false, issueUrl = "" }) {
-  const cleanedText = stripHeaderLines ? stripHeaders(text || "") : (text || "");
-  const { text: truncatedText, truncated } = truncateTextWithFlag(cleanedText, truncateLength);
+  const content = stripHeaderLines ? stripHeaders(text || "") : (text || "");
+  if (!content) return { type: "text", value: "" };
 
-  const inlineNodes = renderInlineContent(truncatedText, parseMyst);
-  if (truncated && issueUrl) {
-    inlineNodes.push({ type: "text", value: " " });
-    inlineNodes.push({
-      type: "link",
-      url: issueUrl,
-      children: [{ type: "text", value: "More" }],
-    });
+  if (typeof parseMyst !== "function") {
+    return { type: "text", value: content };
   }
 
-  return renderParagraphFromInline(inlineNodes);
+  let parsed;
+  try {
+    parsed = parseMyst(content);
+  } catch {
+    return { type: "text", value: content };
+  }
+
+  let children = parsed?.children || [];
+  let truncated = false;
+
+  if (truncateLength && truncateLength > 0) {
+    const result = truncateTree(children, truncateLength);
+    truncated = result.remaining <= 0;
+    children = result.nodes;
+  }
+
+  // Append "More" link as an AST node if truncated
+  if (truncated && issueUrl) {
+    const moreLink = { type: "link", url: issueUrl, children: [{ type: "text", value: "More" }] };
+    // Find the last paragraph-like node and append inline, or add a new paragraph
+    const last = children[children.length - 1];
+    if (last?.children && (last.type === "paragraph" || last.type === "text")) {
+      last.children.push({ type: "text", value: " " }, moreLink);
+    } else {
+      children.push({ type: "paragraph", children: [moreLink] });
+    }
+  }
+
+  return children.length > 0
+    ? { type: "div", children }
+    : { type: "text", value: content };
+}
+
+function renderLabelList(labels) {
+  const valid = (labels || []).filter(l => l && l.name);
+  if (valid.length === 0) return { type: "text", value: "" };
+
+  const nodes = [];
+  valid.forEach((label, idx) => {
+    if (idx > 0) nodes.push({ type: "break" });
+    nodes.push({
+      type: "span",
+      style: {
+        display: "inline-block",
+        fontSize: "0.875rem",
+        fontFamily: "monospace",
+        whiteSpace: "nowrap",
+        padding: "0.125rem 0.5rem",
+        margin: "0.125rem 0",
+        borderRadius: "0.25rem",
+        backgroundColor: "#dbeafe",
+        color: "#000000ff"
+      },
+      children: [{ type: "text", value: label.name }]
+    });
+  });
+  return { type: "paragraph", children: nodes };
 }
 
 function renderPRList(prs) {
@@ -106,7 +114,6 @@ function renderPRList(prs) {
   };
 }
 
-// Render sub-issues as a details/summary block
 function renderSubIssuesBlock(item, options) {
   const subIssues = item.subIssues || [];
 
@@ -166,41 +173,31 @@ function renderTitleLink(item) {
   };
 }
 
-/**
- * Column definition registry mapping column names to render functions
- * Each function receives (item, options) and returns an AST node
- */
+// Column definition registry. Each function receives (item, options) and returns an AST node.
 export const COLUMN_DEFINITIONS = {
-  number: (item, options) => ({
+  number: (item) => ({
     type: "link",
     url: item.url,
     children: [{ type: "text", value: `#${item.number}` }]
   }),
 
-  title: (item, options) => renderTitleLink(item),
+  title: (item) => renderTitleLink(item),
 
-  state: (item, options) => {
+  state: (item) => {
     const icon = item.state === "OPEN" ? "🟢" : "🟣";
     return { type: "text", value: `${icon} ${item.state}` };
   },
 
-  author: (item, options) =>
+  author: (item) =>
     linkifyHandle(item.author) || { type: "text", value: item.author || "" },
 
-  author_affiliation: (item, options) => {
-    if (!item.author_affiliation) {
-      return { type: "text", value: "" };
-    }
-    return linkifyHandle(item.author_affiliation) || {
-      type: "text",
-      value: item.author_affiliation
-    };
+  author_affiliation: (item) => {
+    if (!item.author_affiliation) return { type: "text", value: "" };
+    return linkifyHandle(item.author_affiliation) || { type: "text", value: item.author_affiliation };
   },
 
-  repo: (item, options) => {
-    if (!item.repo) {
-      return { type: "text", value: "" };
-    }
+  repo: (item) => {
+    if (!item.repo) return { type: "text", value: "" };
     return {
       type: "link",
       url: `https://github.com/${item.repo}`,
@@ -223,10 +220,8 @@ export const COLUMN_DEFINITIONS = {
     value: formatDate(item.closed, options.dateFormat || "absolute")
   }),
 
-  reactions: (item, options) => {
-    // Show all reaction types with counts
+  reactions: (item) => {
     const reactionNodes = [];
-
     const reactions = [
       { emoji: "👍", count: item.reactions_thumbsup },
       { emoji: "❤️", count: item.reactions_heart },
@@ -237,130 +232,34 @@ export const COLUMN_DEFINITIONS = {
       { emoji: "😕", count: item.reactions_confused },
       { emoji: "👎", count: item.reactions_thumbsdown }
     ];
-
     reactions.forEach(({ emoji, count }) => {
       if (count > 0) {
-        if (reactionNodes.length > 0) {
-          reactionNodes.push({ type: "text", value: " · " });
-        }
-        // Wrap emoji and count in span to prevent line breaking
+        if (reactionNodes.length > 0) reactionNodes.push({ type: "text", value: " · " });
         reactionNodes.push({
           type: "span",
-          children: [
-            { type: "text", value: `${emoji}\u00A0${count}` }
-          ]
+          children: [{ type: "text", value: `${emoji}\u00A0${count}` }]
         });
       }
     });
-
-    if (reactionNodes.length === 0) {
-      return { type: "text", value: " " };
-    }
-
-    return {
-      type: "paragraph",
-      children: reactionNodes
-    };
+    return reactionNodes.length > 0
+      ? { type: "paragraph", children: reactionNodes }
+      : { type: "text", value: " " };
   },
 
-  reactions_thumbsup: (item, options) => ({
-    type: "text",
-    value: `👍 ${item.reactions_thumbsup}`
-  }),
+  reactions_thumbsup: (item) => ({ type: "text", value: `👍 ${item.reactions_thumbsup}` }),
+  reactions_thumbsdown: (item) => ({ type: "text", value: `👎 ${item.reactions_thumbsdown}` }),
+  reactions_laugh: (item) => ({ type: "text", value: `😄 ${item.reactions_laugh}` }),
+  reactions_hooray: (item) => ({ type: "text", value: `🎉 ${item.reactions_hooray}` }),
+  reactions_confused: (item) => ({ type: "text", value: `😕 ${item.reactions_confused}` }),
+  reactions_heart: (item) => ({ type: "text", value: `❤️ ${item.reactions_heart}` }),
+  reactions_rocket: (item) => ({ type: "text", value: `🚀 ${item.reactions_rocket}` }),
+  reactions_eyes: (item) => ({ type: "text", value: `👀 ${item.reactions_eyes}` }),
 
-  reactions_thumbsdown: (item, options) => ({
-    type: "text",
-    value: `👎 ${item.reactions_thumbsdown}`
-  }),
+  comments: (item) => ({ type: "text", value: String(item.comments) }),
 
-  reactions_laugh: (item, options) => ({
-    type: "text",
-    value: `😄 ${item.reactions_laugh}`
-  }),
-
-  reactions_hooray: (item, options) => ({
-    type: "text",
-    value: `🎉 ${item.reactions_hooray}`
-  }),
-
-  reactions_confused: (item, options) => ({
-    type: "text",
-    value: `😕 ${item.reactions_confused}`
-  }),
-
-  reactions_heart: (item, options) => ({
-    type: "text",
-    value: `❤️ ${item.reactions_heart}`
-  }),
-
-  reactions_rocket: (item, options) => ({
-    type: "text",
-    value: `🚀 ${item.reactions_rocket}`
-  }),
-
-  reactions_eyes: (item, options) => ({
-    type: "text",
-    value: `👀 ${item.reactions_eyes}`
-  }),
-
-  comments: (item, options) => ({
-    type: "text",
-    value: String(item.comments)
-  }),
-
-  labels: (item, options) => {
-    if (!item.labels || item.labels.length === 0) {
-      return { type: "text", value: "" };
-    }
-
-    const labelNodes = [];
-
-    item.labels
-      .filter(label => label && label.name)
-      .forEach((label, idx) => {
-        if (idx > 0) {
-          // Add line break between labels
-          labelNodes.push({ type: "break" });
-        }
-
-        // Create span with styling for labels
-        // Using inline styles only (no Tailwind classes needed)
-        labelNodes.push({
-          type: "span",
-          style: {
-            display: "inline-block",
-            fontSize: "0.875rem",
-            whiteSpace: "nowrap",
-            padding: "0.125rem 0.5rem",
-            margin: "0.125rem 0",
-            borderRadius: "0.25rem",
-            backgroundColor: "#dbeafe",
-            color: "#000000ff"
-          },
-          children: [
-            { type: "text", value: label.name }
-          ]
-        });
-      });
-
-    if (labelNodes.length === 0) {
-      return { type: "text", value: "" };
-    }
-
-    return {
-      type: "paragraph",
-      children: labelNodes
-    };
-  },
-
-  linked_prs: (item, options) => {
-    return renderPRList(item.linkedPRs);
-  },
-
-  closing_prs: (item, options) => {
-    const closing = item?.closingPRs ?? (item.linkedPRs || []).filter(pr => pr?.willClose);
-    return renderPRList(closing);
-  },
+  labels: (item) => renderLabelList(item.labels),
+  linked_prs: (item) => renderPRList(item.linkedPRs),
+  closing_prs: (item) => renderPRList(item.closingPRs),
 
   body: (item, options) =>
     renderLongFormText(item.body, {
@@ -376,93 +275,36 @@ export const COLUMN_DEFINITIONS = {
       truncateLength: options.bodyTruncate,
       issueUrl: item.url
     }),
-  
+
   summary: (item, options) => {
-    const summaryLimit = options.summaryTruncate ?? options.bodyTruncate;
-    // Extract summary using header keywords or fallback logic
     const summaryText = extractSummary(
       item.body || "",
       options.summaryHeader || "summary,context,overview,description,background,user story"
     );
-
-    if (!summaryText) {
-      return { type: "text", value: "" };
-    }
-
+    if (!summaryText) return { type: "text", value: "" };
     return renderLongFormText(summaryText, {
       parseMyst: options.parseMyst,
-      truncateLength: summaryLimit,
+      truncateLength: options.summaryTruncate ?? options.bodyTruncate,
       issueUrl: item.url
     });
   },
 
-  sub_issues: (item, options) => {
-    const subIssues = item.subIssues || [];
-
-    if (subIssues.length === 0) {
-      return { type: "text", value: "" };
-    }
-
-    // Sort by last updated (most recent first)
-    const sorted = [...subIssues].sort((a, b) => {
-      const aTime = a.updated ? new Date(a.updated).getTime() : 0;
-      const bTime = b.updated ? new Date(b.updated).getTime() : 0;
-      return bTime - aTime;
-    });
-
-    const contentNodes = [];
-    sorted.forEach((sub, idx) => {
-      if (idx > 0) {
-        contentNodes.push({ type: "break" });
-      }
-
-      const icon = sub.state === "OPEN" ? "🟢" : "🟣";
-
-      contentNodes.push({ type: "text", value: `${icon} ` });
-      contentNodes.push({
-        type: "link",
-        url: sub.url,
-        children: [{ type: "text", value: sub.title || `#${sub.number}` }]
-      });
-      contentNodes.push({
-        type: "text",
-        value: ` • ${formatDate(sub.updated, options.dateFormat || "relative")}`
-      });
-    });
-
-    return {
-      type: "details",
-      children: [
-        {
-          type: "summary",
-          children: [{
-            type: "text",
-            value: `${subIssues.length} sub-issue${subIssues.length === 1 ? '' : 's'}`
-          }]
-        },
-        {
-          type: "paragraph",
-          children: contentNodes
-        }
-      ]
-    };
-  },
+  sub_issues: (item, options) =>
+    renderSubIssuesBlock(item, options) || { type: "text", value: "" },
 };
 
-/**
- * Export sub-issues block renderer for use in buildTable
- */
 export { renderSubIssuesBlock };
 
-/**
- * Render a table cell for given column
- * @param {Object} item - Issue/PR data
- * @param {string} column - Column name
- * @param {Object} options - Rendering options
- * @returns {Object} AST node for cell content
- */
+/** Render a table cell, checking label-columns, built-in columns, item fields, then templates. */
 export function renderCell(item, column, options = {}) {
   const normalizedColumn = typeof column === "string" ? column.toLowerCase() : column;
+
+  // Check label-column definitions (before built-ins so "labels=..." can override)
+  const { labelColumns = {} } = options;
+  if (labelColumns[column]) {
+    const filtered = (item.labels || []).filter(l => l?.name && matchesLabelPattern(l.name, labelColumns[column]));
+    return renderLabelList(filtered);
+  }
 
   // Try column definition first
   const columnDef = COLUMN_DEFINITIONS[column] || COLUMN_DEFINITIONS[normalizedColumn];

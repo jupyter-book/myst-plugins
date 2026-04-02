@@ -4,7 +4,7 @@
 function createDemoDirective(name) {
   return {
     name,
-    argument: {
+    arg: {
       type: String,
       required: false,
       doc: "Optional title for the demo card",
@@ -16,7 +16,7 @@ function createDemoDirective(name) {
     },
     run(data, _vfile, ctx) {
       const rawContent = data.body?.trim() || "";
-      const title = data.argument?.trim() || "MyST Demo";
+      const title = data.arg?.trim() || "";
 
       if (!rawContent) {
         return [];
@@ -24,42 +24,31 @@ function createDemoDirective(name) {
 
       const parsed = ctx.parseMyst(rawContent) || { children: [] };
 
-      const cardNode = {
-        type: "card",
-        data: {
-          hProperties: {
-            className: ["card", "myst-demo-card", "myst-demo"],
-          },
-        },
-        children: [
-          {
-            type: "cardTitle",
-            children: [{ type: "text", value: title }],
-          },
-          {
-            type: "cardBody",
-            children: [
-              {
-                type: "code",
-                lang: "markdown",
-                meta: { caption: "Source MyST" },
-                value: rawContent,
-              },
-          {
-            type: "paragraph",
-            children: [
-              {
-                type: "thematicBreak",
-              },
-            ],
-          },
-          ...parsed.children,
-        ],
-          },
-        ],
-      };
+      const titleChildren = title
+        ? [{ type: "heading", depth: 6, children: [{ type: "text", value: title }] }]
+        : [];
 
-      return [cardNode];
+      return [
+        {
+          type: "div",
+          class: "myst-demo-container",
+          style: {
+            border: "1px solid #e0e0e0",
+            borderRadius: "4px",
+            padding: "1rem",
+          },
+          children: [
+            ...titleChildren,
+            {
+              type: "code",
+              lang: "markdown",
+              value: rawContent,
+            },
+            { type: "thematicBreak" },
+            ...parsed.children,
+          ],
+        },
+      ];
     },
   };
 }
