@@ -20,6 +20,7 @@ def build(session):
 def docs(session):
     """Build the documentation as static HTML using MyST."""
     build(session)
+    generate_plugin_overview(session)
     session.install("mystmd")
     session.run("myst", "build", "--html")
 
@@ -28,6 +29,7 @@ def docs(session):
 def docs_live(session):
     """Start a live development server for the documentation."""
     build(session)
+    generate_plugin_overview(session)
     session.install("mystmd")
     session.run("myst", "start")
 
@@ -47,3 +49,9 @@ def release(session):
     """
     build(session)
     session.run("python", "-m", "src.release", *session.posargs)
+
+@nox.session(name="generate-plugin-overview")
+def generate_plugin_overview(session):
+    """Generate the plugin overview table from plugin_overview.yml."""
+    session.install("pyyaml")
+    session.run("python", "src/gallery.py")
