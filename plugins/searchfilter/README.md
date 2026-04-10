@@ -13,7 +13,7 @@ Add the plugin to your `myst.yml` file:
 ```yaml
 project:
   plugins:
-    - https://github.com/jupyter-book/myst-plugins/releases/latest/download/searchfilter.mjs
+    - https://github.com/jupyter-book/myst-plugins/raw/refs/heads/main/plugins/searchfilter/searchfilter.mjs
 ```
 
 Then add a `{searchfilter}` directive with a CSS selector argument to select the items you'd like to search and filter. For example:
