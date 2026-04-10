@@ -36,6 +36,7 @@ function createDemoDirective(name) {
             border: "1px solid #e0e0e0",
             borderRadius: "4px",
             padding: "1rem",
+            marginBottom: "1rem",
           },
           children: [
             ...titleChildren,
