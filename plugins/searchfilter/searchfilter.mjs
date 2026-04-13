@@ -8,6 +8,21 @@
  * SVG search icon from Lucide (https://lucide.dev), licensed under the ISC License.
  */
 
+const PLUGIN_PATH = new URL(import.meta.url).pathname;
+
+// Compute a POSIX relative path from `fromDir` to `toFile`.
+// This is a little hack to avoid using node:path because we kept hitting
+// sync/async bugs with that. There are a bunch of assumptions baked into this
+// Simple function but I think it should be safe for MyST purposes.
+function relativePath(fromDir, toFile) {
+  const from = fromDir.split('/').filter(Boolean);
+  const to = toFile.split('/').filter(Boolean);
+  let i = 0;
+  while (i < from.length && i < to.length && from[i] === to[i]) i++;
+  const ups = Array(from.length - i).fill('..');
+  return [...ups, ...to.slice(i)].join('/') || '.';
+}
+
 // --- Widget (run by the browser) ---
 
 /** Run cleanup when the widget leaves the DOM. Usually because either:
@@ -66,7 +81,7 @@ function render({ model, el }) {
   input.type = 'search';
   input.placeholder = 'Filter items...';
   input.style.cssText =
-    'width:100%;padding:0.5rem 2rem 0.5rem 2rem;font-size:0.9rem;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;background:transparent;color:inherit;';
+    'width:100%;padding:0.5rem 2rem 0.5rem 2rem;font-size:0.9rem;border:1px solid #ccc;border-radius:6px;box-sizing:border-box;background:transparent;color:inherit;-webkit-appearance:none;appearance:none;';
 
   const clearBtn = document.createElement('button');
   clearBtn.textContent = '\u00d7';
@@ -131,10 +146,6 @@ function render({ model, el }) {
 
 // --- Directive (aren't used in browser, just when the plugin builds locally w/ myst) ---
 
-let pathMod;
-try { pathMod = await import('node:path'); } catch {}
-const PLUGIN_PATH = new URL(import.meta.url).pathname;
-
 const searchfilterDirective = {
   name: 'searchfilter',
   doc: 'Adds a search bar that filters page elements matching a CSS selector by their text content.',
@@ -144,7 +155,8 @@ const searchfilterDirective = {
   },
   run(data, vfile) {
     const selector = (data.arg ?? '').trim();
-    const esm = pathMod.relative(pathMod.dirname(vfile.path), PLUGIN_PATH);
+    const fromDir = vfile.path.replace(/\/[^/]*$/, '');
+    const esm = relativePath(fromDir, PLUGIN_PATH);
     return [
       {
         type: 'anywidget',
