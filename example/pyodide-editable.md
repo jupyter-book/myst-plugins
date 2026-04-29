@@ -1,13 +1,16 @@
 ---
-title: Pyodide Editable demo
+title: Editable Pyodide Cells
 ---
+
+```{include} ../plugins/pyodide-editable/README.md
+:start-line: 2
+```
+
 This page demonstrates two richer examples using Pyodide: a `pandas` data example and a `matplotlib` plot. Both the container `pyodide-cell` form and the fenced directive form are shown.
 
-## Pandas example (container form)
+## Pandas example
 
-:::{pyodide-cell}
-:id: pandas-demo
-
+```{pyodide}
 import pandas as pd
 
 data = {
@@ -20,11 +23,11 @@ df = pd.DataFrame(data)
 df["Density"] = (df["Population"] * 1e6 / df["Area_km2"]).round(0)
 print(df.to_string(index=False))
 print(f"\nMost dense: {df.loc[df.Density.idxmax(), 'City']}")
-:::
+```
 
 ---
 
-## Matplotlib plot (container form)
+## Matplotlib plot
 
 :::{pyodide-cell}
 :id: matplotlib-demo
@@ -52,20 +55,3 @@ plt.tight_layout()
 plt.show()
 :::
 
----
-
-## Same examples (fenced directive form)
-
-```{pyodide}
-import pandas as pd
-data = {"City":["Delhi","Mumbai"],"Population":[32.9,20.7],"Area_km2":[1484,603]}
-df = pd.DataFrame(data)
-print(df)
-```
-
-```{pyodide}
-import numpy as np
-import matplotlib.pyplot as plt
-plt.plot([0,1,2],[0,1,0])
-plt.show()
-```

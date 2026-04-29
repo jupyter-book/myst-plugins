@@ -1,4 +1,4 @@
-# Pyodide Editable
+# Editable Pyodide Cells
 
 `pyodide-editable` adds an editable Python cell directive to MyST sites. Each
 cell is rendered in the browser with editor controls and executed with Pyodide,
