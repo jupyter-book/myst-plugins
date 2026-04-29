@@ -21,6 +21,7 @@ This is (as yet) a non-official repository for MyST plugins.
 | github-handle-links | Converts `@username` mentions to GitHub profile links | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |
 | emoji-shortcodes | Converts emoji shortcodes (`:smile:`) to unicode emojis (😊) at build time | transform | | in development | Matt Fisher | - |
 | searchfilter | Adds a search bar that filters page elements matching a CSS selector by text content | directive (anywidget) | | in development | @choldgraf | - |
+| pyodide-editable | Adds editable Python cells that execute in the browser with Pyodide | directive | loads Pyodide, CodeMirror, and Python packages from CDN | in development | @chandraveshchaudhari | - |
 
 
 ## Contribute
