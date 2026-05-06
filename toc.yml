@@ -12,6 +12,7 @@ project:
     - file: example/page-last-updated.md
     - file: example/emoji-shortcodes.md
     - file: example/searchfilter.md
+    - file: example/pyodide-editable.md
     - file: example/footer.md
 
     - title: GitHub Plugins
@@ -33,4 +34,3 @@ project:
       - file: example/experiment.md    
       - file: example/intermezzo.md
       - file: example/example.md
-
