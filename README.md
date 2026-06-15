@@ -22,6 +22,7 @@ This is (as yet) a non-official repository for MyST plugins.
 | emoji-shortcodes | Converts emoji shortcodes (`:smile:`) to unicode emojis (😊) at build time | transform | | in development | Matt Fisher | - |
 | searchfilter | Adds a search bar that filters page elements matching a CSS selector by text content | directive (anywidget) | | in development | @choldgraf | - |
 | pyodide-editable | Adds editable Python cells that execute in the browser with Pyodide | directive | loads Pyodide, CodeMirror, and Python packages from CDN | in development | @chandraveshchaudhari | - |
+| manim | Adds a `manim` admonition that allows you to create interactive animations with `manim-web` JS library | directive | loads `manim-web` package from CDN | in development | Yehor Korotenko ( @DobbiKov ) | - |
 
 
 ## Contribute

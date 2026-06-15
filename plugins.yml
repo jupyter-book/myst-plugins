@@ -23,3 +23,4 @@ project:
     - plugins/page-last-updated/page-last-updated.mjs
     - plugins/searchfilter/searchfilter.mjs
     - plugins/pyodide-editable/pyodide-editable.mjs
+    - plugins/manim/manim.mjs
