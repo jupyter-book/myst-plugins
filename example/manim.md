@@ -2,6 +2,9 @@
 
 Here is a 3D scene created using `manim` plugin.
 
+The plugin repository is [here](https://github.com/DobbiKov/myst-manim-plugin).
+You may find there more examples and the documentation.
+
 ## 3D-Scene
 
 :::{manim}
