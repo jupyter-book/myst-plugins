@@ -34,3 +34,4 @@ project:
       - file: example/experiment.md    
       - file: example/intermezzo.md
       - file: example/example.md
+      - file: example/manim.md
