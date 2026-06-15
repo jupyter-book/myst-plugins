@@ -14,7 +14,8 @@ project:
     - file: example/searchfilter.md
     - file: example/pyodide-editable.md
     - file: example/footer.md
-
+    - file: example/manim.md
+    
     - title: GitHub Plugins
       file: example/github-plugins.md
       children:
@@ -34,4 +35,4 @@ project:
       - file: example/experiment.md    
       - file: example/intermezzo.md
       - file: example/example.md
-      - file: example/manim.md
+
