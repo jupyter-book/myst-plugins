@@ -21,3 +21,10 @@ icons:
 
 copyright: © 2026 Jupyter Book. Built with MyST.
 ```
+
+% This is a hack to inject the foldable-solutions javascript in all pages
+```{anywidget} ./plugins/foldable-solutions/foldable-solutions.mjs
+{
+  "notesTitles": ["Notes for instructors"],
+}
+```

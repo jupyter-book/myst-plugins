@@ -24,3 +24,4 @@ project:
     - plugins/searchfilter/searchfilter.mjs
     - plugins/pyodide-editable/pyodide-editable.mjs
     - plugins/manim/manim.mjs
+    - plugins/foldable-solutions/foldable-solutions.mjs
