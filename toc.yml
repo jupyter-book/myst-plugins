@@ -15,6 +15,7 @@ project:
     - file: example/pyodide-editable.md
     - file: example/footer.md
     - file: example/manim.md
+    - file: example/foldable-solutions.md
     
     - title: GitHub Plugins
       file: example/github-plugins.md
