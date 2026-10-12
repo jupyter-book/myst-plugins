@@ -23,7 +23,7 @@ This is (as yet) a non-official repository for MyST plugins.
 | searchfilter | Adds a search bar that filters page elements matching a CSS selector by text content | directive (anywidget) | | in development | @choldgraf | - |
 | pyodide-editable | Adds editable Python cells that execute in the browser with Pyodide | directive | loads Pyodide, CodeMirror, and Python packages from CDN | in development | @chandraveshchaudhari | - |
 | manim | Adds a `manim` admonition that allows you to create interactive animations with `manim-web` JS library | directive | loads `manim-web` package from CDN | in development | Yehor Korotenko ( @DobbiKov ) | - |
-
+| hypothesis | Enables hypothesis in the entire project | transform | - | tested | Freek Pols | - |
 
 ## Contribute
 We welcome new plugins! To share your plugin, please fork this repository, add your plugin, update the gallery table below and include an example page to demonstrate its output (note that the toc is in the toc.yml file), then submit a pull request. Edits and improvements to existing plugins are also encouraged.
@@ -39,7 +39,7 @@ Once a plugin reaches the stable level, we will create a release for it - it the
 
 We use GitHub releases to share plugins in a way that others can reference and use.
 
-Do do so, use the `src/release.py` script.
+To do so, use the `src/release.py` script.
 It will print a `gh` command to generate a release for the plugin you specify.
 See the docstring of that script for usage information.
 
