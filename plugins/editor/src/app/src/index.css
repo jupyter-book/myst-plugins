@@ -1,0 +1,406 @@
+/* === CSS Variables === */
+:root {
+  --accent: #d7e1ff;
+  --toolbar-bg: #fff;
+  --accent-dark: #1a237e;
+  --button-bg: #fff;
+  --button-fg: #212529;
+  --table-bg: #f9f9fa;
+  --code-bg: #272822;
+  --code-fg: #f8f8f2;
+  --resize-handle: #1976d2;
+  --link: #1976d2;
+  --button-radius: 4px;
+}
+
+/* === Base Styles === */
+body {
+  margin: 0;
+  font-family:
+    -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family:
+    source-code-pro, Menlo, Monaco, Consolas, "Courier New", monospace;
+}
+
+/* === ProseMirror Editor === */
+.ProseMirror {
+  min-height: 800px;
+  background: var(--button-bg);
+  border: 2px solid var(--accent);
+  border-radius: 12px;
+  box-shadow: 0 2px 16px 0 #0001;
+  padding: 48px 64px;
+  box-sizing: border-box;
+  outline: none;
+  font-size: 14px;
+  margin: 40px auto;
+  transition: border 0.15s, box-shadow 0.15s;
+  max-width: 800px;
+}
+
+/* === Tables === */
+.ProseMirror table {
+  border-collapse: collapse;
+  border: 1px solid var(--accent);
+  background: var(--button-bg);
+  width: max-content;
+  max-width: 100%;
+  table-layout: auto;
+  margin: 1em 0;
+}
+
+.ProseMirror td,
+.ProseMirror th {
+  border: 1px solid var(--accent);
+  padding: 2px 6px;
+  background: var(--table-bg);
+  min-width: 60px;
+  white-space: pre-line;
+  word-break: break-word;
+  font-size: 14px;
+}
+
+.ProseMirror td p,
+.ProseMirror th p {
+  margin: 0;
+  font-size: 14px;
+}
+
+/* === Blockquotes === */
+blockquote {
+  border-left: 3px solid var(--accent);
+  margin-left: 0;
+  padding-left: 1em;
+  color: #555;
+  background: var(--table-bg);
+}
+
+/* === Code Blocks === */
+pre {
+  background: var(--code-bg);
+  color: var(--code-fg);
+  border-radius: 6px;
+  padding: 1em;
+  font-family: "Fira Mono", "Consolas", "Menlo", "Monaco", monospace;
+  font-size: 13px;
+  margin: 1em 0;
+  overflow-x: auto;
+}
+
+/* === Links === */
+a {
+  color: var(--link);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* === Reference Links === */
+.reference-link {
+  color: #1d4ed8;
+}
+
+/* === Toolbar Buttons & Dropdowns === */
+.toolbar-btn,
+.btn.btn-sm.px-1,
+.btn.btn-sm.dropdown-toggle {
+  background: transparent;
+  color: var(--button-fg);
+  border: none;
+  border-radius: var(--button-radius, 4px);
+  transition: background 0.1s, color 0.1s, border 0.1s;
+  box-shadow: none;
+  margin-right: 1px;
+  margin-bottom: 1px;
+  height: 28px;
+  padding: 2px 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn.btn-sm.px-1[aria-pressed="true"],
+.btn.btn-sm.dropdown-toggle[aria-expanded="true"] {
+  background: var(--accent);
+  color: var(--accent-dark);
+}
+
+.dropdown-item:focus,
+.dropdown-item:hover,
+.btn.btn-sm.px-1:hover,
+.btn.btn-sm.px-1:focus,
+.toolbar-btn:hover,
+.toolbar-btn:focus,
+.btn.btn-sm.dropdown-toggle:hover,
+.btn.btn-sm.dropdown-toggle:focus {
+  background-color: var(--accent) !important;
+  color: var(--accent-dark) !important;
+}
+
+/* === Toolbar Dropdown Menu === */
+.dropdown-menu {
+  min-width: 40px;
+  top: 100%;
+  left: 0;
+}
+
+.dropdown-menu.icon-only-dropdown {
+  min-width: 40px !important;
+  width: auto !important;
+  max-width: 60px !important;
+  padding: 0;
+}
+
+/* Make icons in icon-only dropdowns larger */
+.dropdown-menu.icon-only-dropdown .dropdown-item .bi {
+  font-size: 1.3em;
+  margin: 0;
+  padding: 0;
+}
+
+/* === Toolbar Dropdown Label === */
+.toolbar-dropdown-label {
+  margin-left: 6px;
+  font-weight: normal;
+  font-size: 1em;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  min-width: 0;
+  max-width: 150px;
+  overflow: hidden;
+  width: auto;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+}
+
+/* === Toolbar Separator === */
+.toolbar-separator {
+  width: 1px;
+  height: 18px;
+  background: var(--accent);
+  margin: 0 2px;
+}
+
+/* === Toolbar Icon === */
+.bi {
+  color: var(--button-fg);
+}
+
+/* === Hint Tooltip Popup === */
+.hint-tooltip-popup {
+  position: absolute;
+  z-index: 99999;
+  pointer-events: none;
+}
+
+/* === Hint Tooltip Box === */
+.hint-tooltip {
+  background: var(--button-bg);
+  color: var(--accent-dark);
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  box-shadow: 0 2px 8px 0 #d7e1ff55;
+  padding: 8px 14px;
+  font-size: 13px;
+  white-space: pre-line;
+  pointer-events: none;
+  max-width: 260px;
+}
+
+/* === Math Input & Rendering === */
+.math-input {
+  max-width: 100%;
+  width: 100%;
+  min-width: 200px;
+  box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  resize: none;
+  font-size: 1em;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+.math-node {
+  display: block;
+  max-width: 100%;
+  overflow-x: visible;
+}
+
+.math-render {
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  white-space: pre;
+  word-break: break-word;
+}
+
+/* === Image Node & Resize Handle === */
+.image-node {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+}
+
+.image-node img {
+  cursor: pointer;
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
+.resize-handle {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 12px;
+  height: 12px;
+  background: var(--resize-handle);
+  cursor: nwse-resize;
+  border-radius: 50%;
+  z-index: 10;
+  display: none;
+}
+
+.image-node img:active + .resize-handle,
+.image-node img:focus + .resize-handle {
+  display: block;
+}
+
+/* === Table Grid Selector Popup === */
+.table-grid-selector-popup {
+  position: absolute;
+  background: var(--button-bg);
+  padding: 8px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  box-shadow: 0 2px 8px 0 #d7e1ff55;
+  z-index: 10000;
+  display: inline-block;
+}
+
+/* === Table Grid Selector Grid === */
+.table-grid-selector-grid {
+  display: flex;
+  flex-direction: column;
+}
+
+/* === Table Grid Selector Row === */
+.table-grid-selector-row {
+  display: flex;
+}
+
+/* === Table Grid Selector Cell === */
+.table-grid-selector-cell {
+  width: 20px;
+  height: 20px;
+  border: 1px solid var(--accent);
+  cursor: pointer;
+  border-radius: 4px;
+  margin: 1px;
+  transition: background 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--button-bg);
+}
+
+/* === Table Grid Selector Cell (selected) === */
+.table-grid-selector-cell.selected {
+  background: var(--accent);
+}
+
+/* === Table Grid Selector Label === */
+.table-grid-selector-label {
+  text-align: center;
+  margin-top: 6px;
+  font-size: 13px;
+  color: #333;
+}
+
+/* === Toolbar Header Option Labels === */
+.toolbar-header-option-h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin: 0;
+}
+.toolbar-header-option-h2 {
+  font-size: 24px;
+  font-weight: 700;
+  margin: 0;
+}
+.toolbar-header-option-h3 {
+  font-size: 18.72px;
+  font-weight: 700;
+  margin: 0;
+}
+.toolbar-header-option-normal {
+  font-size: 16px;
+  font-weight: 400;
+  margin: 0;
+}
+
+/* === GitHub Popup === */
+.github-popup-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 24, 38, 0.45);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 72px 20px 40px;
+  z-index: 2000;
+}
+
+.github-popup-card {
+  width: min(760px, 96vw);
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 24px 80px rgba(16, 20, 40, 0.2);
+  border: 1px solid #e5e7eb;
+  overflow: hidden;
+}
+
+.github-popup-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 22px;
+  border-bottom: 1px solid #eceff4;
+  background: linear-gradient(120deg, #f8fafc, #eef2ff);
+}
+
+.github-popup-title {
+  font-weight: 700;
+  color: #111827;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 1rem;
+}
+
+.github-popup-close {
+  border: none;
+  background: transparent;
+  color: #4b5563;
+  border-radius: 999px;
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.github-popup-close:hover,
+.github-popup-close:focus {
+  background: rgba(17, 24, 39, 0.08);
+  color: #111827;
+}

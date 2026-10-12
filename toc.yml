@@ -11,6 +11,9 @@ project:
     - file: example/update-date.md   
     - file: example/page-last-updated.md
     - file: example/emoji-shortcodes.md
+    - file: example/wizard.md
+    - file: example/hypothesis.md
+
     - file: example/searchfilter.md
     - file: example/pyodide-editable.md
     - file: example/footer.md
