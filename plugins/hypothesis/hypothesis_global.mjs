@@ -78,10 +78,10 @@ const hypothesisTransform = {
 
     if (hasHypothesis(mdast)) return mdast;
 
-    // Voeg Hypothesis automatisch toe
+    // Add hypothesis, change esm
     mdast.children.push({
       type: "anywidget",
-      esm: "./plugins/hypothesis.mjs",
+      esm: "./plugins/hypothesis/hypothesis.mjs",
       model: {},
       id: randomUUID()
     });
