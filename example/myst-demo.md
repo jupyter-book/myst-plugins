@@ -1,6 +1,12 @@
 # MyST Demo Directive
 
-Shows raw MyST content alongside its rendered output - perfect for documentation and tutorials.
+Shows raw MyST content alongside its rendered output.
+The `{myst:demo}` directive takes any MyST content and displays two things in a card:
+
+1. The markdown source
+2. The rendered output
+
+This directive is used extensively throughout the myst-plugins documentation to show examples of each plugin in action!
 
 ## Usage
 
@@ -12,18 +18,26 @@ project:
     - https://raw.githubusercontent.com/jupyter-book/myst-plugins/main/plugins/demo/src/index.mjs
 ```
 
-## Basic Example
+The syntax below is both an example of `{myst:demo}` and a demonstration of how to use it:
 
-::::::{myst:demo}
+::::{myst:demo}
+:::{myst:demo} My cool title
 This is **bold** and this is *italic*.
 
 Here's a [link](https://mystmd.org).
-::::::
+:::
+::::
 
-## Lists and Structure
+Do not give an argument if you do not wish to have a title.
+
+## Examples
+
+Here are several examples to demonstrate functionality and as a reference to ensure the rendering looks correct.
+
+### Lists and Structure
 
 ::::::{myst:demo}
-### A Heading
+#### A Heading
 
 Here's an unordered list:
 
@@ -38,7 +52,7 @@ And a numbered list:
 3. Step three
 ::::::
 
-## Code Blocks
+### Code Blocks
 
 ::::::{myst:demo}
 Here's some Python code:
@@ -49,7 +63,7 @@ def hello_world():
 ```
 ::::::
 
-## Admonitions
+### Admonitions
 
 ::::::{myst:demo}
 :::{note}
@@ -61,7 +75,7 @@ This is a warning - be careful!
 :::
 ::::::
 
-## Math
+### Math
 
 ::::::{myst:demo}
 Inline math: $E = mc^2$
@@ -73,7 +87,7 @@ $$
 $$
 ::::::
 
-## Images and Figures
+### Images and Figures
 
 ::::::{myst:demo}
 ```{figure} https://picsum.photos/seed/myst-demo/400/300.jpg
@@ -83,26 +97,8 @@ A random image from Unsplash
 ```
 ::::::
 
-## Cross-References
+### Cross-References
 
 ::::::{myst:demo}
 You can reference the figure above: see {ref}`random-figure` for an example.
 ::::::
-
-## How It Works
-
-The `myst:demo` directive takes any MyST content and displays it in a single card:
-
-1. **MyST Demo** heading (customizable via an argument)
-2. A code block titled “Source MyST” showing the raw markdown
-3. **Rendered output** below
-
-You can also use `myst-demo` as an alias if needed.
-
-This makes it perfect for:
-- Writing MyST documentation
-- Creating tutorials
-- Demonstrating MyST syntax
-- Testing how content renders
-
-This directive is used extensively throughout the myst-plugins documentation to show examples of each plugin in action!

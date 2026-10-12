@@ -1,9 +1,9 @@
 import { fetchIssues } from "./github-api.mjs";
-import { createCache, walk } from "../../github-shared/utils.mjs";
+import { createCache, walk, MS_PER_DAY } from "../../github-shared/utils.mjs";
 import { parseTemplates, parseWidths } from "./utils.mjs";
 import { renderCell, renderSubIssuesBlock } from "./columns.mjs";
 
-const { readCache, writeCache } = createCache("github-search");
+const { readCache, writeCache } = createCache("github-search", 7 * MS_PER_DAY);
 
 let sharedParseMyst = null; // captured from directive ctx; reused in transform
 

@@ -1,0 +1,49 @@
+.myst-boolean-slider {
+    appearance: none;
+    width: 40px;
+    height: 20px;
+    background: #ccc;
+    border-radius: 20px;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: 0.3s;
+}
+
+.myst-boolean-slider:checked {
+    background: #4caf50; /* Green when on */
+}
+
+.myst-boolean-slider:before {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    background: white;
+    border-radius: 50%;
+    top: 2px;
+    left: 2px;
+    transition: 0.3s;
+}
+
+.myst-boolean-slider:checked:before {
+    left: 22px;
+}
+
+.myst-tooltip {
+    margin-right: 4px;
+    color: #888;
+    font-size: 12px;
+}
+
+.solution {
+  padding: 0px 0px;
+  border: none;
+  cursor: pointer;
+}
+.alert {
+    background-color: #d1e7dd;
+    border-radius: 6px;
+    color: #0a3622;
+    position: relative;
+}

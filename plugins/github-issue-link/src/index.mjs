@@ -1,9 +1,9 @@
 // GitHub Issue Link Decorator Plugin
 // Automatically decorates GitHub issue links with titles, state, and CSS classes
 
-import { createCache, walk, githubApiHeaders, stripBrackets } from "../../github-shared/utils.mjs";
+import { createCache, walk, githubApiHeaders, stripBrackets, MS_PER_DAY } from "../../github-shared/utils.mjs";
 
-const { readCache, writeCache } = createCache("github-issue");
+const { readCache, writeCache } = createCache("github-issue", 7 * MS_PER_DAY);
 
 const ISSUE_LINK_REGEX =
   /^https:\/\/github\.com\/([^/]+\/[^/]+)\/issues\/(\d+)(?:[/?#].*)?$/;
