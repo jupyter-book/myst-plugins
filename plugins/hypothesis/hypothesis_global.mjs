@@ -2,7 +2,7 @@
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 
-// Lees de frontmatter van een Markdown-bestand
+// Read the frontmatter of a Markdown-file
 function getFrontmatter(srcPath) {
   try {
     const text = readFileSync(srcPath, "utf-8");
@@ -48,7 +48,7 @@ const hypothesisTransform = {
 
     if (isPDF) return mdast;
 
-    // Controleer de frontmatter
+    // Check frontmatter
     if (file?.path) {
       const frontmatter = getFrontmatter(file.path);
 
@@ -59,12 +59,12 @@ const hypothesisTransform = {
       });
 
       if (frontmatter?.["no-hypothesis"] === true) {
-        console.log("Hypothesis UIT voor:", file.path);
+        console.log("Hypothesis not enabled for:", file.path);
         return mdast;
       }
     }
 
-    // Controleer of Hypothesis al aanwezig is
+    // Check whether hypthesis is present as anywidget on the page
     const hasHypothesis = (node) => {
       if (
         node.type === "anywidget" &&
