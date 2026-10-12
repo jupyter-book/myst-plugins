@@ -1,3 +1,7 @@
+---
+no-hypothesis: True
+---
+
 ```{footer}
 title: MyST Plugins
 description: Community-driven plugins for MyST Markdown and Jupyter Book.
