@@ -1,8 +1,10 @@
 
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-// Lees de frontmatter van een Markdown-bestand
+// Read the frontmatter of a Markdown-file
 function getFrontmatter(srcPath) {
   try {
     const text = readFileSync(srcPath, "utf-8");
@@ -34,6 +36,10 @@ function getFrontmatter(srcPath) {
   }
 }
 
+const widgetPath = fileURLToPath(
+  new URL("./hypothesis.mjs", import.meta.url)
+);
+
 const hypothesisTransform = {
   name: "hypothesis-global",
   stage: "document",
@@ -48,7 +54,7 @@ const hypothesisTransform = {
 
     if (isPDF) return mdast;
 
-    // Controleer de frontmatter
+    // Check frontmatter
     if (file?.path) {
       const frontmatter = getFrontmatter(file.path);
 
@@ -59,12 +65,12 @@ const hypothesisTransform = {
       });
 
       if (frontmatter?.["no-hypothesis"] === true) {
-        console.log("Hypothesis UIT voor:", file.path);
+        console.log("Hypothesis not enabled for:", file.path);
         return mdast;
       }
     }
 
-    // Controleer of Hypothesis al aanwezig is
+    // Check whether hypthesis is present as anywidget on the page
     const hasHypothesis = (node) => {
       if (
         node.type === "anywidget" &&
@@ -79,14 +85,21 @@ const hypothesisTransform = {
     if (hasHypothesis(mdast)) return mdast;
 
     // Add hypothesis, change esm
+    const relativePath = path
+    .relative(path.dirname(file.path), widgetPath)
+    .replace(/\\/g, "/");
+
+    // Zorg dat het pad altijd met ./ of ../ begint
+    const esmPath = relativePath.startsWith(".")
+      ? relativePath
+      : `./${relativePath}`;
+
     mdast.children.push({
       type: "anywidget",
-      esm: "./plugins/hypothesis/hypothesis.mjs",
+      esm: esmPath,
       model: {},
       id: randomUUID()
     });
-
-    return mdast;
   }
 };
 
