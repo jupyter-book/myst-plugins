@@ -1,6 +1,8 @@
 
 import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 
 // Read the frontmatter of a Markdown-file
 function getFrontmatter(srcPath) {
@@ -33,6 +35,10 @@ function getFrontmatter(srcPath) {
     return null;
   }
 }
+
+const widgetPath = fileURLToPath(
+  new URL("./hypothesis.mjs", import.meta.url)
+);
 
 const hypothesisTransform = {
   name: "hypothesis-global",
@@ -79,14 +85,21 @@ const hypothesisTransform = {
     if (hasHypothesis(mdast)) return mdast;
 
     // Add hypothesis, change esm
+    const relativePath = path
+    .relative(path.dirname(file.path), widgetPath)
+    .replace(/\\/g, "/");
+
+    // Zorg dat het pad altijd met ./ of ../ begint
+    const esmPath = relativePath.startsWith(".")
+      ? relativePath
+      : `./${relativePath}`;
+
     mdast.children.push({
       type: "anywidget",
-      esm: "./plugins/hypothesis/hypothesis.mjs",
+      esm: esmPath,
       model: {},
       id: randomUUID()
     });
-
-    return mdast;
   }
 };
 
