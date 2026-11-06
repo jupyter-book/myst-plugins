@@ -24,6 +24,7 @@ This is (as yet) a non-official repository for MyST plugins.
 | pyodide-editable | Adds editable Python cells that execute in the browser with Pyodide | directive | loads Pyodide, CodeMirror, and Python packages from CDN | in development | @chandraveshchaudhari | - |
 | manim | Adds a `manim` admonition that allows you to create interactive animations with `manim-web` JS library | directive | loads `manim-web` package from CDN | in development | Yehor Korotenko ( @DobbiKov ) | - |
 | hypothesis | Enables hypothesis in the entire project | transform | change esm in hypothesis.mjs | tested | Freek Pols | - |
+| [myst-slides](https://github.com/afeld/myst-slides) | Publishes reveal.js slides for notebooks with slide metadata and adds a "View as slides" link to each notebook's page | transform | nbconvert | in development | Aidan Feldman | [Link](https://github.com/afeld/myst-slides/releases/download/v0.2.0/slides.mjs) |
 
 ## Contribute
 We welcome new plugins! To share your plugin, please fork this repository, add your plugin, update the gallery table below and include an example page to demonstrate its output (note that the toc is in the toc.yml file), then submit a pull request. Edits and improvements to existing plugins are also encouraged.
