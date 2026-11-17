@@ -24,6 +24,7 @@ This is (as yet) a non-official repository for MyST plugins.
 | pyodide-editable | Adds editable Python cells that execute in the browser with Pyodide | directive | loads Pyodide, CodeMirror, and Python packages from CDN | in development | @chandraveshchaudhari | - |
 | manim | Adds a `manim` admonition that allows you to create interactive animations with `manim-web` JS library | directive | loads `manim-web` package from CDN | in development | Yehor Korotenko ( @DobbiKov ) | - |
 | hypothesis | Enables hypothesis in the entire project | transform | change esm in hypothesis.mjs | tested | Freek Pols | - |
+| myst-annotate | Private, local highlighting (five colours, layered) and annotation (Markdown + math) of page text, with copy buttons and a sidebar for annotations, highlights and page notes; everything stays in the reader's browser | transform (anywidget) | Browser with the CSS Custom Highlight API | in development | Grady Dillon (@gradill22) | [Link](https://github.com/gradill22/myst-annotate/releases/download/v0.2.1/myst-annotate.mjs) |
 
 ## Contribute
 We welcome new plugins! To share your plugin, please fork this repository, add your plugin, update the gallery table below and include an example page to demonstrate its output (note that the toc is in the toc.yml file), then submit a pull request. Edits and improvements to existing plugins are also encouraged.
@@ -62,3 +63,4 @@ See the docstring of that script for usage information.
 | github-issue-link | Automatically decorates GitHub issue/PR links with titles and state badges | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |
 | github-handle-links | Converts `@username` mentions to GitHub profile links | transform | GITHUB_TOKEN (optional) | in development | @choldgraf | - |
 | emoji-shortcodes | Converts emoji shortcodes (`:smile:`) to unicode emojis (😊) at build time | transform | | in development | Matt Fisher | - |
+| myst-annotate | Private, local highlighting (five colours, layered) and annotation (Markdown + math) of page text, with copy buttons and a sidebar for annotations, highlights and page notes; everything stays in the reader's browser | transform (anywidget) | Browser with the CSS Custom Highlight API | in development | Grady Dillon (@gradill22) | [Link](https://github.com/gradill22/myst-annotate/releases/download/v0.2.1/myst-annotate.mjs) |

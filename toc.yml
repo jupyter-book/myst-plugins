@@ -13,6 +13,7 @@ project:
     - file: example/emoji-shortcodes.md
     - file: example/wizard.md
     - file: example/hypothesis.md
+    - file: example/myst-annotate.md
 
     - file: example/searchfilter.md
     - file: example/pyodide-editable.md
